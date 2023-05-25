@@ -89,7 +89,7 @@ public class PhysxLoader {
 
     /**
      * リソースからライブラリをコピーします。
-     * 展開先は `${java.io.tmpdir}/com.quarri6343.physx-jni/${physxJniVersion}` になります。
+     * 展開先は `${java.io.tmpdir}/de.fabmax.physx-jni/${physxJniVersion}` になります。
      */
     private static File copyLibsFromResources(boolean forceCopy) throws Exception {
         File tempLibDir = new File(System.getProperty("java.io.tmpdir"), "de.fabmax.physx-jni" + File.separator + physxJniVersion);
