@@ -10,7 +10,7 @@ public final class PhysxMc extends JavaPlugin implements Listener {
 
     public static Physx physx;
     private static RigidItemDisplay rigidBlockDisplay;
-    
+
     @Override
     public void onEnable() {
         try {
@@ -21,15 +21,15 @@ public final class PhysxMc extends JavaPlugin implements Listener {
 
         physx = new Physx();
         physx.setUpScene();
-        
-        new BukkitRunnable(){
+
+        new BukkitRunnable() {
             @Override
             public void run() {
                 physx.tick();
                 rigidBlockDisplay.update();
             }
         }.runTaskTimer(this, 1, 1);
-        
+
         rigidBlockDisplay = new RigidItemDisplay();
 
         getServer().getPluginManager().registerEvents(this, this);
@@ -37,18 +37,18 @@ public final class PhysxMc extends JavaPlugin implements Listener {
 
     @org.bukkit.event.EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if(event.getAction() == Action.RIGHT_CLICK_AIR){
+        if (event.getAction() == Action.RIGHT_CLICK_AIR) {
             rigidBlockDisplay.create(event.getPlayer());
         }
     }
 
     @Override
     public void onDisable() {
-        if(rigidBlockDisplay != null){
+        if (rigidBlockDisplay != null) {
             rigidBlockDisplay.destroyAll();
         }
-        
-        if(physx != null){
+
+        if (physx != null) {
             physx.destroyScene();
             physx.terminate();
         }

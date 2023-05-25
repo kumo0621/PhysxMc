@@ -13,13 +13,19 @@ import java.net.URL;
 import java.nio.file.Files;
 
 public class PhysxLoader {
-    /** プラグインのクラスローダー */
+    /**
+     * プラグインのクラスローダー
+     */
     private static final ClassLoader pluginClassLoader = PhysxLoader.class.getClassLoader();
 
-    /** アプリケーションクラスローダー */
+    /**
+     * アプリケーションクラスローダー
+     */
     private static final ClassLoader appClassLoader = pluginClassLoader.getParent();
 
-    /** ライブラリのバージョン */
+    /**
+     * ライブラリのバージョン
+     */
     private static final String physxJniVersion = "2.0.6";
 
     static MethodHandles.Lookup lookup;
@@ -37,7 +43,7 @@ public class PhysxLoader {
         } catch (Throwable ignore) {
         }
     }
-    
+
     /**
      * PhysXライブラリをアプリケーションクラスローダーにロードします。
      * プラグインローダーでロードするとプラグインのリロードに失敗するため、アプリケーションクラスローダーに直接ロードします。
@@ -46,10 +52,10 @@ public class PhysxLoader {
         // 全体のクラスローダーに登録
         boolean forceCopy = "true".equalsIgnoreCase(System.getProperty("physx.forceCopyLibs", "false"));
         File libFile = copyLibsFromResources(forceCopy);
-        
+
         Field ucp = ucp(appClassLoader.getClass());
         addURL(appClassLoader, ucp, libFile);
-        
+
         // 全体のクラスローダーで読み込む
         Class<?> loaderClass = appClassLoader.loadClass("de.fabmax.physxjni.Loader");
         Method loadMethod = loaderClass.getMethod("load");

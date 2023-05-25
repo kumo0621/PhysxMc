@@ -13,11 +13,11 @@ public class PhysxGround {
     private PxRigidStatic actor;
     private PxShape groundShape;
 
-    public PhysxGround(PxPhysics physics){
+    public PhysxGround(PxPhysics physics) {
         this.physics = physics;
     }
 
-    public PxActor createGround(PxMaterial defaultMaterial){
+    public PxActor createGround(PxMaterial defaultMaterial) {
         // create default simulation shape flags
         PxShapeFlags defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
         // create a few temporary objects used during setup
@@ -37,17 +37,17 @@ public class PhysxGround {
         tmpFilterData.destroy();
         tmpPose.destroy();
         groundGeometry.destroy();
-        
+
         actor = ground;
 
         return ground;
     }
 
-    public PxRigidStatic getActor(){
+    public PxRigidStatic getActor() {
         return actor;
     }
 
-    public void release(){
+    public void release() {
         actor.release();
         groundShape.release();
     }

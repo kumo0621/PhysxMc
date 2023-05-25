@@ -54,6 +54,11 @@ public class PhysxBox {
         return actor.getGlobalPose();
     }
 
+    public void setPos(PxTransform transform) {
+        actor.setGlobalPose(transform);
+        transform.destroy();
+    }
+
     public PxRigidDynamic getActor() {
         return actor;
     }
@@ -66,10 +71,5 @@ public class PhysxBox {
     public void addForce(PxVec3 vec3) {
         actor.addForce(vec3, PxForceModeEnum.eFORCE);
         vec3.destroy();
-    }
-
-    public void setPos(PxTransform transform) {
-        actor.setGlobalPose(transform);
-        transform.destroy();
     }
 }
