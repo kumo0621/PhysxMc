@@ -28,7 +28,7 @@ public class RigidItemDisplay {
         
         int multiplier = player.getInventory().getHeldItemSlot() + 1;
         
-        org.bukkit.entity.ItemDisplay itemDisplay = player.getWorld().spawn(player.getLocation(), ItemDisplay.class);
+        ItemDisplay itemDisplay = player.getWorld().spawn(player.getLocation(), ItemDisplay.class);
         itemDisplay.setItemStack(player.getItemInHand());
         Transformation transformation = itemDisplay.getTransformation();
         transformation.getScale().x = multiplier;
@@ -52,9 +52,10 @@ public class RigidItemDisplay {
     public void update(){
         itemDisplayList.forEach((itemDisplay, box) -> {
             Quaternionf boxQuat = new Quaternionf(box.getPos().getQ().getX(), box.getPos().getQ().getY(), box.getPos().getQ().getZ(), box.getPos().getQ().getW());
-            Vector3f rot = convertToEulerAngles(boxQuat);
-            float[] yawPitch = convertToYawPitch(rot.x, rot.y, rot.z);
-            itemDisplay.teleport(new Location(itemDisplay.getWorld(), box.getPos().getP().getX(), box.getPos().getP().getY(), box.getPos().getP().getZ(), yawPitch[0], yawPitch[1]));
+            Transformation transformation = itemDisplay.getTransformation();
+            transformation.getLeftRotation().set(boxQuat);
+            itemDisplay.setTransformation(transformation);
+            itemDisplay.teleport(new Location(itemDisplay.getWorld(), box.getPos().getP().getX(), box.getPos().getP().getY(), box.getPos().getP().getZ()));
         });
 
         Bukkit.getOnlinePlayers().forEach(player -> {
