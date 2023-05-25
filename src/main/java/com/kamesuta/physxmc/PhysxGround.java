@@ -8,7 +8,7 @@ import physx.physics.*;
 
 public class PhysxGround {
 
-    private PxPhysics physics;
+    private final PxPhysics physics;
 
     private PxRigidStatic actor;
     private PxShape groundShape;

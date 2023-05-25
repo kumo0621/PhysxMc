@@ -17,19 +17,19 @@ import java.util.*;
 
 public class RigidItemDisplay {
     
-    private static Map<ItemDisplay, PhysxBox> itemDisplayList = new HashMap<>();
+    private static final Map<ItemDisplay, PhysxBox> itemDisplayList = new HashMap<>();
     
-    private static Map<Player, PhysxBox> playerCollisionList = new HashMap<>();
+    private static final Map<Player, PhysxBox> playerCollisionList = new HashMap<>();
     
     public void create(Player player){
-        if(!player.getItemInHand().getType().isBlock()){
+        if(!player.getInventory().getItemInMainHand().getType().isBlock()){
             return;
         }
         
         int multiplier = player.getInventory().getHeldItemSlot() + 1;
         
         ItemDisplay itemDisplay = player.getWorld().spawn(player.getLocation(), ItemDisplay.class);
-        itemDisplay.setItemStack(player.getItemInHand());
+        itemDisplay.setItemStack(player.getInventory().getItemInMainHand());
         Transformation transformation = itemDisplay.getTransformation();
         transformation.getScale().x = multiplier;
         transformation.getScale().y = multiplier;

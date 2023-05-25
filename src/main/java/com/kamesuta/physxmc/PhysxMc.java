@@ -15,8 +15,6 @@ public final class PhysxMc extends JavaPlugin implements Listener {
     public void onEnable() {
         try {
             PhysxLoader.loadPhysxOnAppClassloader();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }

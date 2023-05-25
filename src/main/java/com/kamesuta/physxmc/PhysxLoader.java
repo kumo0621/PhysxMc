@@ -14,10 +14,10 @@ import java.nio.file.Files;
 
 public class PhysxLoader {
     /** プラグインのクラスローダー */
-    private static ClassLoader pluginClassLoader = PhysxLoader.class.getClassLoader();
+    private static final ClassLoader pluginClassLoader = PhysxLoader.class.getClassLoader();
 
     /** アプリケーションクラスローダー */
-    private static ClassLoader appClassLoader = pluginClassLoader.getParent();
+    private static final ClassLoader appClassLoader = pluginClassLoader.getParent();
 
     /** ライブラリのバージョン */
     private static final String physxJniVersion = "2.0.6";

@@ -7,10 +7,10 @@ import physx.physics.*;
 
 public class Physx {
 
-    //PhysX library version
+    //PhysX's library version
     private static final int version = PxTopLevelFunctions.getPHYSICS_VERSION();
 
-    //PhysX foundation object
+    //PhysX's foundation object
     private static PxDefaultAllocator allocator;
     private static PxDefaultErrorCallback errorCb;
     private static PxFoundation foundation;

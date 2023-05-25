@@ -10,7 +10,7 @@ import physx.physics.*;
 
 public class PhysxBox {
 
-    private PxPhysics physics;
+    private final PxPhysics physics;
 
     private PxRigidDynamic actor;
     private PxShape boxShape;
