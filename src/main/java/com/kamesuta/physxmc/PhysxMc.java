@@ -9,7 +9,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 public final class PhysxMc extends JavaPlugin implements Listener {
 
     public static Physx physx;
-    private static RigidItemDisplay rigidBlockDisplay;
+    public static RigidItemDisplay rigidBlockDisplay;
 
     @Override
     public void onEnable() {
@@ -18,6 +18,8 @@ public final class PhysxMc extends JavaPlugin implements Listener {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+        
+        getServer().getPluginManager().registerEvents(new PhysxCommand(), this);
 
         physx = new Physx();
         physx.setUpScene();

@@ -78,9 +78,8 @@ public class RigidItemDisplay {
     public void destroyAll() {
         itemDisplayList.forEach((itemDisplay, box) -> {
             itemDisplay.remove();
-            box.release();
+            PhysxMc.physx.removeBox(box);
         });
+        itemDisplayList.clear();
     }
-
-
 }
