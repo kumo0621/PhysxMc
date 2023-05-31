@@ -38,7 +38,7 @@ public class PhysxBox {
         boxShape.setSimulationFilterData(tmpFilterData);
         box.attachShape(boxShape);
 
-        PxRigidBodyExt.updateMassAndInertia(box, 0.1f);
+        PxRigidBodyExt.updateMassAndInertia(box, 0.5f);
 
         defaultShapeFlags.destroy();
         tmpFilterData.destroy();
