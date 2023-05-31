@@ -24,13 +24,10 @@ public class PhysxWorld {
 
         Chunk[] overWorldChunks = Bukkit.getWorlds().get(0).getLoadedChunks();
         for (Chunk overWorldChunk : overWorldChunks) {
-            PhysxTerrain terrain = new PhysxTerrain(physics);
-            scene.addActor(terrain.createTerrain(defaultMaterial, overWorldChunk));
-            chunkTerrainMap.put(overWorldChunk, terrain);
+            loadChunkAsTerrain(overWorldChunk);
         }
     }
-
-
+    
     public PxScene createScene() {
         // create a physics scene
         PxVec3 tmpVec = new PxVec3(0f, -19.62f, 0f);
@@ -44,6 +41,25 @@ public class PhysxWorld {
         sceneDesc.destroy();
 
         return scene;
+    }
+    
+    public void loadChunkAsTerrain(Chunk chunk){
+        if(chunkTerrainMap.containsKey(chunk))
+            return;
+        
+        PhysxTerrain terrain = new PhysxTerrain(physics);
+        scene.addActor(terrain.createTerrain(defaultMaterial, chunk));
+        chunkTerrainMap.put(chunk, terrain);
+    }
+    
+    public void unloadChunkAsTerrain(Chunk chunk){
+        if(chunkTerrainMap.get(chunk) == null)
+            return;
+
+        scene.removeActor(chunkTerrainMap.get(chunk).getActor());
+        chunkTerrainMap.get(chunk).release();
+        
+        chunkTerrainMap.remove(chunk);
     }
 
     public void destroyScene() {

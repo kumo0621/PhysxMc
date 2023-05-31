@@ -6,7 +6,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public final class PhysxMc extends JavaPlugin implements Listener {
+public final class PhysxMc extends JavaPlugin{
 
     public static Physx physx;
     public static PhysxWorld physxWorld;
@@ -21,6 +21,7 @@ public final class PhysxMc extends JavaPlugin implements Listener {
         }
         
         getServer().getPluginManager().registerEvents(new PhysxCommand(), this);
+        getServer().getPluginManager().registerEvents(new EventHandler(), this);
 
         physx = new Physx();
         physxWorld = new PhysxWorld();
@@ -35,15 +36,6 @@ public final class PhysxMc extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 1, 1);
 
         rigidBlockDisplay = new RigidItemDisplay();
-
-        getServer().getPluginManager().registerEvents(this, this);
-    }
-
-    @org.bukkit.event.EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getAction() == Action.RIGHT_CLICK_AIR) {
-            rigidBlockDisplay.create(event.getPlayer());
-        }
     }
 
     @Override
