@@ -44,7 +44,7 @@ public class RigidItemDisplay {
         Vector3f playerRot = player.getLocation().getDirection().toVector3f();
         Quaternionf playerQuat = convertToQuaternion(playerRot.x, playerRot.y, playerRot.z);
         PxBoxGeometry boxGeometry = new PxBoxGeometry(0.5f * multiplier, 0.5f * multiplier, 0.5f * multiplier);
-        PhysxBox box = PhysxMc.physx.addBox(new PxVec3((float) loc.x(), (float) loc.y(), (float) loc.z()), new PxQuat(playerQuat.x, playerQuat.y, playerQuat.z, playerQuat.w), boxGeometry);
+        PhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) loc.x(), (float) loc.y(), (float) loc.z()), new PxQuat(playerQuat.x, playerQuat.y, playerQuat.z, playerQuat.w), boxGeometry);
 
         playerRot = player.getLocation().getDirection().multiply(200).toVector3f();
         PxVec3 force = new PxVec3(playerRot.x, playerRot.y, playerRot.z);
@@ -64,7 +64,7 @@ public class RigidItemDisplay {
         Bukkit.getOnlinePlayers().forEach(player -> {
             Location loc = player.getLocation();
             if (playerCollisionList.get(player) == null) {
-                PhysxBox box = PhysxMc.physx.addBox(new PxVec3((float) loc.x(), (float) loc.y() + 1, (float) loc.z()), new PxQuat(PxIDENTITYEnum.PxIdentity));
+                PhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) loc.x(), (float) loc.y() + 1, (float) loc.z()), new PxQuat(PxIDENTITYEnum.PxIdentity));
                 playerCollisionList.put(player, box);
             }
             PxTransform tmpPose = new PxTransform(PxIDENTITYEnum.PxIdentity);
@@ -78,7 +78,7 @@ public class RigidItemDisplay {
     public void destroyAll() {
         itemDisplayList.forEach((itemDisplay, box) -> {
             itemDisplay.remove();
-            PhysxMc.physx.removeBox(box);
+            PhysxMc.physxWorld.removeBox(box);
         });
         itemDisplayList.clear();
     }

@@ -1,7 +1,6 @@
 package com.kamesuta.physxmc;
 
 import org.bukkit.Chunk;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -15,18 +14,18 @@ import physx.physics.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PhysxGround {
+public class PhysxTerrain {
 
     private final PxPhysics physics;
 
     private PxRigidStatic actor;
-    private List<PxShape> groundShapes = new ArrayList<>();
+    private final List<PxShape> terrainShapes = new ArrayList<>();
 
-    public PhysxGround(PxPhysics physics) {
+    public PhysxTerrain(PxPhysics physics) {
         this.physics = physics;
     }
 
-    public PxActor createGround(PxMaterial defaultMaterial, Chunk chunk) {
+    public PxActor createTerrain(PxMaterial defaultMaterial, Chunk chunk) {
         // create default simulation shape flags
         PxShapeFlags defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
         // create a few temporary objects used during setup
@@ -35,8 +34,8 @@ public class PhysxGround {
         tmpPose.setP(tmpVec);
         tmpVec.destroy();
         PxFilterData tmpFilterData = new PxFilterData(1, 1, 0, 0);
-        PxRigidStatic ground = physics.createRigidStatic(tmpPose);
-        PxBoxGeometry groundGeometry = new PxBoxGeometry(0.5f, 0.5f, 0.5f);   // PxBoxGeometry uses half-sizes
+        PxRigidStatic terrain = physics.createRigidStatic(tmpPose);
+        PxBoxGeometry terrainGeometry = new PxBoxGeometry(0.5f, 0.5f, 0.5f);   // PxBoxGeometry uses half-sizes
 
         
         final int minY = chunk.getWorld().getMinHeight();
@@ -48,14 +47,14 @@ public class PhysxGround {
                     if(!areNeighboursEmpty(chunk.getWorld(), block) || block.getBoundingBox().getVolume() == 0)
                         continue;
 
-                    PxShape shape = physics.createShape(groundGeometry, defaultMaterial, true, defaultShapeFlags);
+                    PxShape shape = physics.createShape(terrainGeometry, defaultMaterial, true, defaultShapeFlags);
                     shape.setSimulationFilterData(tmpFilterData);
                     PxVec3 tmpVec2 = new PxVec3(x + 0.5f, y + 0.5f, z + 0.5f);
                     tmpPose.setP(tmpVec2);
                     tmpVec2.destroy();
                     shape.setLocalPose(tmpPose);
-                    ground.attachShape(shape);
-                    groundShapes.add(shape);
+                    terrain.attachShape(shape);
+                    terrainShapes.add(shape);
                 }
             }
         }
@@ -63,11 +62,11 @@ public class PhysxGround {
         defaultShapeFlags.destroy();
         tmpFilterData.destroy();
         tmpPose.destroy();
-        groundGeometry.destroy();
+        terrainGeometry.destroy();
 
-        actor = ground;
+        actor = terrain;
 
-        return ground;
+        return terrain;
     }
 
     public PxRigidStatic getActor() {
@@ -76,7 +75,7 @@ public class PhysxGround {
 
     public void release() {
         actor.release();
-        groundShapes.forEach(PxBase::release);
+        terrainShapes.forEach(PxBase::release);
     }
 
     private boolean areNeighboursEmpty(World level, Block pos) {

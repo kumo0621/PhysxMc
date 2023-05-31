@@ -9,6 +9,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 public final class PhysxMc extends JavaPlugin implements Listener {
 
     public static Physx physx;
+    public static PhysxWorld physxWorld;
     public static RigidItemDisplay rigidBlockDisplay;
 
     @Override
@@ -22,12 +23,13 @@ public final class PhysxMc extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new PhysxCommand(), this);
 
         physx = new Physx();
-        physx.setUpScene();
+        physxWorld = new PhysxWorld();
+        physxWorld.setUpScene();
 
         new BukkitRunnable() {
             @Override
             public void run() {
-                physx.tick();
+                physxWorld.tick();
                 rigidBlockDisplay.update();
             }
         }.runTaskTimer(this, 1, 1);
@@ -51,7 +53,7 @@ public final class PhysxMc extends JavaPlugin implements Listener {
         }
 
         if (physx != null) {
-            physx.destroyScene();
+            physxWorld.destroyScene();
             physx.terminate();
         }
     }
