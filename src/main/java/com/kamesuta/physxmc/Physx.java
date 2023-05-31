@@ -77,7 +77,7 @@ public class Physx {
     }
 
     public void tick() {
-        scene.simulate(1f / 60f);
+        scene.simulate(3f / 60f); // 1 second = 60 frame = 20tick
         scene.fetchResults(true);
     }
 
