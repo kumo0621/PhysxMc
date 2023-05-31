@@ -1,5 +1,8 @@
 package com.kamesuta.physxmc;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
+import org.bukkit.World;
 import physx.PxTopLevelFunctions;
 import physx.common.*;
 import physx.geometry.PxBoxGeometry;
@@ -7,6 +10,9 @@ import physx.physics.PxMaterial;
 import physx.physics.PxPhysics;
 import physx.physics.PxScene;
 import physx.physics.PxSceneDesc;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class Physx {
 
@@ -39,21 +45,26 @@ public class Physx {
     }
 
     private PxScene scene;
-    private PhysxGround ground;
+    private final Map<Chunk, PhysxGround> chunkGroundMap = new HashMap<>();//チャンクごとに地形を生成して管理
 
     public void setUpScene() {
         scene = createScene();
 
-        ground = new PhysxGround(physics);
-        scene.addActor(ground.createGround(defaultMaterial));
+        Chunk[] overWorldChunks = Bukkit.getWorlds().get(0).getLoadedChunks();
+        for (Chunk overWorldChunk : overWorldChunks) {
+            PhysxGround ground = new PhysxGround(physics);
+            scene.addActor(ground.createGround(defaultMaterial, overWorldChunk));
+            chunkGroundMap.put(overWorldChunk, ground);
+        }
     }
 
     public void destroyScene() {
         if (scene != null) {
-            if (ground != null) {
-                scene.removeActor(ground.getActor());
-                ground.release();
-            }
+            chunkGroundMap.forEach((chunk, physxGround) -> {
+                scene.removeActor(physxGround.getActor());
+                physxGround.release();
+            });
+            chunkGroundMap.clear();
 
             scene.release();
         }
