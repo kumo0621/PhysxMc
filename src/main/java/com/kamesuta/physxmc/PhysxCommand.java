@@ -11,11 +11,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * コマンドを仮実装するクラス。CommandLib(<a href="https://github.com/TeamKun/CommandLib">...</a>)が1.20に対応し次第移行する
+ */
 public class PhysxCommand extends CommandBase implements Listener {
-
+    
     private static final String commandName = "physxmc";
     private static final String resetArgument = "reset";
-    private static final List<String> arguments = List.of(resetArgument); //ここに引数を追加
+
+    /**
+     * 引数のリスト
+     */
+    private static final List<String> arguments = List.of(resetArgument);
     
     public PhysxCommand() {
         super(commandName, 1, 1, false);

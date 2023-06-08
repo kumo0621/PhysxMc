@@ -13,6 +13,9 @@ import physx.physics.PxSceneDesc;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Physxのコアコンポーネントのホルダークラス。
+ */
 public class Physx {
 
     //PhysX's library version
@@ -33,6 +36,9 @@ public class Physx {
     //create default material
     public static final PxMaterial defaultMaterial;
 
+    /**
+     * コアコンポーネントを初期化する
+     */
     static {
         allocator = new PxDefaultAllocator();
         errorCb = new PxDefaultErrorCallback();
@@ -43,6 +49,9 @@ public class Physx {
         defaultMaterial = physics.createMaterial(0.5f, 0.5f, 0.5f);
     }
 
+    /**
+     * プラグイン終了時にコアコンポーネントを破壊してメモリリークを防ぐ
+     */
     public void terminate() {
         if (defaultMaterial != null) {
             defaultMaterial.release();

@@ -18,12 +18,19 @@ import java.util.Map;
 
 import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
 
+/**
+ * ItemDisplayを生成し、物理演算世界の箱と結びつけるクラス
+ */
 public class RigidItemDisplay {
 
     private static final Map<ItemDisplay, PhysxBox> itemDisplayList = new HashMap<>();
 
     private static final Map<Player, PhysxBox> playerCollisionList = new HashMap<>();
 
+    /**
+     * プレイヤーの座標にItemDisplayを1個生成して、箱と紐づける
+     * @param player プレイヤー
+     */
     public void create(Player player) {
         if (!player.getInventory().getItemInMainHand().getType().isBlock()) {
             return;
@@ -52,6 +59,9 @@ public class RigidItemDisplay {
         itemDisplayList.put(itemDisplay, box);
     }
 
+    /**
+     * ワールドに存在する全てのItemDisplayの座標と回転を箱に基づいて更新する
+     */
     public void update() {
         itemDisplayList.forEach((itemDisplay, box) -> {
             Quaternionf boxQuat = new Quaternionf(box.getPos().getQ().getX(), box.getPos().getQ().getY(), box.getPos().getQ().getZ(), box.getPos().getQ().getW());
@@ -75,6 +85,9 @@ public class RigidItemDisplay {
         });
     }
 
+    /**
+     * 全てのitemdisplayと箱を消去する
+     */
     public void destroyAll() {
         itemDisplayList.forEach((itemDisplay, box) -> {
             itemDisplay.remove();

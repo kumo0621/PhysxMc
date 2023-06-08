@@ -14,6 +14,9 @@ import physx.physics.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 地形(動かない箱)をその形状と共に保持するクラス
+ */
 public class PhysxTerrain {
 
     private final PxPhysics physics;
@@ -25,6 +28,12 @@ public class PhysxTerrain {
         this.physics = physics;
     }
 
+    /**
+     * チャンクの形に応じた地形を作る
+     * @param defaultMaterial　地形のマテリアル
+     * @param chunk チャンク
+     * @return 地形のオブジェクト
+     */
     public PxActor createTerrain(PxMaterial defaultMaterial, Chunk chunk) {
         // create default simulation shape flags
         PxShapeFlags defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
@@ -69,16 +78,29 @@ public class PhysxTerrain {
         return terrain;
     }
 
+    /**
+     * 地形のオブジェクトを取得する
+     * @return 箱のオブジェクト
+     */
     public PxRigidStatic getActor() {
         return actor;
     }
 
+    /**
+     * 地形とその形状を破壊する
+     */
     public void release() {
         actor.release();
         terrainShapes.forEach(PxBase::release);
     }
 
-    private boolean areNeighboursEmpty(World level, Block pos) {
+    /**
+     * ブロックの隣に空洞があるか判定する
+     * @param level 世界
+     * @param pos 座標
+     * @return ブロックの隣に空洞があるかどうか
+     */
+    private static boolean areNeighboursEmpty(World level, Block pos) {
         return pos.getY() >= level.getMaxHeight() || pos.getY() <= level.getMinHeight()
                 || (pos.getY() < level.getMaxHeight() - 1 && pos.getRelative(BlockFace.UP).isEmpty())
                 || (pos.getY() > level.getMaxHeight() && pos.getRelative(BlockFace.DOWN).isEmpty())

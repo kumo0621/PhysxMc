@@ -3,18 +3,29 @@ package com.kamesuta.physxmc;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+/**
+ * 角度変換用のユーティリティクラス
+ */
 public class ConversionUtility {
 
+    /**
+     * クォータニオンをオイラー角に変換
+     * @param quaternion クォータニオン
+     * @return オイラー角
+     */
     public static Vector3f convertToEulerAngles(Quaternionf quaternion) {
         Vector3f euler = new Vector3f();
         quaternion.getEulerAnglesXYZ(euler);
-
-        // ラジアンから度に変換
+        
         euler.mul((float) (180.0 / Math.PI));
 
         return euler;
     }
 
+    /**
+     * オイラー角をクォータニオンに変換
+     * @return クォータニオン
+     */
     public static Quaternionf convertToQuaternion(double eulerX, double eulerY, double eulerZ) {
         Vector3f angles = new Vector3f((float) Math.toRadians(eulerX), (float) Math.toRadians(eulerY), (float) Math.toRadians(eulerZ));
         Quaternionf quaternion = new Quaternionf();
@@ -23,29 +34,39 @@ public class ConversionUtility {
         return quaternion;
     }
 
+    /**
+     * オイラー角をyaw/pitchに変換
+     * @return yaw/pitch
+     */
     public static float[] convertToYawPitch(double eulerX, double eulerY, double eulerZ) {
         double yaw = eulerY;
         double pitch = -eulerX;
-
-        // 正規化
+        
         yaw = normalizeAngle(yaw);
         pitch = normalizeAngle(pitch);
 
         return new float[]{(float) yaw, (float) pitch};
     }
 
+    /**
+     * yaw/pitchをオイラー角に変換
+     * @return オイラー角
+     */
     public static float[] convertToEulerAngles(double yaw, double pitch) {
         double eulerX = -pitch;
         double eulerY = yaw;
         double eulerZ = 0.0;
-
-        // 正規化
+        
         eulerX = normalizeAngle(eulerX);
         eulerY = normalizeAngle(eulerY);
 
         return new float[]{(float) eulerX, (float) eulerY, (float) eulerZ};
     }
 
+    /**
+     * 角度を正規化
+     * @return 正規化された角度
+     */
     public static double normalizeAngle(double angle) {
         angle %= 360.0;
 
