@@ -13,8 +13,8 @@ public class EventHandler implements Listener {
 
     @org.bukkit.event.EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getAction() == Action.RIGHT_CLICK_AIR) {
-            rigidBlockDisplay.create(event.getPlayer());
+        if (event.getAction() == Action.RIGHT_CLICK_AIR && PhysxSetting.isDebugMode()) {
+            rigidBlockDisplay.debugCreate(event.getPlayer());
         }
     }
 

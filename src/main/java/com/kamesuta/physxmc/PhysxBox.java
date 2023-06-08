@@ -1,5 +1,6 @@
 package com.kamesuta.physxmc;
 
+import lombok.Getter;
 import physx.common.PxIDENTITYEnum;
 import physx.common.PxQuat;
 import physx.common.PxTransform;
@@ -15,6 +16,7 @@ public class PhysxBox {
 
     private final PxPhysics physics;
 
+    @Getter
     private PxRigidDynamic actor;
     private PxShape boxShape;
 
@@ -33,15 +35,20 @@ public class PhysxBox {
         return createBox(defaultMaterial, pos, quat, new PxBoxGeometry(0.5f, 0.5f, 0.5f));// PxBoxGeometry uses half-sizes
     }
 
+    public PxRigidDynamic createBox(PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry) {
+        return createBox(defaultMaterial, pos, quat, boxGeometry, PhysxSetting.getDefaultDensity());
+    }
+
     /**
      * 物理演算される箱を作る
      * @param defaultMaterial　箱のマテリアル
      * @param pos 箱の位置
      * @param quat 箱の角度
      * @param boxGeometry 箱の大きさ (1/2)
+     * @param density 箱の密度
      * @return 箱のオブジェクト
      */
-    public PxRigidDynamic createBox(PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry) {
+    public PxRigidDynamic createBox(PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, float density) {
         // create default simulation shape flags
         PxShapeFlags defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
         // create a few temporary objects used during setup
@@ -56,7 +63,7 @@ public class PhysxBox {
         boxShape.setSimulationFilterData(tmpFilterData);
         box.attachShape(boxShape);
 
-        PxRigidBodyExt.updateMassAndInertia(box, 0.5f);
+        PxRigidBodyExt.updateMassAndInertia(box, density);
 
         defaultShapeFlags.destroy();
         tmpFilterData.destroy();
@@ -83,14 +90,6 @@ public class PhysxBox {
     public void setPos(PxTransform transform) {
         actor.setGlobalPose(transform);
         transform.destroy();
-    }
-
-    /**
-     * 箱のオブジェクトを取得する
-     * @return 箱のオブジェクト
-     */
-    public PxRigidDynamic getActor() {
-        return actor;
     }
 
     /**

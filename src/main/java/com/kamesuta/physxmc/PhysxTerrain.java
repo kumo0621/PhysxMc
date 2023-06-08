@@ -1,5 +1,6 @@
 package com.kamesuta.physxmc;
 
+import lombok.Getter;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -21,6 +22,7 @@ public class PhysxTerrain {
 
     private final PxPhysics physics;
 
+    @Getter
     private PxRigidStatic actor;
     private final List<PxShape> terrainShapes = new ArrayList<>();
 
@@ -76,14 +78,6 @@ public class PhysxTerrain {
         actor = terrain;
 
         return terrain;
-    }
-
-    /**
-     * 地形のオブジェクトを取得する
-     * @return 箱のオブジェクト
-     */
-    public PxRigidStatic getActor() {
-        return actor;
     }
 
     /**

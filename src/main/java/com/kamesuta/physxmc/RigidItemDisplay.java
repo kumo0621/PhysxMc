@@ -29,17 +29,22 @@ public class RigidItemDisplay {
     private static final Map<Player, PhysxBox> playerCollisionList = new HashMap<>();
 
     /**
-     * プレイヤーの座標にItemDisplayを1個生成して、箱と紐づける
+     * プレイヤーがブロックを持っていたとき、座標にItemDisplayを1個生成して、箱と紐づける
      * @param player プレイヤー
      */
-    public void create(Player player) {
+    public void debugCreate(Player player) {
         if (!player.getInventory().getItemInMainHand().getType().isBlock()) {
             return;
         }
 
         int scale = player.getInventory().getHeldItemSlot() + 1;
+        
         ItemDisplay itemDisplay = createItemDisplay(player.getInventory().getItemInMainHand(), player.getEyeLocation(), scale);
+        
         PhysxBox box = createBox(player.getEyeLocation(), scale);
+        Vector3f rot = player.getEyeLocation().getDirection().clone().multiply(PhysxSetting.getThrowPower() * Math.pow(scale, 3)).toVector3f();
+        PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
+        box.addForce(force);
         
         itemDisplayList.put(itemDisplay, box);
     }
@@ -57,15 +62,10 @@ public class RigidItemDisplay {
     }
     
     private PhysxBox createBox(Location location, float scale){
-        Vector3f playerRot = location.getDirection().clone().toVector3f();
-        Quaternionf playerQuat = convertToQuaternion(playerRot.x, playerRot.y, playerRot.z);
+        Vector3f rot = location.getDirection().clone().toVector3f();
+        Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
         PxBoxGeometry boxGeometry = new PxBoxGeometry(0.5f * scale, 0.5f * scale, 0.5f * scale);
-        PhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(playerQuat.x, playerQuat.y, playerQuat.z, playerQuat.w), boxGeometry);
-
-        playerRot = location.getDirection().clone().multiply(200 * Math.pow(scale, 3)).toVector3f();
-        PxVec3 force = new PxVec3(playerRot.x, playerRot.y, playerRot.z);
-        box.addForce(force);
-        return box;
+        return PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry);
     }
     
     /**
