@@ -52,7 +52,7 @@ public class ConversionUtility {
      * yaw/pitchをオイラー角に変換
      * @return オイラー角
      */
-    public static float[] convertToEulerAngles(double yaw, double pitch) {
+    public static Vector3f convertToEulerAngles(double yaw, double pitch) {
         double eulerX = -pitch;
         double eulerY = yaw;
         double eulerZ = 0.0;
@@ -60,7 +60,7 @@ public class ConversionUtility {
         eulerX = normalizeAngle(eulerX);
         eulerY = normalizeAngle(eulerY);
 
-        return new float[]{(float) eulerX, (float) eulerY, (float) eulerZ};
+        return new Vector3f((float) eulerX, (float) eulerY, (float) eulerZ);
     }
 
     /**
