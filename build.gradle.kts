@@ -8,6 +8,7 @@ plugins {
     id("com.github.johnrengelman.shadow") version "6.0.0"
     // Gitに応じた自動バージョニングを行うためのプラグイン
     id("org.ajoberstar.grgit") version "4.1.1"
+    id("io.freefair.lombok") version "6.6.1"
 }
 
 // グループ定義
@@ -45,6 +46,8 @@ dependencies {
 
     // JOML
     implementation("org.joml:joml:1.10.5")
+
+    compileOnly("org.projectlombok:lombok:1.18.24")
 }
 
 tasks {
