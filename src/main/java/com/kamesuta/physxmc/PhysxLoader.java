@@ -98,19 +98,20 @@ public class PhysxLoader {
         }
 
         // 1st: make sure all libs are available in system temp dir
-        InputStream libIn = pluginClassLoader.getResourceAsStream("libs.zip");
-        if (libIn == null) {
-            throw new IllegalStateException("Failed loading libs.zip from resources");
-        }
-        File libTmpFile = new File(tempLibDir, "libs.jar");
-        if (forceCopy && libTmpFile.exists()) {
-            if (!libTmpFile.delete()) {
-                throw new IllegalStateException("Failed deleting existing native lib file " + libTmpFile);
+        try (InputStream libIn = pluginClassLoader.getResourceAsStream("libs.zip")) {
+            if (libIn == null) {
+                throw new IllegalStateException("Failed loading libs.zip from resources");
             }
+            File libTmpFile = new File(tempLibDir, "libs.jar");
+            if (forceCopy && libTmpFile.exists()) {
+                if (!libTmpFile.delete()) {
+                    throw new IllegalStateException("Failed deleting existing native lib file " + libTmpFile);
+                }
+            }
+            if (!libTmpFile.exists()) {
+                Files.copy(libIn, libTmpFile.toPath());
+            }
+            return libTmpFile;
         }
-        if (!libTmpFile.exists()) {
-            Files.copy(libIn, libTmpFile.toPath());
-        }
-        return libTmpFile;
     }
 }
