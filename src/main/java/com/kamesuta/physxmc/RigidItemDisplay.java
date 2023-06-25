@@ -1,30 +1,23 @@
 package com.kamesuta.physxmc;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Transformation;
-import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import physx.common.PxIDENTITYEnum;
 import physx.common.PxQuat;
-import physx.common.PxTransform;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
-import physx.physics.PxPhysics;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
 
 /**
- * ItemDisplayを生成し、物理演算世界の箱と結びつけるクラス
+ * ItemDisplayと物理演算世界の箱を結びつけるクラス
  */
 public class RigidItemDisplay {
 
@@ -43,17 +36,8 @@ public class RigidItemDisplay {
         }
 
         int scale = player.getInventory().getHeldItemSlot() + 1;
-
-        // TP用に2つのItemDisplayを生成
-        ItemDisplay[] displays = new ItemDisplay[] {
-                createItemDisplay(player.getInventory().getItemInMainHand(), player.getEyeLocation(), scale),
-                createItemDisplay(player.getInventory().getItemInMainHand(), player.getEyeLocation(), scale),
-        };
-
-        DisplayedPhysxBox box = createDisplayedBox(player.getEyeLocation(), scale, displays);
-        Vector3f rot = player.getEyeLocation().getDirection().clone().multiply(PhysxSetting.getThrowPower() * Math.pow(scale, 3)).toVector3f();
-        PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
-        box.addForce(force);
+        DisplayedPhysxBox box = createDisplayedBox(player.getEyeLocation(), scale, player.getInventory().getItemInMainHand());
+        throwBox(player.getEyeLocation(), scale, box);
 
         itemDisplayList.add(box);
     }
@@ -70,51 +54,26 @@ public class RigidItemDisplay {
         return itemDisplay;
     }
 
-    private DisplayedPhysxBox createDisplayedBox(Location location, float scale, ItemDisplay[] displays) {
+    private DisplayedPhysxBox createDisplayedBox(Location location, float scale, ItemStack itemStack) {
+        ItemDisplay display = createItemDisplay(itemStack, location, scale);
         Vector3f rot = location.getDirection().clone().toVector3f();
         Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
         PxBoxGeometry boxGeometry = new PxBoxGeometry(0.5f * scale, 0.5f * scale, 0.5f * scale);
-        return PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, displays);
+        return PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, display);
+    }
+    
+    private void throwBox(Location location, int scale, DisplayedPhysxBox box){
+        double power = PhysxSetting.getThrowPower() * Math.pow(scale, 3);
+        Vector3f rot = location.getDirection().clone().multiply(power).toVector3f();
+        PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
+        box.addForce(force);
     }
 
     /**
-     * ワールドに存在する全てのItemDisplayの座標と回転を箱に基づいて更新する
+     * ワールドに存在する全ての箱を更新する
      */
     public void update() {
-        itemDisplayList.forEach(block -> {
-
-            PxQuat q = block.getPos().getQ();
-            PxVec3 p = block.getPos().getP();
-            Location pos = new Location(block.display[0].getWorld(), p.getX(), p.getY(), p.getZ());
-
-            // スワップのフェーズ管理 (2ティックかけてスワップが完了する)
-            if (block.swapPhase == 2) {
-                block.swap(pos);
-                block.swapPhase = 0;
-            }
-            if (block.swapPhase == 1) {
-                block.preSwap(pos);
-                block.swapPhase = 2;
-            }
-            // 位置が16マス以上離れていたら次のティックからスワップを開始する
-            if (block.swapPhase == 0 && block.display[0].getLocation().toVector().distance(new Vector(p.getX(), p.getY(), p.getZ())) > 16) {
-                block.swapPhase = 1;
-            }
-
-            for (ItemDisplay itemDisplay : block.display) {
-                Location prev = itemDisplay.getLocation();
-
-                Quaternionf boxQuat = new Quaternionf(q.getX(), q.getY(), q.getZ(), q.getW());
-                Transformation transformation = itemDisplay.getTransformation();
-                transformation.getLeftRotation().set(boxQuat);
-                transformation.getTranslation().set(p.getX() - prev.getX(), p.getY() - prev.getY(), p.getZ() - prev.getZ());
-                itemDisplay.setTransformation(transformation);
-                // なめらかに補完する
-                itemDisplay.setInterpolationDelay(0);
-                itemDisplay.setInterpolationDuration(1);
-                // itemDisplay.teleport(new Location(itemDisplay.getWorld(), p.getX(), p.getY(), p.getZ()));
-            }
-        });
+        itemDisplayList.forEach(DisplayedPhysxBox::update);
 
         //TODO:プレイヤーの接触判定を適切に実装
 //        Bukkit.getOnlinePlayers().forEach(player -> {

@@ -81,11 +81,11 @@ public class IntegratedPhysxWorld extends PhysxWorld {
      * @param pos 座標
      * @param quat 回転
      * @param boxGeometry 箱の大きさ
-     * @param displays 表示用のItemDisplay
+     * @param display 表示用のItemDisplay
      * @return 追加した箱オブジェクト
      */
-    public DisplayedPhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, ItemDisplay[] displays) {
-        DisplayedPhysxBox box = new DisplayedPhysxBox(physics, displays);
+    public DisplayedPhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, ItemDisplay display) {
+        DisplayedPhysxBox box = new DisplayedPhysxBox(physics, display);
         scene.addActor(box.createBox(defaultMaterial, pos, quat, boxGeometry));
         return box;
     }
