@@ -85,8 +85,8 @@ public class IntegratedPhysxWorld extends PhysxWorld {
      * @return 追加した箱オブジェクト
      */
     public DisplayedPhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, ItemDisplay display) {
-        DisplayedPhysxBox box = new DisplayedPhysxBox(physics, display);
-        scene.addActor(box.createBox(defaultMaterial, pos, quat, boxGeometry));
+        DisplayedPhysxBox box = new DisplayedPhysxBox(physics, pos, quat, boxGeometry, display);
+        scene.addActor(box.getActor());
         return box;
     }
 }

@@ -58,8 +58,8 @@ public class PhysxWorld {
      * @return 箱オブジェクト
      */
     public PhysxBox addBox(PxVec3 pos, PxQuat quat) {
-        PhysxBox box = new PhysxBox(physics);
-        scene.addActor(box.createBox(defaultMaterial, pos, quat));
+        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat);
+        scene.addActor(box.getActor());
         return box;
     }
 
@@ -71,8 +71,8 @@ public class PhysxWorld {
      * @return 追加した箱オブジェクト
      */
     public PhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry) {
-        PhysxBox box = new PhysxBox(physics);
-        scene.addActor(box.createBox(defaultMaterial, pos, quat, boxGeometry));
+        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat, boxGeometry);
+        scene.addActor(box.getActor());
         return box;
     }
 

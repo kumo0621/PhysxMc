@@ -17,9 +17,9 @@ import java.util.List;
 import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
 
 /**
- * ItemDisplayと物理演算世界の箱を結びつけるクラス
+ * ItemDisplayと物理演算世界の箱を保持するクラス
  */
-public class RigidItemDisplay {
+public class DisplayedBoxHolder {
 
     private static final List<DisplayedPhysxBox> itemDisplayList = new ArrayList<>();
 
@@ -37,9 +37,17 @@ public class RigidItemDisplay {
 
         int scale = player.getInventory().getHeldItemSlot() + 1;
         DisplayedPhysxBox box = createDisplayedBox(player.getEyeLocation(), scale, player.getInventory().getItemInMainHand());
-        throwBox(player.getEyeLocation(), scale, box);
+        box.throwBox(player.getEyeLocation(), scale);
 
         itemDisplayList.add(box);
+    }
+
+    private DisplayedPhysxBox createDisplayedBox(Location location, float scale, ItemStack itemStack) {
+        ItemDisplay display = createItemDisplay(itemStack, location, scale);
+        Vector3f rot = location.getDirection().clone().toVector3f();
+        Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
+        PxBoxGeometry boxGeometry = new PxBoxGeometry(0.5f * scale, 0.5f * scale, 0.5f * scale);
+        return PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, display);
     }
 
     private ItemDisplay createItemDisplay(ItemStack itemStack, Location location, float scale) {
@@ -53,22 +61,7 @@ public class RigidItemDisplay {
         itemDisplay.setGravity(false);
         return itemDisplay;
     }
-
-    private DisplayedPhysxBox createDisplayedBox(Location location, float scale, ItemStack itemStack) {
-        ItemDisplay display = createItemDisplay(itemStack, location, scale);
-        Vector3f rot = location.getDirection().clone().toVector3f();
-        Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
-        PxBoxGeometry boxGeometry = new PxBoxGeometry(0.5f * scale, 0.5f * scale, 0.5f * scale);
-        return PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, display);
-    }
     
-    private void throwBox(Location location, int scale, DisplayedPhysxBox box){
-        double power = PhysxSetting.getThrowPower() * Math.pow(scale, 3);
-        Vector3f rot = location.getDirection().clone().multiply(power).toVector3f();
-        PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
-        box.addForce(force);
-    }
-
     /**
      * ワールドに存在する全ての箱を更新する
      */

@@ -7,14 +7,14 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 
 import static com.kamesuta.physxmc.PhysxMc.physxWorld;
-import static com.kamesuta.physxmc.PhysxMc.rigidBlockDisplay;
+import static com.kamesuta.physxmc.PhysxMc.displayedBoxHolder;
 
 public class EventHandler implements Listener {
 
     @org.bukkit.event.EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getAction() == Action.RIGHT_CLICK_AIR && PhysxSetting.isDebugMode()) {
-            rigidBlockDisplay.debugCreate(event.getPlayer());
+            displayedBoxHolder.debugCreate(event.getPlayer());
         }
     }
 

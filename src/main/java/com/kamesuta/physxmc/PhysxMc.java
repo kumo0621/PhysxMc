@@ -7,7 +7,7 @@ public final class PhysxMc extends JavaPlugin{
 
     public static Physx physx;
     public static IntegratedPhysxWorld physxWorld;
-    public static RigidItemDisplay rigidBlockDisplay;
+    public static DisplayedBoxHolder displayedBoxHolder;
 
     @Override
     public void onEnable() {
@@ -28,17 +28,17 @@ public final class PhysxMc extends JavaPlugin{
             @Override
             public void run() {
                 physxWorld.tick();
-                rigidBlockDisplay.update();
+                displayedBoxHolder.update();
             }
         }.runTaskTimer(this, 1, 1);
 
-        rigidBlockDisplay = new RigidItemDisplay();
+        displayedBoxHolder = new DisplayedBoxHolder();
     }
 
     @Override
     public void onDisable() {
-        if (rigidBlockDisplay != null) {
-            rigidBlockDisplay.destroyAll();
+        if (displayedBoxHolder != null) {
+            displayedBoxHolder.destroyAll();
         }
 
         if (physx != null) {

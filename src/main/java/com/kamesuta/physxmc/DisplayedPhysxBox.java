@@ -5,9 +5,13 @@ import org.bukkit.entity.ItemDisplay;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
+import physx.geometry.PxBoxGeometry;
 import physx.physics.PxPhysics;
+
+import static com.kamesuta.physxmc.Physx.defaultMaterial;
 
 /**
  * Minecraft世界で表示可能なPhysxBox
@@ -23,8 +27,8 @@ public class DisplayedPhysxBox extends PhysxBox {
      */
     public int swapPhase = 0;
 
-    public DisplayedPhysxBox(PxPhysics physics, ItemDisplay display) {
-        super(physics);
+    public DisplayedPhysxBox(PxPhysics physics, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, ItemDisplay display) {
+        super(physics, defaultMaterial, pos, quat, boxGeometry);
         // TP用に2つのItemDisplayを生成
         this.display = new ItemDisplay[]{display, display};
     }
@@ -85,5 +89,12 @@ public class DisplayedPhysxBox extends PhysxBox {
         ItemDisplay temp = display[1];
         display[1] = display[0];
         display[0] = temp;
+    }
+
+    public void throwBox(Location location, int scale){
+        double power = PhysxSetting.getThrowPower() * Math.pow(scale, 3);
+        Vector3f rot = location.getDirection().clone().multiply(power).toVector3f();
+        PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
+        addForce(force);
     }
 }

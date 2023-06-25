@@ -8,7 +8,6 @@ import org.bukkit.event.Listener;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -33,7 +32,7 @@ public class PhysxCommand extends CommandBase implements Listener {
     @Override
     public boolean onCommand(CommandSender sender, @Nullable String[] arguments) {
         if(arguments[0].equals(resetArgument)){
-            PhysxMc.rigidBlockDisplay.destroyAll();
+            PhysxMc.displayedBoxHolder.destroyAll();
             return true;
         }
         else if(arguments[0].equals(debugArgument)){
