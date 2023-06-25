@@ -6,7 +6,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 public final class PhysxMc extends JavaPlugin{
 
     public static Physx physx;
-    public static PhysxWorld physxWorld;
+    public static IntegratedPhysxWorld physxWorld;
     public static RigidItemDisplay rigidBlockDisplay;
 
     @Override
@@ -21,7 +21,7 @@ public final class PhysxMc extends JavaPlugin{
         getServer().getPluginManager().registerEvents(new EventHandler(), this);
 
         physx = new Physx();
-        physxWorld = new PhysxWorld();
+        physxWorld = new IntegratedPhysxWorld();
         physxWorld.setUpScene();
 
         new BukkitRunnable() {

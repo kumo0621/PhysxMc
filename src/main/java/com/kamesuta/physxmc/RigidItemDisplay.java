@@ -14,6 +14,7 @@ import physx.common.PxQuat;
 import physx.common.PxTransform;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
+import physx.physics.PxPhysics;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,53 +28,9 @@ import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
  */
 public class RigidItemDisplay {
 
-    /**
-     * 物理用のブロック管理クラス
-     */
-    private static class PhysxBlock {
-        /**
-         * 物理当たり判定
-         */
-        public final PhysxBox box;
-        /**
-         * 表示用のItemDisplay
-         */
-        public ItemDisplay[] display;
-        /**
-         * スワップのフェーズ管理
-         */
-        public int swapPhase = 0;
+    private static final List<DisplayedPhysxBox> itemDisplayList = new ArrayList<>();
 
-        public PhysxBlock(PhysxBox box, ItemDisplay[] display) {
-            this.box = box;
-            this.display = display;
-        }
-
-        /**
-         * スワップの1ティック前に呼ぶ
-         * @param pos 新しい位置
-         */
-        public void preSwap(Location pos) {
-            display[0].setVisibleByDefault(true);
-        }
-
-        /**
-         * TPの移動が見えないようにスワップする
-         * @param pos 新しい位置
-         */
-        public void swap(Location pos) {
-            display[1].setVisibleByDefault(false);
-            display[1].teleport(pos);
-
-            ItemDisplay temp = display[1];
-            display[1] = display[0];
-            display[0] = temp;
-        }
-    }
-
-    private static final List<PhysxBlock> itemDisplayList = new ArrayList<>();
-
-    private static final Map<Player, PhysxBox> playerCollisionList = new HashMap<>();
+//    private static final Map<Player, PhysxBox> playerCollisionList = new HashMap<>();
 
     /**
      * プレイヤーがブロックを持っていたとき、座標にItemDisplayを1個生成して、箱と紐づける
@@ -88,17 +45,17 @@ public class RigidItemDisplay {
         int scale = player.getInventory().getHeldItemSlot() + 1;
 
         // TP用に2つのItemDisplayを生成
-        ItemDisplay[] display = new ItemDisplay[] {
+        ItemDisplay[] displays = new ItemDisplay[] {
                 createItemDisplay(player.getInventory().getItemInMainHand(), player.getEyeLocation(), scale),
                 createItemDisplay(player.getInventory().getItemInMainHand(), player.getEyeLocation(), scale),
         };
 
-        PhysxBox box = createBox(player.getEyeLocation(), scale);
+        DisplayedPhysxBox box = createDisplayedBox(player.getEyeLocation(), scale, displays);
         Vector3f rot = player.getEyeLocation().getDirection().clone().multiply(PhysxSetting.getThrowPower() * Math.pow(scale, 3)).toVector3f();
         PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
         box.addForce(force);
 
-        itemDisplayList.add(new PhysxBlock(box, display));
+        itemDisplayList.add(box);
     }
 
     private ItemDisplay createItemDisplay(ItemStack itemStack, Location location, float scale) {
@@ -113,11 +70,11 @@ public class RigidItemDisplay {
         return itemDisplay;
     }
 
-    private PhysxBox createBox(Location location, float scale) {
+    private DisplayedPhysxBox createDisplayedBox(Location location, float scale, ItemDisplay[] displays) {
         Vector3f rot = location.getDirection().clone().toVector3f();
         Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
         PxBoxGeometry boxGeometry = new PxBoxGeometry(0.5f * scale, 0.5f * scale, 0.5f * scale);
-        return PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry);
+        return PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, displays);
     }
 
     /**
@@ -125,10 +82,9 @@ public class RigidItemDisplay {
      */
     public void update() {
         itemDisplayList.forEach(block -> {
-            PhysxBox box = block.box;
 
-            PxQuat q = box.getPos().getQ();
-            PxVec3 p = box.getPos().getP();
+            PxQuat q = block.getPos().getQ();
+            PxVec3 p = block.getPos().getP();
             Location pos = new Location(block.display[0].getWorld(), p.getX(), p.getY(), p.getZ());
 
             // スワップのフェーズ管理 (2ティックかけてスワップが完了する)
@@ -160,18 +116,19 @@ public class RigidItemDisplay {
             }
         });
 
-        Bukkit.getOnlinePlayers().forEach(player -> {
-            Location loc = player.getLocation();
-            if (playerCollisionList.get(player) == null) {
-                PhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) loc.x(), (float) loc.y() + 1, (float) loc.z()), new PxQuat(PxIDENTITYEnum.PxIdentity));
-                playerCollisionList.put(player, box);
-            }
-            PxTransform tmpPose = new PxTransform(PxIDENTITYEnum.PxIdentity);
-            PxVec3 vec3 = new PxVec3((float) loc.x(), (float) loc.y() + 1, (float) loc.z());
-            tmpPose.setP(vec3);
-            vec3.destroy();
-            playerCollisionList.get(player).setPos(tmpPose);
-        });
+        //TODO:プレイヤーの接触判定を適切に実装
+//        Bukkit.getOnlinePlayers().forEach(player -> {
+//            Location loc = player.getLocation();
+//            if (playerCollisionList.get(player) == null) {
+//                PhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) loc.x(), (float) loc.y() + 1, (float) loc.z()), new PxQuat(PxIDENTITYEnum.PxIdentity));
+//                playerCollisionList.put(player, box);
+//            }
+//            PxTransform tmpPose = new PxTransform(PxIDENTITYEnum.PxIdentity);
+//            PxVec3 vec3 = new PxVec3((float) loc.x(), (float) loc.y() + 1, (float) loc.z());
+//            tmpPose.setP(vec3);
+//            vec3.destroy();
+//            playerCollisionList.get(player).setPos(tmpPose);
+//        });
     }
 
     /**
@@ -182,7 +139,7 @@ public class RigidItemDisplay {
             for (ItemDisplay itemDisplay : block.display) {
                 itemDisplay.remove();
             }
-            PhysxMc.physxWorld.removeBox(block.box);
+            PhysxMc.physxWorld.removeBox(block);
         });
         itemDisplayList.clear();
     }

@@ -1,7 +1,5 @@
 package com.kamesuta.physxmc;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
 import physx.PxTopLevelFunctions;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
@@ -9,29 +7,20 @@ import physx.geometry.PxBoxGeometry;
 import physx.physics.PxScene;
 import physx.physics.PxSceneDesc;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static com.kamesuta.physxmc.Physx.*;
 
 /**
- * 世界オブジェクト
+ * Physxのシーン管理クラス
  */
 public class PhysxWorld {
     
-    private PxScene scene;
-    private final Map<Chunk, PhysxTerrain> chunkTerrainMap = new HashMap<>();//チャンクごとに地形を生成して管理
+    protected PxScene scene;
 
     /**
      * チャンクごとに地形を作ってシーンに挿入する
      */
     public void setUpScene() {
         scene = createScene();
-
-        Chunk[] overWorldChunks = Bukkit.getWorlds().get(0).getLoadedChunks();
-        for (Chunk overWorldChunk : overWorldChunks) {
-            loadChunkAsTerrain(overWorldChunk);
-        }
     }
 
     /**
@@ -54,43 +43,10 @@ public class PhysxWorld {
     }
 
     /**
-     * チャンクごとに物理エンジンの地形を作る
-     * @param chunk
-     */
-    public void loadChunkAsTerrain(Chunk chunk){
-        if(chunkTerrainMap.containsKey(chunk))
-            return;
-        
-        PhysxTerrain terrain = new PhysxTerrain(physics);
-        scene.addActor(terrain.createTerrain(defaultMaterial, chunk));
-        chunkTerrainMap.put(chunk, terrain);
-    }
-
-    /**
-     * チャンクごとに存在する地形を破壊する
-     * @param chunk
-     */
-    public void unloadChunkAsTerrain(Chunk chunk){
-        if(chunkTerrainMap.get(chunk) == null)
-            return;
-
-        scene.removeActor(chunkTerrainMap.get(chunk).getActor());
-        chunkTerrainMap.get(chunk).release();
-        
-        chunkTerrainMap.remove(chunk);
-    }
-
-    /**
      * シーンオブジェクトを破壊する
      */
     public void destroyScene() {
         if (scene != null) {
-            chunkTerrainMap.forEach((chunk, physxTerrain) -> {
-                scene.removeActor(physxTerrain.getActor());
-                physxTerrain.release();
-            });
-            chunkTerrainMap.clear();
-
             scene.release();
         }
     }
