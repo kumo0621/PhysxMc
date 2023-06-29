@@ -55,7 +55,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
         if(chunkTerrainMap.get(chunk) == null)
             return;
 
-        scene.removeActor(chunkTerrainMap.get(chunk).getActor());
+        scene.removeActor(chunkTerrainMap.get(chunk).getActor(), false);
         chunkTerrainMap.get(chunk).release();
 
         chunkTerrainMap.remove(chunk);
