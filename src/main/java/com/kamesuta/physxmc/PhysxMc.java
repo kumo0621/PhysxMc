@@ -9,8 +9,13 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.BlockPosition;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class PhysxMc extends JavaPlugin{
 
@@ -56,6 +61,32 @@ public final class PhysxMc extends JavaPlugin{
                 physxWorld.registerChunksToReloadNextSecond(event.getPlayer().getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()).getChunk());
             }
         });
+        protocolManager.addPacketListener(new PacketAdapter(this, ListenerPriority.NORMAL, PacketType.Play.Server.MULTI_BLOCK_CHANGE) {
+            @Override
+            public void onPacketSending(PacketEvent event) {
+                PacketContainer packet = event.getPacket();
+                List<Location> locations = new ArrayList<>();
+
+                var sectionPos = packet.getSectionPositions().read(0);
+                var shortLocations = packet.getShortArrays().read(0);
+
+                for (short shortLocation : shortLocations) {
+                    var loc = convertShortLocation(event.getPlayer().getWorld(), sectionPos, shortLocation);
+                    locations.add(loc);
+                }
+
+                for (Location location : locations) {
+                    physxWorld.registerChunksToReloadNextSecond(location.getChunk());
+                }
+            }
+        });
+    }
+
+    private static Location convertShortLocation(World world, BlockPosition sectionPosition, short shortLoc) {
+        int y = (sectionPosition.getY() * 16) + (shortLoc & 0xF);
+        int z = (sectionPosition.getZ() * 16) + ((shortLoc >> 4) & 0xF);
+        int x = (sectionPosition.getX() * 16) + ((shortLoc >> 8) & 0xF);
+        return new Location(world, x, y, z);
     }
 
     @Override
