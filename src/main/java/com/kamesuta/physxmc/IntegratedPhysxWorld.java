@@ -1,14 +1,12 @@
 package com.kamesuta.physxmc;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.entity.ItemDisplay;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.kamesuta.physxmc.Physx.defaultMaterial;
 import static com.kamesuta.physxmc.Physx.physics;
@@ -19,19 +17,9 @@ import static com.kamesuta.physxmc.Physx.physics;
 public class IntegratedPhysxWorld extends PhysxWorld {
 
     private final Map<Chunk, PhysxTerrain> chunkTerrainMap = new HashMap<>();//チャンクごとに地形を生成して管理
-
-    /**
-     * チャンクごとに地形を作ってシーンに挿入する
-     */
-    @Override
-    public void setUpScene() {
-        scene = createScene();
-
-        Chunk[] overWorldChunks = Bukkit.getWorlds().get(0).getLoadedChunks();
-        for (Chunk overWorldChunk : overWorldChunks) {
-            loadChunkAsTerrain(overWorldChunk);
-        }
-    }
+    private final List<Chunk> chunksToLoadNextTick = new ArrayList<>();//現在アクティブな物理オブジェクトが存在するチャンク
+    
+    private boolean readyToUpdateChunks = false;
 
     /**
      * チャンクごとに物理エンジンの地形を作る
@@ -41,8 +29,8 @@ public class IntegratedPhysxWorld extends PhysxWorld {
         if(chunkTerrainMap.containsKey(chunk))
             return;
 
-        PhysxTerrain terrain = new PhysxTerrain(physics);
-        scene.addActor(terrain.createTerrain(defaultMaterial, chunk));
+        PhysxTerrain terrain = new PhysxTerrain(physics, defaultMaterial, chunk);
+        scene.addActor(terrain.getActor());
         chunkTerrainMap.put(chunk, terrain);
     }
 
@@ -84,9 +72,56 @@ public class IntegratedPhysxWorld extends PhysxWorld {
      * @param display 表示用のItemDisplay
      * @return 追加した箱オブジェクト
      */
-    public DisplayedPhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, ItemDisplay display) {
+    public DisplayedPhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, ItemDisplay[] display) {
         DisplayedPhysxBox box = new DisplayedPhysxBox(physics, pos, quat, boxGeometry, display);
         scene.addActor(box.getActor());
         return box;
+    }
+
+    /**
+     * 次のtickで地形をロードしておきたいチャンクを登録する
+     * @param chunks 地形をロードしておきたいチャンク
+     */
+    public void registerChunksToLoadNextTick(Collection<Chunk> chunks){
+        chunksToLoadNextTick.addAll(chunks);
+    }
+
+    /**
+     * 次のtickでロードするチャンクの登録が終わったことを登録する
+     */
+    public void setReadyToUpdateChunks(){
+        readyToUpdateChunks = true;
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        updateChunks();
+    }
+
+    /**
+     * ロードするチャンクをアップデートする
+     */
+    private void updateChunks(){
+        if(!readyToUpdateChunks)
+            return;
+        
+        if(chunksToLoadNextTick.isEmpty())
+            return;
+        
+        for (Chunk chunk : chunksToLoadNextTick) {
+            loadChunkAsTerrain(chunk);
+        }
+        Collection<Chunk> chunksToUnload = new ArrayList<>();
+        for (Map.Entry<Chunk, PhysxTerrain> chunkPhysxTerrainEntry : chunkTerrainMap.entrySet()) {
+            Chunk chunk = chunkPhysxTerrainEntry.getKey();
+            if (!chunksToLoadNextTick.contains(chunk))
+                chunksToUnload.add(chunk);
+        }
+        for (Chunk chunk : chunksToUnload) {
+            unloadChunkAsTerrain(chunk);
+        }
+        chunksToLoadNextTick.clear();
+        readyToUpdateChunks = false;
     }
 }

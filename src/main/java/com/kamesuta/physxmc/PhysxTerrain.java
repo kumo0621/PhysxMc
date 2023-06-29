@@ -20,15 +20,9 @@ import java.util.List;
  */
 public class PhysxTerrain {
 
-    private final PxPhysics physics;
-
     @Getter
-    private PxRigidStatic actor;
+    private final PxRigidStatic actor;
     private final List<PxShape> terrainShapes = new ArrayList<>();
-
-    public PhysxTerrain(PxPhysics physics) {
-        this.physics = physics;
-    }
 
     /**
      * チャンクの形に応じた地形を作る
@@ -36,7 +30,7 @@ public class PhysxTerrain {
      * @param chunk チャンク
      * @return 地形のオブジェクト
      */
-    public PxActor createTerrain(PxMaterial defaultMaterial, Chunk chunk) {
+    public PhysxTerrain(PxPhysics physics, PxMaterial defaultMaterial, Chunk chunk) {
         // create default simulation shape flags
         PxShapeFlags defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
         // create a few temporary objects used during setup
@@ -76,8 +70,6 @@ public class PhysxTerrain {
         terrainGeometry.destroy();
 
         actor = terrain;
-
-        return terrain;
     }
 
     /**

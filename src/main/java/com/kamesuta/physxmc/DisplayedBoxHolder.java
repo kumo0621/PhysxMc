@@ -43,7 +43,8 @@ public class DisplayedBoxHolder {
     }
 
     private DisplayedPhysxBox createDisplayedBox(Location location, float scale, ItemStack itemStack) {
-        ItemDisplay display = createItemDisplay(itemStack, location, scale);
+        // なめらかな補完のために2つitemdisplayを作る
+        ItemDisplay[] display = new ItemDisplay[]{createItemDisplay(itemStack, location, scale), createItemDisplay(itemStack, location, scale)};
         Vector3f rot = location.getDirection().clone().toVector3f();
         Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
         PxBoxGeometry boxGeometry = new PxBoxGeometry(0.5f * scale, 0.5f * scale, 0.5f * scale);
@@ -61,12 +62,18 @@ public class DisplayedBoxHolder {
         itemDisplay.setGravity(false);
         return itemDisplay;
     }
-    
+
     /**
      * ワールドに存在する全ての箱を更新する
      */
     public void update() {
-        itemDisplayList.forEach(DisplayedPhysxBox::update);
+        itemDisplayList.forEach(displayedPhysxBox -> {
+            displayedPhysxBox.update();
+
+            if (!displayedPhysxBox.isSleeping())
+                PhysxMc.physxWorld.registerChunksToLoadNextTick(displayedPhysxBox.getSurroundingChunks());
+        });
+        PhysxMc.physxWorld.setReadyToUpdateChunks();
 
         //TODO:プレイヤーの接触判定を適切に実装
 //        Bukkit.getOnlinePlayers().forEach(player -> {

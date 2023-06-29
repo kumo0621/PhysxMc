@@ -1,6 +1,8 @@
 package com.kamesuta.physxmc;
 
+import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
@@ -10,6 +12,9 @@ import physx.common.PxQuat;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
 import physx.physics.PxPhysics;
+
+import java.util.Collection;
+import java.util.HashSet;
 
 import static com.kamesuta.physxmc.Physx.defaultMaterial;
 
@@ -27,16 +32,20 @@ public class DisplayedPhysxBox extends PhysxBox {
      */
     public int swapPhase = 0;
 
-    public DisplayedPhysxBox(PxPhysics physics, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, ItemDisplay display) {
+    public DisplayedPhysxBox(PxPhysics physics, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, ItemDisplay[] display) {
         super(physics, defaultMaterial, pos, quat, boxGeometry);
-        // TP用に2つのItemDisplayを生成
-        this.display = new ItemDisplay[]{display, display};
+
+        this.display = display;
+    }
+    
+    public void update(){
+        trySwap();
     }
 
     /**
      * 物理の箱とItemDisplayを同期する
      */
-    public void update(){
+    private void trySwap(){
         PxQuat q = getPos().getQ();
         PxVec3 p = getPos().getP();
         Location pos = new Location(display[0].getWorld(), p.getX(), p.getY(), p.getZ());
@@ -69,7 +78,7 @@ public class DisplayedPhysxBox extends PhysxBox {
             // itemDisplay.teleport(new Location(itemDisplay.getWorld(), p.getX(), p.getY(), p.getZ()));
         }
     }
-
+    
     /**
      * スワップの1ティック前に呼ぶ
      * @param pos 新しい位置
@@ -91,10 +100,42 @@ public class DisplayedPhysxBox extends PhysxBox {
         display[0] = temp;
     }
 
+    /**
+     * 箱を投げる
+     * @param location 向き
+     * @param scale 力
+     */
     public void throwBox(Location location, int scale){
         double power = PhysxSetting.getThrowPower() * Math.pow(scale, 3);
         Vector3f rot = location.getDirection().clone().multiply(power).toVector3f();
         PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
         addForce(force);
+    }
+    
+    public boolean isSleeping(){
+        return getActor().isSleeping();
+    }
+
+    /**
+     * 箱の周囲のチャンクを取得
+     * @return 箱があるチャンクとその8方にあるチャンク
+     */
+    public Collection<Chunk> getSurroundingChunks() {
+        int[] offset = {-1,0,1};
+
+        World world = display[0].getWorld();
+        PxVec3 p = getPos().getP();
+        Location pos = new Location(display[0].getWorld(), p.getX(), p.getY(), p.getZ());
+        int baseX = pos.getChunk().getX();
+        int baseZ = pos.getChunk().getZ();
+
+        Collection<Chunk> chunksAround = new HashSet<>();
+        for(int x : offset) {
+            for(int z : offset) {
+                Chunk chunk = world.getChunkAt(baseX + x, baseZ + z);
+                chunksAround.add(chunk);
+            }
+        } 
+        return chunksAround;
     }
 }
