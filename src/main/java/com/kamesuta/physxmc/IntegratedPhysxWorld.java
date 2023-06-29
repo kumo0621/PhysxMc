@@ -16,10 +16,23 @@ import static com.kamesuta.physxmc.Physx.physics;
  */
 public class IntegratedPhysxWorld extends PhysxWorld {
 
-    private final Map<Chunk, PhysxTerrain> chunkTerrainMap = new HashMap<>();//チャンクごとに地形を生成して管理
-    private final List<Chunk> chunksToLoadNextTick = new ArrayList<>();//現在アクティブな物理オブジェクトが存在するチャンク
+    /**
+     * チャンクごとに地形を生成して管理
+     */
+    private final Map<Chunk, PhysxTerrain> chunkTerrainMap = new HashMap<>();
+
+    /**
+     * 次のtickで保持しておかなくてはいけない現在アクティブな物理オブジェクトが存在するチャンク
+     */
+    private final Set<Chunk> chunksToLoadNextTick = new HashSet<>();
+
+    /**
+     * 次の秒でリロードしておかなくてはいけない、構成ブロックに変更が加わったチャンク
+     */
+    private final Set<Chunk> chunksToReloadNextSecond = new HashSet<>();
     
     private boolean readyToUpdateChunks = false;
+    private int tickCount = 0;
 
     /**
      * チャンクごとに物理エンジンの地形を作る
@@ -46,6 +59,10 @@ public class IntegratedPhysxWorld extends PhysxWorld {
         chunkTerrainMap.get(chunk).release();
 
         chunkTerrainMap.remove(chunk);
+    }
+    
+    public boolean isChunkLoadedAsTerrain(Chunk chunk){
+        return chunkTerrainMap.get(chunk) != null;
     }
 
     /**
@@ -93,16 +110,27 @@ public class IntegratedPhysxWorld extends PhysxWorld {
         readyToUpdateChunks = true;
     }
 
+    /**
+     * 次の秒で地形をリロードしておきたい変更の加わったチャンクを登録する
+     */
+    public void registerChunksToReloadNextSecond(Chunk chunk){
+        chunksToReloadNextSecond.add(chunk);
+    }
+
     @Override
     public void tick() {
         super.tick();
-        updateChunks();
+        updateActiveChunks();
+        
+        tickCount++;
+        if(tickCount % 20 == 0)
+            reloadModifiedChunks();
     }
 
     /**
-     * ロードするチャンクをアップデートする
+     * アクティブなオブジェクト付近のロードしておくチャンクをアップデートする。毎tick実行することで高速で動くオブジェクトに対応する
      */
-    private void updateChunks(){
+    private void updateActiveChunks(){
         if(!readyToUpdateChunks)
             return;
         
@@ -123,5 +151,19 @@ public class IntegratedPhysxWorld extends PhysxWorld {
         }
         chunksToLoadNextTick.clear();
         readyToUpdateChunks = false;
+    }
+
+    /**
+     * 構成ブロックに変更が加わったチャンクをリロードする
+     */
+    private void reloadModifiedChunks(){
+        for (Chunk chunk : chunksToReloadNextSecond) {
+            if(!isChunkLoadedAsTerrain(chunk))
+                continue;
+            
+            unloadChunkAsTerrain(chunk);
+            loadChunkAsTerrain(chunk);
+        }
+        chunksToReloadNextSecond.clear();
     }
 }

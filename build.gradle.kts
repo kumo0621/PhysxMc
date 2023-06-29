@@ -21,6 +21,8 @@ repositories {
     // Paperの依存リポジトリ
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://oss.sonatype.org/content/groups/public/")
+    // ProtocolLibの依存リポジトリ
+    maven("https://repo.dmulloy2.net/repository/public/")
 }
 
 configurations {
@@ -32,6 +34,8 @@ configurations {
 dependencies {
     // PaperAPI
     compileOnly("io.papermc.paper:paper-api:1.20-R0.1-SNAPSHOT")
+    // ProtocolLib
+    compileOnly("com.comphenix.protocol:ProtocolLib:5.0.0")
 
     // IncludeLib
     val includeLib by configurations
