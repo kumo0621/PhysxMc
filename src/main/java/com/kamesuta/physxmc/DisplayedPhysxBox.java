@@ -11,6 +11,7 @@ import org.joml.Vector3f;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
+import physx.physics.PxForceModeEnum;
 import physx.physics.PxPhysics;
 
 import java.util.Collection;
@@ -109,7 +110,7 @@ public class DisplayedPhysxBox extends PhysxBox {
         double power = PhysxSetting.getThrowPower() * Math.pow(scale, 3);
         Vector3f rot = location.getDirection().clone().multiply(power).toVector3f();
         PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
-        addForce(force);
+        addForce(force, PxForceModeEnum.eFORCE);
     }
     
     public boolean isSleeping(){

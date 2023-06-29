@@ -1,15 +1,19 @@
 package com.kamesuta.physxmc;
 
+import lombok.Data;
+import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
+import physx.physics.PxForceModeEnum;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -101,5 +105,33 @@ public class DisplayedBoxHolder {
             PhysxMc.physxWorld.removeBox(block);
         });
         itemDisplayList.clear();
+    }
+
+    /**
+     * 全ての箱に対して爆発を適用する
+     */
+     public void executeExplosion(Location location, float strength) {
+        Vector3d tmp = new Vector3d();
+        double explosionStrengthSquared = strength * 2.0 * strength * 2.0;
+
+        for (DisplayedPhysxBox box : itemDisplayList) {
+            PxVec3 pos = box.getPos().getP();
+            tmp.set(pos.getX(), pos.getY(), pos.getZ());
+            double distanceSquared = location.toVector().toVector3d().distanceSquared(tmp);
+            if (distanceSquared <= explosionStrengthSquared) {
+                double distance = Math.sqrt(distanceSquared);
+                Vector3d direction = tmp.sub(location.toVector().toVector3d()).normalize();
+                direction.y += 2.0;
+                direction.normalize();
+                double realStrength = (1.0 - (Math.min(Math.max( distance / (strength * 2.0), 0f),1f))) * 15.0;
+                
+                PxVec3 pxVec = new PxVec3(
+                        (float) (direction.x * realStrength),
+                        (float) (direction.y * realStrength),
+                        (float) (direction.z * realStrength)
+                );
+                box.addForce(pxVec, PxForceModeEnum.eVELOCITY_CHANGE);
+            }
+        }
     }
 }

@@ -51,11 +51,11 @@ public class IntegratedPhysxWorld extends PhysxWorld {
      * チャンクごとに存在する地形を破壊する
      * @param chunk
      */
-    public void unloadChunkAsTerrain(Chunk chunk){
+    public void unloadChunkAsTerrain(Chunk chunk, boolean wakeOnLostTouch){
         if(chunkTerrainMap.get(chunk) == null)
             return;
 
-        scene.removeActor(chunkTerrainMap.get(chunk).getActor(), false);
+        scene.removeActor(chunkTerrainMap.get(chunk).getActor(), wakeOnLostTouch);
         chunkTerrainMap.get(chunk).release();
 
         chunkTerrainMap.remove(chunk);
@@ -147,7 +147,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
                 chunksToUnload.add(chunk);
         }
         for (Chunk chunk : chunksToUnload) {
-            unloadChunkAsTerrain(chunk);
+            unloadChunkAsTerrain(chunk, false);
         }
         chunksToLoadNextTick.clear();
         readyToUpdateChunks = false;
@@ -161,7 +161,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
             if(!isChunkLoadedAsTerrain(chunk))
                 continue;
             
-            unloadChunkAsTerrain(chunk);
+            unloadChunkAsTerrain(chunk, true);
             loadChunkAsTerrain(chunk);
         }
         chunksToReloadNextSecond.clear();

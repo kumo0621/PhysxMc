@@ -96,8 +96,8 @@ public class PhysxBox {
      * 箱に力を加える
      * @param vec3 箱に加える力
      */
-    public void addForce(PxVec3 vec3) {
-        actor.addForce(vec3, PxForceModeEnum.eFORCE);
+    public void addForce(PxVec3 vec3, PxForceModeEnum mode) {
+        actor.addForce(vec3, mode);
         vec3.destroy();
     }
 }
