@@ -1,10 +1,13 @@
 package com.kamesuta.physxmc;
 
 import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.entity.ItemDisplay;
+import org.bukkit.util.Vector;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
+import physx.physics.*;
 
 import java.util.*;
 
@@ -165,5 +168,26 @@ public class IntegratedPhysxWorld extends PhysxWorld {
             loadChunkAsTerrain(chunk);
         }
         chunksToReloadNextSecond.clear();
+    }
+
+    /**
+     * Raycastして動的オブジェクトを検索する
+     * @param location 始点
+     * @param distance 距離
+     * @return 見つかった最初の動的オブジェクト
+     */
+    public PxRigidActor raycast(Location location, float distance){
+        PxVec3 origin = new PxVec3((float)location.x(), (float) location.y(), (float)location.z());
+        Vector unitDir = location.getDirection();
+        PxVec3 pxUnitDir = new PxVec3((float) unitDir.getX(), (float) unitDir.getY(), (float) unitDir.getZ());
+        PxRaycastBuffer10 raycastHit = new PxRaycastBuffer10();
+        PxHitFlags hitFlags = new PxHitFlags((short)PxHitFlagEnum.eDEFAULT.value);
+        PxQueryFilterData filterData = new PxQueryFilterData(new PxQueryFlags((short)PxQueryFlagEnum.eDYNAMIC.value));
+        boolean isHit = scene.raycast(origin, pxUnitDir, distance, raycastHit, hitFlags, filterData);
+        origin.destroy();
+        pxUnitDir.destroy();
+        if(!isHit)
+            return null;
+        return raycastHit.getAnyHit(0).getActor();
     }
 }

@@ -11,7 +11,16 @@ public class EventHandler implements Listener {
     @org.bukkit.event.EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getAction() == Action.RIGHT_CLICK_AIR && PhysxSetting.isDebugMode()) {
-            displayedBoxHolder.debugCreate(event.getPlayer());
+            DisplayedPhysxBox box = displayedBoxHolder.debugCreate(event.getPlayer());
+            if(box == null)
+                return;
+            box.throwBox(event.getPlayer().getEyeLocation());
+        }
+        if((event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) && PhysxSetting.isDebugMode()){
+            DisplayedPhysxBox box = displayedBoxHolder.raycast(event.getPlayer().getEyeLocation(), 4);
+            if(box == null)
+                return;
+            box.throwBox(event.getPlayer().getEyeLocation());
         }
     }
 

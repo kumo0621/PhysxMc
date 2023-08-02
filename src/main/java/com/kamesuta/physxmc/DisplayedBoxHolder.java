@@ -7,6 +7,7 @@ import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Transformation;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
@@ -14,6 +15,7 @@ import physx.common.PxQuat;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
 import physx.physics.PxForceModeEnum;
+import physx.physics.PxRigidActor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,14 +36,13 @@ public class DisplayedBoxHolder {
      *
      * @param player プレイヤー
      */
-    public void debugCreate(Player player) {
+    public DisplayedPhysxBox debugCreate(Player player) {
         if (!player.getInventory().getItemInMainHand().getType().isBlock()) {
-            return;
+            return null;
         }
 
         int scale = player.getInventory().getHeldItemSlot() + 1;
-        DisplayedPhysxBox box = createDisplayedBox(player.getEyeLocation(), new Vector3f(scale, scale, scale), player.getInventory().getItemInMainHand());
-        box.throwBox(player.getEyeLocation(), scale);
+        return createDisplayedBox(player.getEyeLocation(), new Vector3f(scale, scale, scale), player.getInventory().getItemInMainHand());
     }
 
     /**
@@ -140,5 +141,19 @@ public class DisplayedBoxHolder {
                 box.addForce(pxVec, PxForceModeEnum.eVELOCITY_CHANGE);
             }
         }
+    }
+
+    /**
+     * 世界内でraycastしてBoxを探す
+     * @param location 始点
+     * @param distance 距離
+     * @return 見つかったBox
+     */
+    @Nullable
+    public DisplayedPhysxBox raycast(Location location, float distance){
+        PxRigidActor actor = PhysxMc.physxWorld.raycast(location, distance);
+        if(actor == null)
+            return null;
+        return itemDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
     }
 }

@@ -102,11 +102,10 @@ public class DisplayedPhysxBox extends PhysxBox {
     }
 
     /**
-     * 箱を投げる
+     * 箱をコンフィグで設定したパワーで投げる
      * @param location 向き
-     * @param scale 速度の倍率
      */
-    public void throwBox(Location location, int scale){
+    public void throwBox(Location location){
         double power = PhysxSetting.getThrowPower();
         Vector3f rot = location.getDirection().clone().multiply(power).toVector3f();
         PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
