@@ -104,13 +104,13 @@ public class DisplayedPhysxBox extends PhysxBox {
     /**
      * 箱を投げる
      * @param location 向き
-     * @param scale 力
+     * @param scale 速度の倍率
      */
     public void throwBox(Location location, int scale){
-        double power = PhysxSetting.getThrowPower() * Math.pow(scale, 3);
+        double power = PhysxSetting.getThrowPower();
         Vector3f rot = location.getDirection().clone().multiply(power).toVector3f();
         PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
-        addForce(force, PxForceModeEnum.eFORCE);
+        addForce(force, PxForceModeEnum.eVELOCITY_CHANGE);
     }
     
     public boolean isSleeping(){
