@@ -3,6 +3,7 @@ package com.kamesuta.physxmc;
 import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.Nullable;
@@ -19,11 +20,12 @@ public class PhysxCommand extends CommandBase implements Listener {
     private static final String resetArgument = "reset";
     private static final String debugArgument = "debug";
     private static final String densityArgument = "density";
+    private static final String updateArgument = "updateCurrentChunk";
 
     /**
      * 引数のリスト
      */
-    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument);
+    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument);
     
     public PhysxCommand() {
         super(commandName, 1, 2, false);
@@ -55,6 +57,15 @@ public class PhysxCommand extends CommandBase implements Listener {
                 return true;
             }
         }
+        else if(arguments[0].equals(updateArgument)){
+            if(!(sender instanceof Player)){
+                sender.sendMessage("プレイヤーしか実行できません");
+                return true;
+            }
+            PhysxMc.physxWorld.registerChunksToReloadNextSecond(((Player)sender).getChunk());
+            sender.sendMessage("プレイヤーが今いるチャンクをアップデートしました");
+            return true;
+        }
         
         sendUsage(sender);
         return true;
@@ -64,7 +75,8 @@ public class PhysxCommand extends CommandBase implements Listener {
     public void sendUsage(CommandSender sender) {
         sender.sendMessage(Component.text("/physxmc reset: 物理演算をリセットする\n" +
                 "/physxmc debug: 右クリックでアイテムが投げられるデバッグモードを有効/無効にする\n" + 
-                "/physxmc density {float型} 召喚する物理オブジェクトの既定の密度を設定する"));
+                "/physxmc density {float型}: 召喚する物理オブジェクトの既定の密度を設定する" +
+                "/physxmc updateCurrentChunk: プレイヤーが今いるチャンクの地形をリロードする"));
     }
     
     @EventHandler

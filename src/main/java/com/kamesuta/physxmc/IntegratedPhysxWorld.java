@@ -96,7 +96,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     }
 
     /**
-     * 次のtickで地形をロードしておきたいチャンクを登録する
+     * 次のtickで地形をロードしておきたいチャンクを登録する（これに登録されていないチャンクは次のtickでアンロードされる）
      * @param chunks 地形をロードしておきたいチャンク
      */
     public void registerChunksToLoadNextTick(Collection<Chunk> chunks){
@@ -154,7 +154,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     }
 
     /**
-     * 構成ブロックに変更が加わったチャンクをリロードする
+     * 構成ブロックに変更が加わったチャンクを(まとめて)リロードする
      */
     private void reloadModifiedChunks(){
         for (Chunk chunk : chunksToReloadNextSecond) {

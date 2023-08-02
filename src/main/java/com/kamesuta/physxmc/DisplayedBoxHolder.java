@@ -21,7 +21,7 @@ import java.util.List;
 import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
 
 /**
- * ItemDisplayと物理演算世界の箱を保持するクラス
+ * OverWorld内の全てのDisplayedPhysxBoxを保持するクラス
  */
 public class DisplayedBoxHolder {
 
