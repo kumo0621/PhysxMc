@@ -30,7 +30,7 @@ public class DisplayedBoxHolder {
 //    private static final Map<Player, PhysxBox> playerCollisionList = new HashMap<>();
 
     /**
-     * プレイヤーがブロックを持っていたとき、座標にItemDisplayを1個生成して、箱と紐づける
+     * デバッグモードでプレイヤーがブロックを右クリックした時、座標にItemDisplayを1個生成して、箱と紐づける
      *
      * @param player プレイヤー
      */
@@ -40,28 +40,35 @@ public class DisplayedBoxHolder {
         }
 
         int scale = player.getInventory().getHeldItemSlot() + 1;
-        DisplayedPhysxBox box = createDisplayedBox(player.getEyeLocation(), scale, player.getInventory().getItemInMainHand());
+        DisplayedPhysxBox box = createDisplayedBox(player.getEyeLocation(), new Vector3f(scale, scale, scale), player.getInventory().getItemInMainHand());
         box.throwBox(player.getEyeLocation(), scale);
-
-        itemDisplayList.add(box);
     }
 
-    private DisplayedPhysxBox createDisplayedBox(Location location, float scale, ItemStack itemStack) {
+    /**
+     * DisplayedPhysxBoxを1個生成
+     * @param location 場所
+     * @param scale 大きさ
+     * @param itemStack 元となるブロック
+     * @return
+     */
+    public DisplayedPhysxBox createDisplayedBox(Location location, Vector3f scale, ItemStack itemStack) {
         // なめらかな補完のために2つitemdisplayを作る
         ItemDisplay[] display = new ItemDisplay[]{createItemDisplay(itemStack, location, scale), createItemDisplay(itemStack, location, scale)};
         Vector3f rot = location.getDirection().clone().toVector3f();
         Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
-        PxBoxGeometry boxGeometry = new PxBoxGeometry(0.5f * scale, 0.5f * scale, 0.5f * scale);
-        return PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, display);
+        PxBoxGeometry boxGeometry = new PxBoxGeometry(0.5f * scale.x, 0.5f * scale.y, 0.5f * scale.z);
+        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, display);
+        itemDisplayList.add(box);
+        return  box;
     }
 
-    private ItemDisplay createItemDisplay(ItemStack itemStack, Location location, float scale) {
+    private ItemDisplay createItemDisplay(ItemStack itemStack, Location location, Vector3f scale) {
         ItemDisplay itemDisplay = location.getWorld().spawn(location, ItemDisplay.class);
         itemDisplay.setItemStack(itemStack);
         Transformation transformation = itemDisplay.getTransformation();
-        transformation.getScale().x = scale;
-        transformation.getScale().y = scale;
-        transformation.getScale().z = scale;
+        transformation.getScale().x = scale.x;
+        transformation.getScale().y = scale.y;
+        transformation.getScale().z = scale.z;
         itemDisplay.setTransformation(transformation);
         itemDisplay.setGravity(false);
         return itemDisplay;

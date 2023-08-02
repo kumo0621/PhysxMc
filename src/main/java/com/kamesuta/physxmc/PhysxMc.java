@@ -49,6 +49,8 @@ public final class PhysxMc extends JavaPlugin{
         }.runTaskTimer(this, 1, 1);
         
         initProtocolLib();
+        
+        forceInit(PhysxTerrain.class);
     }
     
     private void initProtocolLib(){
@@ -99,5 +101,20 @@ public final class PhysxMc extends JavaPlugin{
             physxWorld.destroyScene();
             physx.terminate();
         }
+    }
+
+    /**
+     * BukkitのOnDisableでエラーが出ないようにクラスを強制的にロードする
+     * @param klass
+     * @param <T>
+     * @return
+     */
+    public static <T> Class<T> forceInit(Class<T> klass) {
+        try {
+            Class.forName(klass.getName(), true, klass.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            throw new AssertionError(e);  // Can't happen
+        }
+        return klass;
     }
 }

@@ -2,11 +2,14 @@ package com.kamesuta.physxmc;
 
 import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,17 +21,18 @@ public class PhysxCommand extends CommandBase implements Listener {
     
     private static final String commandName = "physxmc";
     private static final String resetArgument = "reset";
-    private static final String debugArgument = "debug";
+    private static final String debugArgument = "debugmode";
     private static final String densityArgument = "density";
-    private static final String updateArgument = "updateCurrentChunk";
+    private static final String updateArgument = "updatecurrentchunk";
+    private static final String summonArgument = "summon";
 
     /**
      * 引数のリスト
      */
-    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument);
+    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument);
     
     public PhysxCommand() {
-        super(commandName, 1, 2, false);
+        super(commandName, 1, 4, false);
     }
 
     @Override
@@ -66,6 +70,25 @@ public class PhysxCommand extends CommandBase implements Listener {
             sender.sendMessage("プレイヤーが今いるチャンクをアップデートしました");
             return true;
         }
+        else if(arguments[0].equals(summonArgument) && arguments[1] != null && arguments[2] != null && arguments[3] != null){
+            if(!(sender instanceof Player)){
+                sender.sendMessage("プレイヤーしか実行できません");
+                return true;
+            }
+            float x, y, z;
+            try{
+                x = Float.parseFloat(arguments[1]);
+                y = Float.parseFloat(arguments[2]);
+                z = Float.parseFloat(arguments[3]);
+            }
+            catch (NumberFormatException e){
+                sendUsage(sender);
+                return true;
+            }
+            PhysxMc.displayedBoxHolder.createDisplayedBox(((Player)sender).getLocation(), new Vector3f(x,y,z), new ItemStack(Material.COMMAND_BLOCK));
+            sender.sendMessage("テストブロックを生成しました");
+            return true;
+        }
         
         sendUsage(sender);
         return true;
@@ -74,9 +97,10 @@ public class PhysxCommand extends CommandBase implements Listener {
     @Override
     public void sendUsage(CommandSender sender) {
         sender.sendMessage(Component.text("/physxmc reset: 物理演算をリセットする\n" +
-                "/physxmc debug: 右クリックでアイテムが投げられるデバッグモードを有効/無効にする\n" + 
+                "/physxmc debug: 右クリックで持っているアイテムが投げられるデバッグモードを有効/無効にする\n" + 
                 "/physxmc density {float型}: 召喚する物理オブジェクトの既定の密度を設定する" +
-                "/physxmc updateCurrentChunk: プレイヤーが今いるチャンクの地形をリロードする"));
+                "/physxmc updateCurrentChunk: プレイヤーが今いるチャンクの地形をリロードする" + 
+                "/physxmc summon {縦}　{高さ}　{横}: テストオブジェクトを1個召喚する"));
     }
     
     @EventHandler
