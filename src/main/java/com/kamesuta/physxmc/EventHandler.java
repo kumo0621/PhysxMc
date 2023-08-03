@@ -11,10 +11,6 @@ import physx.physics.PxActor;
 import static com.kamesuta.physxmc.PhysxMc.displayedBoxHolder;
 
 public class EventHandler implements Listener {
-
-    public EventHandler(){
-//        PhysxMc.physxWorld.simCallback.triggerReceivers.add(this::onPlayerEnterBox);
-    }
     
     @org.bukkit.event.EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
@@ -36,19 +32,4 @@ public class EventHandler implements Listener {
     public void onExplosion(EntityExplodeEvent event){
         displayedBoxHolder.executeExplosion(event.getLocation(), 6.9f);
     }
-    
-    //プレイヤーの衝突検出コードの例
-//    public void onPlayerEnterBox(PxActor actor1, PxActor actor2, String event){
-//        if(!event.equals("TRIGGER_ENTER"))
-//            return;
-//
-//        Player player = PhysxMc.playerTriggerHolder.getPlayer(actor1);
-//        if(player == null){
-//            player = PhysxMc.playerTriggerHolder.getPlayer(actor2);
-//        }
-//        if(player == null)
-//            return;
-//        
-//        player.sendMessage("箱と接触しました");
-//    }
 }

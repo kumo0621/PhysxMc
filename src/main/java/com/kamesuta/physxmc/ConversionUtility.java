@@ -11,14 +11,11 @@ public class ConversionUtility {
     /**
      * クォータニオンをオイラー角に変換
      * @param quaternion クォータニオン
-     * @return オイラー角
+     * @return オイラー角(-1~1)
      */
     public static Vector3f convertToEulerAngles(Quaternionf quaternion) {
         Vector3f euler = new Vector3f();
         quaternion.getEulerAnglesXYZ(euler);
-        
-        euler.mul((float) (180.0 / Math.PI));
-
         return euler;
     }
 

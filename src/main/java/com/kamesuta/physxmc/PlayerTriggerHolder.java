@@ -1,5 +1,7 @@
 package com.kamesuta.physxmc;
 
+import org.apache.logging.log4j.util.BiConsumer;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -10,7 +12,9 @@ import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
 import physx.physics.PxActor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,6 +24,15 @@ public class PlayerTriggerHolder {
 
     private static final Map<Player, PhysxBox> playerCollisionList = new HashMap<>();
 
+    /**
+     * プレイヤーのトリガーが箱に接触した時呼ばれるイベント
+     */
+    public List<BiConsumer<Player, DisplayedPhysxBox>> playerTriggerReceivers = new ArrayList<>();
+
+    public PlayerTriggerHolder(){
+        PhysxMc.physxWorld.simCallback.triggerReceivers.add(this::onPlayerEnterBox);
+    }
+    
     public void update() {
         Bukkit.getOnlinePlayers().forEach(player -> {
             Location loc = player.getLocation();
@@ -63,5 +76,33 @@ public class PlayerTriggerHolder {
                 return entry.getKey();
         }
         return null;
+    }
+    
+    public void onPlayerEnterBox(PxActor actor1, PxActor actor2, String event){
+        if(!event.equals("TRIGGER_ENTER"))
+            return;
+
+        Player player;
+        DisplayedPhysxBox box;
+        
+        player = getPlayer(actor1);
+        if(player != null){
+            box = PhysxMc.displayedBoxHolder.getBox(actor2);
+            if(box != null){
+                Player finalPlayer = player;
+                DisplayedPhysxBox finalBox = box;
+                playerTriggerReceivers.forEach(playerDisplayedPhysxBoxBiConsumer -> playerDisplayedPhysxBoxBiConsumer.accept(finalPlayer, finalBox));
+            }
+        }
+
+        player = getPlayer(actor2);
+        if(player != null){
+            box = PhysxMc.displayedBoxHolder.getBox(actor1);
+            if(box != null){
+                Player finalPlayer = player;
+                DisplayedPhysxBox finalBox = box;
+                playerTriggerReceivers.forEach(playerDisplayedPhysxBoxBiConsumer -> playerDisplayedPhysxBoxBiConsumer.accept(finalPlayer, finalBox));
+            }
+        }
     }
 }

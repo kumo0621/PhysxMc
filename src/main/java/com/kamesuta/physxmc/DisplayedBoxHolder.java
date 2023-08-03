@@ -15,11 +15,13 @@ import org.joml.Vector3f;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
+import physx.physics.PxActor;
 import physx.physics.PxForceModeEnum;
 import physx.physics.PxRigidActor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
 
@@ -151,6 +153,10 @@ public class DisplayedBoxHolder {
         PxRigidActor actor = PhysxMc.physxWorld.raycast(location, distance);
         if(actor == null)
             return null;
+        return itemDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
+    }
+
+    public DisplayedPhysxBox getBox(PxActor actor){
         return itemDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
     }
 }

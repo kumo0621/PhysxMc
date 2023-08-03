@@ -138,4 +138,15 @@ public class DisplayedPhysxBox extends PhysxBox {
         } 
         return chunksAround;
     }
+    
+    public Location getLocation(){
+        PxVec3 vec3 = getPos().getP();
+        PxQuat q = getPos().getQ();
+        Quaternionf boxQuat = new Quaternionf(q.getX(), q.getY(), q.getZ(), q.getW());
+        Vector3f dir = ConversionUtility.convertToEulerAngles(boxQuat);
+        Vector dir2 = new Vector(dir.x, dir.y, dir.z);
+        Location loc = new Location(display[0].getWorld(), vec3.getX(), vec3.getY(), vec3.getZ());
+        loc.setDirection(dir2);
+        return loc;
+    }
 }
