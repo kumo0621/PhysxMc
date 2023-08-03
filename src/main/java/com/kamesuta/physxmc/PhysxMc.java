@@ -22,6 +22,7 @@ public final class PhysxMc extends JavaPlugin{
     public static Physx physx;
     public static IntegratedPhysxWorld physxWorld;
     public static DisplayedBoxHolder displayedBoxHolder;
+    public static  PlayerTriggerHolder playerTriggerHolder;
     public ProtocolManager protocolManager;
 
     @Override
@@ -31,22 +32,24 @@ public final class PhysxMc extends JavaPlugin{
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
-        
-        getServer().getPluginManager().registerEvents(new PhysxCommand(), this);
-        getServer().getPluginManager().registerEvents(new EventHandler(), this);
 
         physx = new Physx();
         physxWorld = new IntegratedPhysxWorld();
         physxWorld.setUpScene();
         displayedBoxHolder = new DisplayedBoxHolder();
+        playerTriggerHolder = new PlayerTriggerHolder();
 
         new BukkitRunnable() {
             @Override
             public void run() {
                 physxWorld.tick();
                 displayedBoxHolder.update();
+                playerTriggerHolder.update();
             }
         }.runTaskTimer(this, 1, 1);
+
+        getServer().getPluginManager().registerEvents(new PhysxCommand(), this);
+        getServer().getPluginManager().registerEvents(new EventHandler(), this);
         
         initProtocolLib();
         
@@ -95,6 +98,7 @@ public final class PhysxMc extends JavaPlugin{
     public void onDisable() {
         if (displayedBoxHolder != null) {
             displayedBoxHolder.destroyAll();
+            playerTriggerHolder.destroyAll();
         }
 
         if (physx != null) {

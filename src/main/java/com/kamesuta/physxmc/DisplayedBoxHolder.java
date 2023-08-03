@@ -29,8 +29,6 @@ public class DisplayedBoxHolder {
 
     private static final List<DisplayedPhysxBox> itemDisplayList = new ArrayList<>();
 
-//    private static final Map<Player, PhysxBox> playerCollisionList = new HashMap<>();
-
     /**
      * デバッグモードでプレイヤーがブロックを右クリックした時、座標にItemDisplayを1個生成して、箱と紐づける
      *
@@ -86,20 +84,6 @@ public class DisplayedBoxHolder {
                 PhysxMc.physxWorld.registerChunksToLoadNextTick(displayedPhysxBox.getSurroundingChunks());
         });
         PhysxMc.physxWorld.setReadyToUpdateChunks();
-
-        //TODO:プレイヤーの接触判定を適切に実装
-//        Bukkit.getOnlinePlayers().forEach(player -> {
-//            Location loc = player.getLocation();
-//            if (playerCollisionList.get(player) == null) {
-//                PhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) loc.x(), (float) loc.y() + 1, (float) loc.z()), new PxQuat(PxIDENTITYEnum.PxIdentity));
-//                playerCollisionList.put(player, box);
-//            }
-//            PxTransform tmpPose = new PxTransform(PxIDENTITYEnum.PxIdentity);
-//            PxVec3 vec3 = new PxVec3((float) loc.x(), (float) loc.y() + 1, (float) loc.z());
-//            tmpPose.setP(vec3);
-//            vec3.destroy();
-//            playerCollisionList.get(player).setPos(tmpPose);
-//        });
     }
 
     /**

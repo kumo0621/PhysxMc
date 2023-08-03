@@ -23,6 +23,8 @@ public class PhysxTerrain {
     @Getter
     private final PxRigidStatic actor;
     private final List<PxShape> terrainShapes = new ArrayList<>();
+    
+    public static final String name = "terrain";
 
     /**
      * チャンクの形に応じた地形を作る
@@ -40,6 +42,7 @@ public class PhysxTerrain {
         tmpVec.destroy();
         PxFilterData tmpFilterData = new PxFilterData(1, 1, 0, 0);
         PxRigidStatic terrain = physics.createRigidStatic(tmpPose);
+        terrain.setName(name);
         PxBoxGeometry terrainGeometry = new PxBoxGeometry(0.5f, 0.5f, 0.5f);   // PxBoxGeometry uses half-sizes
 
         
