@@ -8,8 +8,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,7 +85,7 @@ public class PhysxCommand extends CommandBase implements Listener {
                 sendUsage(sender);
                 return true;
             }
-            PhysxMc.displayedBoxHolder.createDisplayedBox(((Player)sender).getLocation(), new Vector3f(x,y,z), new ItemStack(Material.COMMAND_BLOCK));
+            PhysxMc.displayedBoxHolder.createDisplayedBox(((Player)sender).getLocation(), new Vector(x,y,z), new ItemStack(Material.COMMAND_BLOCK));
             sender.sendMessage("テストブロックを生成しました");
             return true;
         }

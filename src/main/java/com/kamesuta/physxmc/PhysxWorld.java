@@ -2,6 +2,7 @@ package com.kamesuta.physxmc;
 
 import lombok.Getter;
 import org.apache.logging.log4j.util.TriConsumer;
+import org.bukkit.util.Vector;
 import physx.PxTopLevelFunctions;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
@@ -105,6 +106,12 @@ public class PhysxWorld {
     public void tick() {
         scene.simulate(3f / 60f); // 1 second = 60 frame = 20tick
         scene.fetchResults(true);
+    }
+    
+    public void setGravity(Vector gravity){
+        PxVec3 pxGravity = new PxVec3((float)gravity.getX(), (float)gravity.getY(), (float)gravity.getZ());
+        scene.setGravity(pxGravity);
+        pxGravity.destroy();
     }
 
     /**

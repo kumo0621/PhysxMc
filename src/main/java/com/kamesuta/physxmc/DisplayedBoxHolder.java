@@ -7,6 +7,7 @@ import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Transformation;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
@@ -40,7 +41,7 @@ public class DisplayedBoxHolder {
         }
 
         int scale = player.getInventory().getHeldItemSlot() + 1;
-        return createDisplayedBox(player.getEyeLocation(), new Vector3f(scale, scale, scale), player.getInventory().getItemInMainHand());
+        return createDisplayedBox(player.getEyeLocation(), new Vector(scale, scale, scale), player.getInventory().getItemInMainHand());
     }
 
     /**
@@ -50,24 +51,25 @@ public class DisplayedBoxHolder {
      * @param itemStack 元となるブロック
      * @return
      */
-    public DisplayedPhysxBox createDisplayedBox(Location location, Vector3f scale, ItemStack itemStack) {
-        // なめらかな補完のために2つitemdisplayを作る
-        ItemDisplay[] display = new ItemDisplay[]{createItemDisplay(itemStack, location, scale), createItemDisplay(itemStack, location, scale)};
+    public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack) {
         Vector3f rot = location.getDirection().clone().toVector3f();
         Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
-        PxBoxGeometry boxGeometry = new PxBoxGeometry(0.5f * scale.x, 0.5f * scale.y, 0.5f * scale.z);
+        // なめらかな補完のために2つitemdisplayを作る
+        ItemDisplay[] display = new ItemDisplay[]{createItemDisplay(itemStack, location, scale, quat), createItemDisplay(itemStack, location, scale, quat)};
+        PxBoxGeometry boxGeometry = new PxBoxGeometry((float)(0.5f * scale.getX()), (float)(0.5f * scale.getY()), (float)(0.5f * scale.getZ()));
         DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, display);
         itemDisplayList.add(box);
-        return  box;
+        return box;
     }
 
-    private ItemDisplay createItemDisplay(ItemStack itemStack, Location location, Vector3f scale) {
+    private ItemDisplay createItemDisplay(ItemStack itemStack, Location location, Vector scale, Quaternionf boxQuat) {
         ItemDisplay itemDisplay = location.getWorld().spawn(location, ItemDisplay.class);
         itemDisplay.setItemStack(itemStack);
         Transformation transformation = itemDisplay.getTransformation();
-        transformation.getScale().x = scale.x;
-        transformation.getScale().y = scale.y;
-        transformation.getScale().z = scale.z;
+        transformation.getScale().x = (float)scale.getX();
+        transformation.getScale().y = (float)scale.getY();
+        transformation.getScale().z = (float)scale.getZ();
+        transformation.getLeftRotation().set(boxQuat);
         itemDisplay.setTransformation(transformation);
         itemDisplay.setGravity(false);
         return itemDisplay;
@@ -97,6 +99,17 @@ public class DisplayedBoxHolder {
             PhysxMc.physxWorld.removeBox(block);
         });
         itemDisplayList.clear();
+    }
+    
+    public void destroySpecific(DisplayedPhysxBox box){
+        if(box == null)
+            return;
+        
+        for (ItemDisplay itemDisplay : box.display) {
+            itemDisplay.remove();
+        }
+        PhysxMc.physxWorld.removeBox(box);
+        itemDisplayList.remove(box);
     }
 
     /**
