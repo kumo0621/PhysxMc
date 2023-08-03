@@ -3,7 +3,7 @@ package com.kamesuta.physxmc;
 import lombok.Data;
 import lombok.Getter;
 import org.bukkit.Location;
-import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Transformation;
@@ -57,17 +57,18 @@ public class DisplayedBoxHolder {
         Vector3f rot = location.getDirection().clone().toVector3f();
         Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
         // なめらかな補完のために2つitemdisplayを作る
-        ItemDisplay[] display = new ItemDisplay[]{createItemDisplay(itemStack, location, scale, quat), createItemDisplay(itemStack, location, scale, quat)};
+        BlockDisplay[] display = new BlockDisplay[]{createItemDisplay(itemStack, location, scale, quat), createItemDisplay(itemStack, location, scale, quat)};
         PxBoxGeometry boxGeometry = new PxBoxGeometry((float)(0.5f * scale.getX()), (float)(0.5f * scale.getY()), (float)(0.5f * scale.getZ()));
         DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, display);
         itemDisplayList.add(box);
         return box;
     }
 
-    private ItemDisplay createItemDisplay(ItemStack itemStack, Location location, Vector scale, Quaternionf boxQuat) {
-        ItemDisplay itemDisplay = location.getWorld().spawn(location, ItemDisplay.class);
-        itemDisplay.setItemStack(itemStack);
+    private BlockDisplay createItemDisplay(ItemStack itemStack, Location location, Vector scale, Quaternionf boxQuat) {
+        BlockDisplay itemDisplay = location.getWorld().spawn(location, BlockDisplay.class);
+        itemDisplay.setBlock(itemStack.getType().createBlockData());
         Transformation transformation = itemDisplay.getTransformation();
+        transformation.getTranslation().add(-0.5f, -0.5f, -0.5f);
         transformation.getScale().x = (float)scale.getX();
         transformation.getScale().y = (float)scale.getY();
         transformation.getScale().z = (float)scale.getZ();
@@ -95,19 +96,19 @@ public class DisplayedBoxHolder {
      */
     public void destroyAll() {
         itemDisplayList.forEach(block -> {
-            for (ItemDisplay itemDisplay : block.display) {
+            for (BlockDisplay itemDisplay : block.display) {
                 itemDisplay.remove();
             }
             PhysxMc.physxWorld.removeBox(block);
         });
         itemDisplayList.clear();
     }
-    
+
     public void destroySpecific(DisplayedPhysxBox box){
         if(box == null)
             return;
-        
-        for (ItemDisplay itemDisplay : box.display) {
+
+        for (BlockDisplay itemDisplay : box.display) {
             itemDisplay.remove();
         }
         PhysxMc.physxWorld.removeBox(box);
@@ -131,7 +132,7 @@ public class DisplayedBoxHolder {
                 direction.y += 2.0;
                 direction.normalize();
                 double realStrength = (1.0 - (Math.min(Math.max( distance / (strength * 2.0), 0f),1f))) * 15.0;
-                
+
                 PxVec3 pxVec = new PxVec3(
                         (float) (direction.x * realStrength),
                         (float) (direction.y * realStrength),

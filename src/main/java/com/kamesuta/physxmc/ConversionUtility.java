@@ -1,10 +1,12 @@
 package com.kamesuta.physxmc;
 
+import org.bukkit.util.Transformation;
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
- * 角度変換用のユーティリティクラス
+ * 変換用のユーティリティクラス
  */
 public class ConversionUtility {
 
@@ -37,7 +39,7 @@ public class ConversionUtility {
     public static float[] convertToYawPitch(double eulerX, double eulerY, double eulerZ) {
         double yaw = eulerY;
         double pitch = -eulerX;
-        
+
         yaw = normalizeAngle(yaw);
         pitch = normalizeAngle(pitch);
 
@@ -52,7 +54,7 @@ public class ConversionUtility {
         double eulerX = -pitch;
         double eulerY = yaw;
         double eulerZ = 0.0;
-        
+
         eulerX = normalizeAngle(eulerX);
         eulerY = normalizeAngle(eulerY);
 
@@ -73,5 +75,20 @@ public class ConversionUtility {
         }
 
         return angle;
+    }
+
+    /**
+     * 変換行列を取得する
+     *
+     * @param transformation 変換
+     * @return 変換行列
+     */
+    public static Matrix4f getTransformationMatrix(Transformation transformation) {
+        Matrix4f matrix4f = new Matrix4f();
+        matrix4f.translation(transformation.getTranslation());
+        matrix4f.rotate(transformation.getLeftRotation());
+        matrix4f.scale(transformation.getScale());
+        matrix4f.rotate(transformation.getRightRotation());
+        return matrix4f;
     }
 }
