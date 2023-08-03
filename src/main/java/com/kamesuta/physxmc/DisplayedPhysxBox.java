@@ -3,9 +3,10 @@ package com.kamesuta.physxmc;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.BlockDisplay;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import physx.common.PxQuat;
@@ -25,15 +26,15 @@ import static com.kamesuta.physxmc.Physx.defaultMaterial;
 public class DisplayedPhysxBox extends PhysxBox {
     
     /**
-     * 表示用のItemDisplay
+     * 表示用のBlockDisplay
      */
-    public ItemDisplay[] display;
+    public BlockDisplay[] display;
     /**
      * スワップのフェーズ管理
      */
     public int swapPhase = 0;
 
-    public DisplayedPhysxBox(PxPhysics physics, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, ItemDisplay[] display) {
+    public DisplayedPhysxBox(PxPhysics physics, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, BlockDisplay[] display) {
         super(physics, defaultMaterial, pos, quat, boxGeometry);
 
         this.display = display;
@@ -44,7 +45,7 @@ public class DisplayedPhysxBox extends PhysxBox {
     }
 
     /**
-     * 物理の箱とItemDisplayを同期する
+     * 物理の箱とBlockDisplayを同期する
      */
     private void trySwap(){
         PxQuat q = getPos().getQ();
@@ -65,21 +66,23 @@ public class DisplayedPhysxBox extends PhysxBox {
             swapPhase = 1;
         }
 
-        for (ItemDisplay itemDisplay : display) {
-            Location prev = itemDisplay.getLocation();
+        for (BlockDisplay blockDisplay : display) {
+            Location prev = blockDisplay.getLocation();
 
             Quaternionf boxQuat = new Quaternionf(q.getX(), q.getY(), q.getZ(), q.getW());
-            Transformation transformation = itemDisplay.getTransformation();
+            Transformation transformation = blockDisplay.getTransformation();
             transformation.getLeftRotation().set(boxQuat);
             transformation.getTranslation().set(p.getX() - prev.getX(), p.getY() - prev.getY(), p.getZ() - prev.getZ());
-            itemDisplay.setTransformation(transformation);
+            Matrix4f matrix = ConversionUtility.getTransformationMatrix(transformation);
+            matrix.translate(-.5f, -.5f, -.5f);
+            blockDisplay.setTransformationMatrix(matrix);
             // なめらかに補完する
-            itemDisplay.setInterpolationDelay(0);
-            itemDisplay.setInterpolationDuration(1);
-            // itemDisplay.teleport(new Location(itemDisplay.getWorld(), p.getX(), p.getY(), p.getZ()));
+            blockDisplay.setInterpolationDelay(0);
+            blockDisplay.setInterpolationDuration(1);
+            // blockDisplay.teleport(new Location(blockDisplay.getWorld(), p.getX(), p.getY(), p.getZ()));
         }
     }
-    
+
     /**
      * スワップの1ティック前に呼ぶ
      * @param pos 新しい位置
@@ -96,7 +99,7 @@ public class DisplayedPhysxBox extends PhysxBox {
         display[1].setVisibleByDefault(false);
         display[1].teleport(pos);
 
-        ItemDisplay temp = display[1];
+        BlockDisplay temp = display[1];
         display[1] = display[0];
         display[0] = temp;
     }

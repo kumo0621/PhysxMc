@@ -1,9 +1,7 @@
 package com.kamesuta.physxmc;
 
-import lombok.Data;
-import lombok.Getter;
 import org.bukkit.Location;
-import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Transformation;
@@ -21,7 +19,6 @@ import physx.physics.PxRigidActor;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
 
@@ -30,10 +27,10 @@ import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
  */
 public class DisplayedBoxHolder {
 
-    private static final List<DisplayedPhysxBox> itemDisplayList = new ArrayList<>();
+    private static final List<DisplayedPhysxBox> blockDisplayList = new ArrayList<>();
 
     /**
-     * デバッグモードでプレイヤーがブロックを右クリックした時、座標にItemDisplayを1個生成して、箱と紐づける
+     * デバッグモードでプレイヤーがブロックを右クリックした時、座標にBlockDisplayを1個生成して、箱と紐づける
      *
      * @param player プレイヤー
      */
@@ -56,32 +53,33 @@ public class DisplayedBoxHolder {
     public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack) {
         Vector3f rot = location.getDirection().clone().toVector3f();
         Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
-        // なめらかな補完のために2つitemdisplayを作る
-        ItemDisplay[] display = new ItemDisplay[]{createItemDisplay(itemStack, location, scale, quat), createItemDisplay(itemStack, location, scale, quat)};
+        // なめらかな補完のために2つBlockDisplayを作る
+        BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
         PxBoxGeometry boxGeometry = new PxBoxGeometry((float)(0.5f * scale.getX()), (float)(0.5f * scale.getY()), (float)(0.5f * scale.getZ()));
         DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, display);
-        itemDisplayList.add(box);
+        blockDisplayList.add(box);
         return box;
     }
 
-    private ItemDisplay createItemDisplay(ItemStack itemStack, Location location, Vector scale, Quaternionf boxQuat) {
-        ItemDisplay itemDisplay = location.getWorld().spawn(location, ItemDisplay.class);
-        itemDisplay.setItemStack(itemStack);
-        Transformation transformation = itemDisplay.getTransformation();
+    private BlockDisplay createDisplay(ItemStack itemStack, Location location, Vector scale, Quaternionf boxQuat) {
+        BlockDisplay blockDisplay = location.getWorld().spawn(location, BlockDisplay.class);
+        blockDisplay.setBlock(itemStack.getType().createBlockData());
+        Transformation transformation = blockDisplay.getTransformation();
+        transformation.getTranslation().add(-0.5f, -0.5f, -0.5f);
         transformation.getScale().x = (float)scale.getX();
         transformation.getScale().y = (float)scale.getY();
         transformation.getScale().z = (float)scale.getZ();
         transformation.getLeftRotation().set(boxQuat);
-        itemDisplay.setTransformation(transformation);
-        itemDisplay.setGravity(false);
-        return itemDisplay;
+        blockDisplay.setTransformation(transformation);
+        blockDisplay.setGravity(false);
+        return blockDisplay;
     }
 
     /**
      * ワールドに存在する全ての箱を更新する
      */
     public void update() {
-        itemDisplayList.forEach(displayedPhysxBox -> {
+        blockDisplayList.forEach(displayedPhysxBox -> {
             displayedPhysxBox.update();
 
             if (!displayedPhysxBox.isSleeping())
@@ -91,27 +89,27 @@ public class DisplayedBoxHolder {
     }
 
     /**
-     * 全てのitemdisplayと箱を消去する
+     * 全てのBlockDisplayと箱を消去する
      */
     public void destroyAll() {
-        itemDisplayList.forEach(block -> {
-            for (ItemDisplay itemDisplay : block.display) {
-                itemDisplay.remove();
+        blockDisplayList.forEach(block -> {
+            for (BlockDisplay blockDisplay : block.display) {
+                blockDisplay.remove();
             }
             PhysxMc.physxWorld.removeBox(block);
         });
-        itemDisplayList.clear();
+        blockDisplayList.clear();
     }
-    
+
     public void destroySpecific(DisplayedPhysxBox box){
         if(box == null)
             return;
-        
-        for (ItemDisplay itemDisplay : box.display) {
-            itemDisplay.remove();
+
+        for (BlockDisplay blockDisplay : box.display) {
+            blockDisplay.remove();
         }
         PhysxMc.physxWorld.removeBox(box);
-        itemDisplayList.remove(box);
+        blockDisplayList.remove(box);
     }
 
     /**
@@ -121,7 +119,7 @@ public class DisplayedBoxHolder {
         Vector3d tmp = new Vector3d();
         double explosionStrengthSquared = strength * 2.0 * strength * 2.0;
 
-        for (DisplayedPhysxBox box : itemDisplayList) {
+        for (DisplayedPhysxBox box : blockDisplayList) {
             PxVec3 pos = box.getPos().getP();
             tmp.set(pos.getX(), pos.getY(), pos.getZ());
             double distanceSquared = location.toVector().toVector3d().distanceSquared(tmp);
@@ -131,7 +129,7 @@ public class DisplayedBoxHolder {
                 direction.y += 2.0;
                 direction.normalize();
                 double realStrength = (1.0 - (Math.min(Math.max( distance / (strength * 2.0), 0f),1f))) * 15.0;
-                
+
                 PxVec3 pxVec = new PxVec3(
                         (float) (direction.x * realStrength),
                         (float) (direction.y * realStrength),
@@ -153,10 +151,10 @@ public class DisplayedBoxHolder {
         PxRigidActor actor = PhysxMc.physxWorld.raycast(location, distance);
         if(actor == null)
             return null;
-        return itemDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
+        return blockDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
     }
 
     public DisplayedPhysxBox getBox(PxActor actor){
-        return itemDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
+        return blockDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
     }
 }
