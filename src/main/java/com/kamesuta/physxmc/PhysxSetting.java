@@ -18,11 +18,11 @@ public class PhysxSetting {
      * プレイヤーがアイテムを持って右クリックすると物理オブジェクトが生成されるデバッグモードのフラグ
      */
     @Getter @Setter
-    private static boolean debugMode = true;
+    private static boolean debugMode = false;
 
     /**
-     * デバッグモードでプレイヤーがアイテムを投げる力の強さ
+     * デバッグモードでプレイヤーがアイテムを投げる速度の大きさ
      */
     @Getter @Setter
-    private static float throwPower = 200f;
+    private static float throwPower = 20f;
 }

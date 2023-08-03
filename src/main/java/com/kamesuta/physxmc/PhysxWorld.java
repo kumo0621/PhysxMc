@@ -1,37 +1,34 @@
 package com.kamesuta.physxmc;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
+import lombok.Getter;
+import org.apache.logging.log4j.util.TriConsumer;
+import org.bukkit.util.Vector;
 import physx.PxTopLevelFunctions;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
-import physx.physics.PxScene;
-import physx.physics.PxSceneDesc;
+import physx.physics.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.kamesuta.physxmc.Physx.*;
 
 /**
- * 世界オブジェクト
+ * Physxのシーン管理クラス
  */
 public class PhysxWorld {
     
-    private PxScene scene;
-    private final Map<Chunk, PhysxTerrain> chunkTerrainMap = new HashMap<>();//チャンクごとに地形を生成して管理
+    protected PxScene scene;
+    
+    @Getter
+    protected SimulationCallback simCallback;
 
     /**
      * チャンクごとに地形を作ってシーンに挿入する
      */
     public void setUpScene() {
+        simCallback = new SimulationCallback();
         scene = createScene();
-
-        Chunk[] overWorldChunks = Bukkit.getWorlds().get(0).getLoadedChunks();
-        for (Chunk overWorldChunk : overWorldChunks) {
-            loadChunkAsTerrain(overWorldChunk);
-        }
     }
 
     /**
@@ -42,6 +39,7 @@ public class PhysxWorld {
         // create a physics scene
         PxVec3 tmpVec = new PxVec3(0f, -19.62f, 0f);
         PxSceneDesc sceneDesc = new PxSceneDesc(tolerances);
+        sceneDesc.setSimulationEventCallback(simCallback);
         sceneDesc.setGravity(tmpVec);
         sceneDesc.setCpuDispatcher(cpuDispatcher);
         sceneDesc.setFilterShader(PxTopLevelFunctions.DefaultFilterShader());
@@ -54,43 +52,10 @@ public class PhysxWorld {
     }
 
     /**
-     * チャンクごとに物理エンジンの地形を作る
-     * @param chunk
-     */
-    public void loadChunkAsTerrain(Chunk chunk){
-        if(chunkTerrainMap.containsKey(chunk))
-            return;
-        
-        PhysxTerrain terrain = new PhysxTerrain(physics);
-        scene.addActor(terrain.createTerrain(defaultMaterial, chunk));
-        chunkTerrainMap.put(chunk, terrain);
-    }
-
-    /**
-     * チャンクごとに存在する地形を破壊する
-     * @param chunk
-     */
-    public void unloadChunkAsTerrain(Chunk chunk){
-        if(chunkTerrainMap.get(chunk) == null)
-            return;
-
-        scene.removeActor(chunkTerrainMap.get(chunk).getActor());
-        chunkTerrainMap.get(chunk).release();
-        
-        chunkTerrainMap.remove(chunk);
-    }
-
-    /**
      * シーンオブジェクトを破壊する
      */
     public void destroyScene() {
         if (scene != null) {
-            chunkTerrainMap.forEach((chunk, physxTerrain) -> {
-                scene.removeActor(physxTerrain.getActor());
-                physxTerrain.release();
-            });
-            chunkTerrainMap.clear();
-
             scene.release();
         }
     }
@@ -102,8 +67,8 @@ public class PhysxWorld {
      * @return 箱オブジェクト
      */
     public PhysxBox addBox(PxVec3 pos, PxQuat quat) {
-        PhysxBox box = new PhysxBox(physics);
-        scene.addActor(box.createBox(defaultMaterial, pos, quat));
+        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat);
+        scene.addActor(box.getActor());
         return box;
     }
 
@@ -115,8 +80,14 @@ public class PhysxWorld {
      * @return 追加した箱オブジェクト
      */
     public PhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry) {
-        PhysxBox box = new PhysxBox(physics);
-        scene.addActor(box.createBox(defaultMaterial, pos, quat, boxGeometry));
+        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat, boxGeometry);
+        scene.addActor(box.getActor());
+        return box;
+    }
+
+    public PhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, boolean isTrigger) {
+        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat, boxGeometry, isTrigger);
+        scene.addActor(box.getActor());
         return box;
     }
 
@@ -135,5 +106,64 @@ public class PhysxWorld {
     public void tick() {
         scene.simulate(3f / 60f); // 1 second = 60 frame = 20tick
         scene.fetchResults(true);
+    }
+    
+    public void setGravity(Vector gravity){
+        PxVec3 pxGravity = new PxVec3((float)gravity.getX(), (float)gravity.getY(), (float)gravity.getZ());
+        scene.setGravity(pxGravity);
+        pxGravity.destroy();
+    }
+
+    /**
+     * 衝突や重なりイベントを検知するためのクラス
+     */
+    public static class SimulationCallback extends PxSimulationEventCallbackImpl {
+
+        public List<TriConsumer<PxActor, PxActor, String>> contactReceivers = new ArrayList<>();
+        public List<TriConsumer<PxActor, PxActor, String>> triggerReceivers = new ArrayList<>();
+
+        @Override
+        public void onContact(PxContactPairHeader pairHeader, PxContactPair pairs, int nbPairs) {
+            PxActor actor0 = pairHeader.getActors(0);
+            PxActor actor1 = pairHeader.getActors(1);
+
+            //入れるとなぜかクラッシュする
+//            if(actor0.getType().equals(PxActorTypeEnum.eRIGID_STATIC) || actor1.getType().equals(PxActorTypeEnum.eRIGID_STATIC)) 
+//                return;
+            
+            for (int i = 0; i < nbPairs; i++) {
+                PxContactPair pair = PxContactPair.arrayGet(pairs.getAddress(), i);
+                PxPairFlags events = pair.getEvents();
+                String event;
+                if (events.isSet(PxPairFlagEnum.eNOTIFY_TOUCH_FOUND)) {
+                    event = "TOUCH_FOUND";
+                } else if (events.isSet(PxPairFlagEnum.eNOTIFY_TOUCH_LOST)) {
+                    event = "TOUCH_LOST";
+                } else {
+                    event = "OTHER";
+                }
+                contactReceivers.forEach(pxActorPxActorStringTriConsumer -> pxActorPxActorStringTriConsumer.accept(actor0, actor1, event));
+            }
+        }
+
+        @Override
+        public void onTrigger(PxTriggerPair pairs, int count) {
+            for (int i = 0; i < count; i++) {
+                PxTriggerPair pair = PxTriggerPair.arrayGet(pairs.getAddress(), i);
+                PxActor actor0 = pair.getTriggerActor();
+                PxActor actor1 = pair.getOtherActor();
+                
+                PxPairFlagEnum status = pair.getStatus();
+                String event;
+                if (status == PxPairFlagEnum.eNOTIFY_TOUCH_FOUND) {
+                    event = "TRIGGER_ENTER";
+                } else if (status == PxPairFlagEnum.eNOTIFY_TOUCH_LOST) {
+                    event = "TRIGGER_EXIT";
+                } else {
+                    event = "OTHER";
+                }
+                triggerReceivers.forEach(pxActorPxActorStringTriConsumer -> pxActorPxActorStringTriConsumer.accept(actor0, actor1, event));
+            }
+        }
     }
 }

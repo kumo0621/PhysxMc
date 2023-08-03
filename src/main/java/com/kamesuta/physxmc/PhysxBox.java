@@ -14,15 +14,9 @@ import physx.physics.*;
  */
 public class PhysxBox {
 
-    private final PxPhysics physics;
-
     @Getter
-    private PxRigidDynamic actor;
-    private PxShape boxShape;
-
-    public PhysxBox(PxPhysics physics) {
-        this.physics = physics;
-    }
+    private final PxRigidDynamic actor;
+    private final PxShape boxShape;
 
     /**
      * 物理演算される箱を作る
@@ -31,12 +25,16 @@ public class PhysxBox {
      * @param quat 箱の角度
      * @return 箱のオブジェクト
      */
-    public PxRigidDynamic createBox(PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat) {
-        return createBox(defaultMaterial, pos, quat, new PxBoxGeometry(0.5f, 0.5f, 0.5f));// PxBoxGeometry uses half-sizes
+    public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat) {
+        this(physics, defaultMaterial, pos, quat, new PxBoxGeometry(0.5f, 0.5f, 0.5f));// PxBoxGeometry uses half-sizes
     }
 
-    public PxRigidDynamic createBox(PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry) {
-        return createBox(defaultMaterial, pos, quat, boxGeometry, PhysxSetting.getDefaultDensity());
+    public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry) {
+        this(physics, defaultMaterial, pos, quat, boxGeometry, false);
+    }
+
+    public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, boolean isTrigger) {
+        this(physics, defaultMaterial, pos, quat, boxGeometry, isTrigger, PhysxSetting.getDefaultDensity());
     }
 
     /**
@@ -45,15 +43,21 @@ public class PhysxBox {
      * @param pos 箱の位置
      * @param quat 箱の角度
      * @param boxGeometry 箱の大きさ (1/2)
+     * @param isTrigger トリガー(当たり判定検出用の箱)であるかどうか
      * @param density 箱の密度
-     * @return 箱のオブジェクト
      */
-    public PxRigidDynamic createBox(PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, float density) {
+    public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, boolean isTrigger, float density) {
         // create default simulation shape flags
-        PxShapeFlags defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
+        PxShapeFlags defaultShapeFlags;
+        if(!isTrigger)
+            defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
+        else
+            defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eTRIGGER_SHAPE.value));//triggerはraycastに引っかからないようにする
         // create a few temporary objects used during setup
         PxTransform tmpPose = new PxTransform(PxIDENTITYEnum.PxIdentity);
-        PxFilterData tmpFilterData = new PxFilterData(1, 1, 0, 0);
+        // create a box with contact reporting enabled
+        int reportContactFlags = PxPairFlagEnum.eNOTIFY_TOUCH_FOUND.value | PxPairFlagEnum.eNOTIFY_TOUCH_LOST.value | PxPairFlagEnum.eNOTIFY_CONTACT_POINTS.value;
+        PxFilterData tmpFilterData = new PxFilterData(1, -1, reportContactFlags, 0);
 
         // create a small dynamic actor with size 1x1x1, which will fall on the ground
         tmpPose.setP(pos);
@@ -72,7 +76,6 @@ public class PhysxBox {
         pos.destroy();
 
         this.actor = box;
-        return box;
     }
 
     /**
@@ -104,8 +107,8 @@ public class PhysxBox {
      * 箱に力を加える
      * @param vec3 箱に加える力
      */
-    public void addForce(PxVec3 vec3) {
-        actor.addForce(vec3, PxForceModeEnum.eFORCE);
+    public void addForce(PxVec3 vec3, PxForceModeEnum mode) {
+        actor.addForce(vec3, mode);
         vec3.destroy();
     }
 }

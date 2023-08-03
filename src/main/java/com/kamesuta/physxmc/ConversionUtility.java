@@ -11,25 +11,21 @@ public class ConversionUtility {
     /**
      * クォータニオンをオイラー角に変換
      * @param quaternion クォータニオン
-     * @return オイラー角
+     * @return オイラー角(-1~1)
      */
     public static Vector3f convertToEulerAngles(Quaternionf quaternion) {
         Vector3f euler = new Vector3f();
         quaternion.getEulerAnglesXYZ(euler);
-        
-        euler.mul((float) (180.0 / Math.PI));
-
         return euler;
     }
 
     /**
-     * オイラー角をクォータニオンに変換
+     * オイラー角(-1~1)をクォータニオンに変換
      * @return クォータニオン
      */
     public static Quaternionf convertToQuaternion(double eulerX, double eulerY, double eulerZ) {
-        Vector3f angles = new Vector3f((float) Math.toRadians(eulerX), (float) Math.toRadians(eulerY), (float) Math.toRadians(eulerZ));
         Quaternionf quaternion = new Quaternionf();
-        quaternion.rotationXYZ(angles.x, angles.y, angles.z);
+        quaternion.rotationXYZ((float)eulerX, (float) eulerY, (float)eulerZ);
 
         return quaternion;
     }
