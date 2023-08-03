@@ -2,7 +2,6 @@ package com.kamesuta.physxmc;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import physx.common.PxIDENTITYEnum;
 import physx.common.PxQuat;
@@ -32,6 +31,13 @@ public class PlayerTriggerHolder {
             tmpPose.setP(vec3);
             vec3.destroy();
             playerCollisionList.get(player).setPos(tmpPose);
+        });
+        
+        playerCollisionList.forEach((player, physxBox) -> {
+            if(!player.isOnline() && physxBox != null){
+                PhysxMc.physxWorld.removeBox(physxBox);
+                playerCollisionList.put(player, null);
+            }
         });
     }
     
