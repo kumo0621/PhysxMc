@@ -89,7 +89,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
      * @param pos 座標
      * @param quat 回転
      * @param boxGeometry 箱の大きさ
-     * @param display 表示用のItemDisplay
+     * @param display 表示用のBlockDisplay
      * @return 追加した箱オブジェクト
      */
     public DisplayedPhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, BlockDisplay[] display) {
