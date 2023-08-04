@@ -9,7 +9,8 @@ import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
 import physx.physics.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.kamesuta.physxmc.Physx.*;
 

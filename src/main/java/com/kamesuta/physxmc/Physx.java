@@ -1,17 +1,9 @@
 package com.kamesuta.physxmc;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
 import physx.PxTopLevelFunctions;
 import physx.common.*;
-import physx.geometry.PxBoxGeometry;
 import physx.physics.PxMaterial;
 import physx.physics.PxPhysics;
-import physx.physics.PxScene;
-import physx.physics.PxSceneDesc;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Physxのコアコンポーネントのホルダークラス。

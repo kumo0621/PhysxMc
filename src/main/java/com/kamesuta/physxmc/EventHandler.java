@@ -1,12 +1,9 @@
 package com.kamesuta.physxmc;
 
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import physx.physics.PxActor;
 
 import static com.kamesuta.physxmc.PhysxMc.displayedBoxHolder;
 

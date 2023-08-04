@@ -12,8 +12,6 @@ import org.bukkit.entity.Player;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * カスタムコマンドを作製するための基礎クラス
