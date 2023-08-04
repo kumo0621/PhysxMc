@@ -1,7 +1,6 @@
 package com.kamesuta.physxmc;
 
 import org.apache.logging.log4j.util.BiConsumer;
-import org.apache.logging.log4j.util.TriConsumer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -72,6 +71,8 @@ public class PlayerTriggerHolder {
     
     public Player getPlayer(PxActor actor){
         for (Map.Entry<Player, PhysxBox> entry : playerCollisionList.entrySet()){
+            if(entry.getValue() == null)
+                continue;
             if(entry.getValue().getActor().equals(actor))
                 return entry.getKey();
         }
