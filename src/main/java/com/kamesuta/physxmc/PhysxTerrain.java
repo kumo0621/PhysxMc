@@ -95,9 +95,9 @@ public class PhysxTerrain {
         return pos.getY() >= level.getMaxHeight() || pos.getY() <= level.getMinHeight()
                 || (pos.getY() < level.getMaxHeight() - 1 && pos.getRelative(BlockFace.UP).isEmpty())
                 || (pos.getY() > level.getMaxHeight() && pos.getRelative(BlockFace.DOWN).isEmpty())
-                || level.isChunkLoaded(pos.getRelative(BlockFace.NORTH).getX(), pos.getRelative(BlockFace.NORTH).getZ()) && pos.getRelative(BlockFace.NORTH).isEmpty()
-                || level.isChunkLoaded(pos.getRelative(BlockFace.EAST).getX(), pos.getRelative(BlockFace.EAST).getZ()) && pos.getRelative(BlockFace.EAST).isEmpty()
-                || level.isChunkLoaded(pos.getRelative(BlockFace.SOUTH).getX(), pos.getRelative(BlockFace.SOUTH).getZ()) && pos.getRelative(BlockFace.SOUTH).isEmpty()
-                || level.isChunkLoaded(pos.getRelative(BlockFace.WEST).getX(), pos.getRelative(BlockFace.WEST).getZ()) && pos.getRelative(BlockFace.WEST).isEmpty();
+                || pos.getRelative(BlockFace.NORTH).isEmpty()
+                || pos.getRelative(BlockFace.EAST).isEmpty()
+                || pos.getRelative(BlockFace.SOUTH).isEmpty()
+                || pos.getRelative(BlockFace.WEST).isEmpty();
     }
 }
