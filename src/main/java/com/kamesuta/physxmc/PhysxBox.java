@@ -20,9 +20,10 @@ public class PhysxBox {
 
     /**
      * 物理演算される箱を作る
-     * @param defaultMaterial　箱のマテリアル
-     * @param pos 箱の位置
-     * @param quat 箱の角度
+     *
+     * @param defaultMaterial 　箱のマテリアル
+     * @param pos             箱の位置
+     * @param quat            箱の角度
      * @return 箱のオブジェクト
      */
     public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat) {
@@ -39,17 +40,18 @@ public class PhysxBox {
 
     /**
      * 物理演算される箱を作る
-     * @param defaultMaterial　箱のマテリアル
-     * @param pos 箱の位置
-     * @param quat 箱の角度
-     * @param boxGeometry 箱の大きさ (1/2)
-     * @param isTrigger トリガー(当たり判定検出用の箱)であるかどうか
-     * @param density 箱の密度
+     *
+     * @param defaultMaterial 　箱のマテリアル
+     * @param pos             箱の位置
+     * @param quat            箱の角度
+     * @param boxGeometry     箱の大きさ (1/2)
+     * @param isTrigger       トリガー(当たり判定検出用の箱)であるかどうか
+     * @param density         箱の密度
      */
     public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, boolean isTrigger, float density) {
         // create default simulation shape flags
         PxShapeFlags defaultShapeFlags;
-        if(!isTrigger)
+        if (!isTrigger)
             defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
         else
             defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eTRIGGER_SHAPE.value));//triggerはraycastに引っかからないようにする
@@ -80,6 +82,7 @@ public class PhysxBox {
 
     /**
      * 箱の座標空間を取得する
+     *
      * @return 箱の座標空間
      */
     public PxTransform getPos() {
@@ -88,6 +91,7 @@ public class PhysxBox {
 
     /**
      * 箱の座標空間をセットする
+     *
      * @param transform 箱の座標空間
      */
     public void setPos(PxTransform transform) {
@@ -105,6 +109,7 @@ public class PhysxBox {
 
     /**
      * 箱に力を加える
+     *
      * @param vec3 箱に加える力
      */
     public void addForce(PxVec3 vec3, PxForceModeEnum mode) {

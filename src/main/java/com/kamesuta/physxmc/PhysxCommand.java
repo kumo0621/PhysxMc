@@ -39,70 +39,62 @@ public class PhysxCommand extends CommandBase implements Listener {
 
     @Override
     public boolean onCommand(CommandSender sender, @Nullable String[] arguments) {
-        if(arguments[0].equals(resetArgument)){
+        if (arguments[0].equals(resetArgument)) {
             PhysxMc.displayedBoxHolder.destroyAll();
             return true;
-        }
-        else if(arguments[0].equals(debugArgument)){
+        } else if (arguments[0].equals(debugArgument)) {
             PhysxSetting.setDebugMode(!PhysxSetting.isDebugMode());
             sender.sendMessage("デバッグモードを" + (PhysxSetting.isDebugMode() ? "有効" : "無効") + "にしました");
             return true;
-        }
-        else if(arguments[0].equals(densityArgument) && arguments[1] != null){
+        } else if (arguments[0].equals(densityArgument) && arguments[1] != null) {
             float density;
-            try{
+            try {
                 density = Float.parseFloat(arguments[1]);
-            }
-            catch (NumberFormatException e){
+            } catch (NumberFormatException e) {
                 sendUsage(sender);
                 return true;
             }
-            if(density > 0){
+            if (density > 0) {
                 PhysxSetting.setDefaultDensity(density);
                 sender.sendMessage("既定の密度を" + density + "にしました");
                 return true;
             }
-        }
-        else if(arguments[0].equals(updateArgument)){
-            if(!(sender instanceof Player)){
+        } else if (arguments[0].equals(updateArgument)) {
+            if (!(sender instanceof Player)) {
                 sender.sendMessage("プレイヤーしか実行できません");
                 return true;
             }
-            PhysxMc.physxWorld.registerChunksToReloadNextSecond(((Player)sender).getChunk());
+            PhysxMc.physxWorld.registerChunksToReloadNextSecond(((Player) sender).getChunk());
             sender.sendMessage("プレイヤーが今いるチャンクをアップデートしました");
             return true;
-        }
-        else if(arguments[0].equals(summonArgument) && arguments[1] != null && arguments[2] != null && arguments[3] != null){
-            if(!(sender instanceof Player)){
+        } else if (arguments[0].equals(summonArgument) && arguments[1] != null && arguments[2] != null && arguments[3] != null) {
+            if (!(sender instanceof Player)) {
                 sender.sendMessage("プレイヤーしか実行できません");
                 return true;
             }
             float x, y, z;
-            try{
+            try {
                 x = Float.parseFloat(arguments[1]);
                 y = Float.parseFloat(arguments[2]);
                 z = Float.parseFloat(arguments[3]);
-            }
-            catch (NumberFormatException e){
+            } catch (NumberFormatException e) {
                 sendUsage(sender);
                 return true;
             }
-            PhysxMc.displayedBoxHolder.createDisplayedBox(((Player)sender).getLocation(), new Vector(x,y,z), new ItemStack(Material.COMMAND_BLOCK));
+            PhysxMc.displayedBoxHolder.createDisplayedBox(((Player) sender).getLocation(), new Vector(x, y, z), new ItemStack(Material.COMMAND_BLOCK));
             sender.sendMessage("テストブロックを生成しました");
             return true;
-        }
-        else if(arguments[0].equals(gravityArgument) && arguments[1] != null && arguments[2] != null && arguments[3] != null){
+        } else if (arguments[0].equals(gravityArgument) && arguments[1] != null && arguments[2] != null && arguments[3] != null) {
             float x, y, z;
-            try{
+            try {
                 x = Float.parseFloat(arguments[1]);
                 y = Float.parseFloat(arguments[2]);
                 z = Float.parseFloat(arguments[3]);
-            }
-            catch (NumberFormatException e){
+            } catch (NumberFormatException e) {
                 sendUsage(sender);
                 return true;
             }
-            PhysxMc.physxWorld.setGravity(new Vector(x,y,z));
+            PhysxMc.physxWorld.setGravity(new Vector(x, y, z));
             sender.sendMessage("重力を変更しました");
             return true;
         }
@@ -127,7 +119,7 @@ public class PhysxCommand extends CommandBase implements Listener {
             List<String> suggestions = new ArrayList<>();
             String pureBuffer = e.getBuffer().replace("/" + commandName + " ", "");
             arguments.forEach(s -> {
-                if(s.startsWith(pureBuffer))
+                if (s.startsWith(pureBuffer))
                     suggestions.add(s);
             });
             e.setCompletions(suggestions);

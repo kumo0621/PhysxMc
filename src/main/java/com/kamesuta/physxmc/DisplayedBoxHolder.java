@@ -45,8 +45,9 @@ public class DisplayedBoxHolder {
 
     /**
      * DisplayedPhysxBoxを1個生成
-     * @param location 場所
-     * @param scale 大きさ
+     *
+     * @param location  場所
+     * @param scale     大きさ
      * @param itemStack 元となるブロック
      * @return
      */
@@ -55,7 +56,7 @@ public class DisplayedBoxHolder {
         Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
         // なめらかな補完のために2つBlockDisplayを作る
         BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
-        PxBoxGeometry boxGeometry = new PxBoxGeometry((float)(0.5f * scale.getX()), (float)(0.5f * scale.getY()), (float)(0.5f * scale.getZ()));
+        PxBoxGeometry boxGeometry = new PxBoxGeometry((float) (0.5f * scale.getX()), (float) (0.5f * scale.getY()), (float) (0.5f * scale.getZ()));
         DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, display);
         blockDisplayList.add(box);
         return box;
@@ -66,9 +67,9 @@ public class DisplayedBoxHolder {
         blockDisplay.setBlock(itemStack.getType().createBlockData());
         Transformation transformation = blockDisplay.getTransformation();
         transformation.getTranslation().add(-0.5f, -0.5f, -0.5f);
-        transformation.getScale().x = (float)scale.getX();
-        transformation.getScale().y = (float)scale.getY();
-        transformation.getScale().z = (float)scale.getZ();
+        transformation.getScale().x = (float) scale.getX();
+        transformation.getScale().y = (float) scale.getY();
+        transformation.getScale().z = (float) scale.getZ();
         transformation.getLeftRotation().set(boxQuat);
         blockDisplay.setTransformation(transformation);
         blockDisplay.setGravity(false);
@@ -101,8 +102,8 @@ public class DisplayedBoxHolder {
         blockDisplayList.clear();
     }
 
-    public void destroySpecific(DisplayedPhysxBox box){
-        if(box == null)
+    public void destroySpecific(DisplayedPhysxBox box) {
+        if (box == null)
             return;
 
         for (BlockDisplay blockDisplay : box.display) {
@@ -115,7 +116,7 @@ public class DisplayedBoxHolder {
     /**
      * 全ての箱に対して爆発を適用する
      */
-     public void executeExplosion(Location location, float strength) {
+    public void executeExplosion(Location location, float strength) {
         Vector3d tmp = new Vector3d();
         double explosionStrengthSquared = strength * 2.0 * strength * 2.0;
 
@@ -128,7 +129,7 @@ public class DisplayedBoxHolder {
                 Vector3d direction = tmp.sub(location.toVector().toVector3d()).normalize();
                 direction.y += 2.0;
                 direction.normalize();
-                double realStrength = (1.0 - (Math.min(Math.max( distance / (strength * 2.0), 0f),1f))) * 15.0;
+                double realStrength = (1.0 - (Math.min(Math.max(distance / (strength * 2.0), 0f), 1f))) * 15.0;
 
                 PxVec3 pxVec = new PxVec3(
                         (float) (direction.x * realStrength),
@@ -142,19 +143,20 @@ public class DisplayedBoxHolder {
 
     /**
      * 世界内でraycastしてBoxを探す
+     *
      * @param location 始点
      * @param distance 距離
      * @return 見つかったBox
      */
     @Nullable
-    public DisplayedPhysxBox raycast(Location location, float distance){
+    public DisplayedPhysxBox raycast(Location location, float distance) {
         PxRigidActor actor = PhysxMc.physxWorld.raycast(location, distance);
-        if(actor == null)
+        if (actor == null)
             return null;
         return blockDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
     }
 
-    public DisplayedPhysxBox getBox(PxActor actor){
+    public DisplayedPhysxBox getBox(PxActor actor) {
         return blockDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
     }
 }

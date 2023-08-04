@@ -33,16 +33,17 @@ public class IntegratedPhysxWorld extends PhysxWorld {
      * 次の秒でリロードしておかなくてはいけない、構成ブロックに変更が加わったチャンク
      */
     private final Set<Chunk> chunksToReloadNextSecond = new HashSet<>();
-    
+
     private boolean readyToUpdateChunks = false;
     private int tickCount = 0;
 
     /**
      * チャンクごとに物理エンジンの地形を作る
+     *
      * @param chunk
      */
-    public void loadChunkAsTerrain(Chunk chunk){
-        if(chunkTerrainMap.containsKey(chunk))
+    public void loadChunkAsTerrain(Chunk chunk) {
+        if (chunkTerrainMap.containsKey(chunk))
             return;
 
         PhysxTerrain terrain = new PhysxTerrain(physics, defaultMaterial, chunk);
@@ -52,10 +53,11 @@ public class IntegratedPhysxWorld extends PhysxWorld {
 
     /**
      * チャンクごとに存在する地形を破壊する
+     *
      * @param chunk
      */
-    public void unloadChunkAsTerrain(Chunk chunk, boolean wakeOnLostTouch){
-        if(chunkTerrainMap.get(chunk) == null)
+    public void unloadChunkAsTerrain(Chunk chunk, boolean wakeOnLostTouch) {
+        if (chunkTerrainMap.get(chunk) == null)
             return;
 
         scene.removeActor(chunkTerrainMap.get(chunk).getActor(), wakeOnLostTouch);
@@ -63,8 +65,8 @@ public class IntegratedPhysxWorld extends PhysxWorld {
 
         chunkTerrainMap.remove(chunk);
     }
-    
-    public boolean isChunkLoadedAsTerrain(Chunk chunk){
+
+    public boolean isChunkLoadedAsTerrain(Chunk chunk) {
         return chunkTerrainMap.get(chunk) != null;
     }
 
@@ -86,10 +88,11 @@ public class IntegratedPhysxWorld extends PhysxWorld {
 
     /**
      * シーンにMinecraft世界で表示可能な箱オブジェクトを追加する
-     * @param pos 座標
-     * @param quat 回転
+     *
+     * @param pos         座標
+     * @param quat        回転
      * @param boxGeometry 箱の大きさ
-     * @param display 表示用のBlockDisplay
+     * @param display     表示用のBlockDisplay
      * @return 追加した箱オブジェクト
      */
     public DisplayedPhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, BlockDisplay[] display) {
@@ -100,23 +103,24 @@ public class IntegratedPhysxWorld extends PhysxWorld {
 
     /**
      * 次のtickで地形をロードしておきたいチャンクを登録する（これに登録されていないチャンクは次のtickでアンロードされる）
+     *
      * @param chunks 地形をロードしておきたいチャンク
      */
-    public void registerChunksToLoadNextTick(Collection<Chunk> chunks){
+    public void registerChunksToLoadNextTick(Collection<Chunk> chunks) {
         chunksToLoadNextTick.addAll(chunks);
     }
 
     /**
      * 次のtickでロードするチャンクの登録が終わったことを登録する
      */
-    public void setReadyToUpdateChunks(){
+    public void setReadyToUpdateChunks() {
         readyToUpdateChunks = true;
     }
 
     /**
      * 次の秒で地形をリロードしておきたい変更の加わったチャンクを登録する
      */
-    public void registerChunksToReloadNextSecond(Chunk chunk){
+    public void registerChunksToReloadNextSecond(Chunk chunk) {
         chunksToReloadNextSecond.add(chunk);
     }
 
@@ -124,22 +128,22 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     public void tick() {
         super.tick();
         updateActiveChunks();
-        
+
         tickCount++;
-        if(tickCount % 20 == 0)
+        if (tickCount % 20 == 0)
             reloadModifiedChunks();
     }
 
     /**
      * アクティブなオブジェクト付近のロードしておくチャンクをアップデートする。毎tick実行することで高速で動くオブジェクトに対応する
      */
-    private void updateActiveChunks(){
-        if(!readyToUpdateChunks)
+    private void updateActiveChunks() {
+        if (!readyToUpdateChunks)
             return;
-        
-        if(chunksToLoadNextTick.isEmpty())
+
+        if (chunksToLoadNextTick.isEmpty())
             return;
-        
+
         for (Chunk chunk : chunksToLoadNextTick) {
             loadChunkAsTerrain(chunk);
         }
@@ -159,11 +163,11 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     /**
      * 構成ブロックに変更が加わったチャンクを(まとめて)リロードする
      */
-    private void reloadModifiedChunks(){
+    private void reloadModifiedChunks() {
         for (Chunk chunk : chunksToReloadNextSecond) {
-            if(!isChunkLoadedAsTerrain(chunk))
+            if (!isChunkLoadedAsTerrain(chunk))
                 continue;
-            
+
             unloadChunkAsTerrain(chunk, true);
             loadChunkAsTerrain(chunk);
         }
@@ -172,21 +176,22 @@ public class IntegratedPhysxWorld extends PhysxWorld {
 
     /**
      * Raycastして動的オブジェクトを検索する
+     *
      * @param location 始点
      * @param distance 距離
      * @return 見つかった最初の動的オブジェクト
      */
-    public PxRigidActor raycast(Location location, float distance){
-        PxVec3 origin = new PxVec3((float)location.x(), (float) location.y(), (float)location.z());
+    public PxRigidActor raycast(Location location, float distance) {
+        PxVec3 origin = new PxVec3((float) location.x(), (float) location.y(), (float) location.z());
         Vector unitDir = location.getDirection();
         PxVec3 pxUnitDir = new PxVec3((float) unitDir.getX(), (float) unitDir.getY(), (float) unitDir.getZ());
         PxRaycastBuffer10 raycastHit = new PxRaycastBuffer10();
-        PxHitFlags hitFlags = new PxHitFlags((short)PxHitFlagEnum.eDEFAULT.value);
-        PxQueryFilterData filterData = new PxQueryFilterData(new PxQueryFlags((short)PxQueryFlagEnum.eDYNAMIC.value));
+        PxHitFlags hitFlags = new PxHitFlags((short) PxHitFlagEnum.eDEFAULT.value);
+        PxQueryFilterData filterData = new PxQueryFilterData(new PxQueryFlags((short) PxQueryFlagEnum.eDYNAMIC.value));
         boolean isHit = scene.raycast(origin, pxUnitDir, distance, raycastHit, hitFlags, filterData);
         origin.destroy();
         pxUnitDir.destroy();
-        if(!isHit)
+        if (!isHit)
             return null;
         return raycastHit.getAnyHit(0).getActor();
     }

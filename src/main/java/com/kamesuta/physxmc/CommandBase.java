@@ -80,7 +80,7 @@ public abstract class CommandBase extends BukkitCommand implements CommandExecut
         if (!commandMap.register(command, "PhysxMc", this))
             commandMap.getKnownCommands().replace(command, this);
     }
-    
+
     /**
      * コマンド使用者にこのコマンドの仕様について送る
      *

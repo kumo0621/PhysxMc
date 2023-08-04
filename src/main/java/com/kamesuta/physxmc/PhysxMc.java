@@ -16,12 +16,12 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class PhysxMc extends JavaPlugin{
+public final class PhysxMc extends JavaPlugin {
 
     public static Physx physx;
     public static IntegratedPhysxWorld physxWorld;
     public static DisplayedBoxHolder displayedBoxHolder;
-    public static  PlayerTriggerHolder playerTriggerHolder;
+    public static PlayerTriggerHolder playerTriggerHolder;
     public ProtocolManager protocolManager;
 
     @Override
@@ -49,13 +49,13 @@ public final class PhysxMc extends JavaPlugin{
 
         getServer().getPluginManager().registerEvents(new PhysxCommand(), this);
         getServer().getPluginManager().registerEvents(new EventHandler(), this);
-        
+
         initProtocolLib();
-        
+
         forceInit(PhysxTerrain.class);
     }
-    
-    private void initProtocolLib(){
+
+    private void initProtocolLib() {
         protocolManager = ProtocolLibrary.getProtocolManager();
         protocolManager.addPacketListener(new PacketAdapter(this, ListenerPriority.NORMAL, PacketType.Play.Server.BLOCK_CHANGE) {
             @Override
@@ -108,6 +108,7 @@ public final class PhysxMc extends JavaPlugin{
 
     /**
      * BukkitのOnDisableでエラーが出ないようにクラスを強制的にロードする
+     *
      * @param klass
      * @param <T>
      * @return
