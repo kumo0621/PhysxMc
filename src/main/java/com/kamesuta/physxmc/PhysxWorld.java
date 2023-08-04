@@ -11,6 +11,7 @@ import physx.physics.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.kamesuta.physxmc.Physx.*;
 
@@ -89,8 +90,8 @@ public class PhysxWorld {
         return box;
     }
 
-    public PhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, boolean isTrigger) {
-        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat, boxGeometry, isTrigger);
+    public PhysxBox addBox(PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, boolean isTrigger) {
+        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat, boxGeometries, isTrigger);
         scene.addActor(box.getActor());
         return box;
     }

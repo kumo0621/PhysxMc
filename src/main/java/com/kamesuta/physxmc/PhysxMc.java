@@ -51,6 +51,11 @@ public final class PhysxMc extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new EventHandler(), this);
 
         initProtocolLib();
+        try {
+            BoundingBoxUtil.init();
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
 
         forceInit(PhysxTerrain.class);
     }

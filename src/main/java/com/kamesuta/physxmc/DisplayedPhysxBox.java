@@ -17,6 +17,7 @@ import physx.physics.PxPhysics;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 import static com.kamesuta.physxmc.Physx.defaultMaterial;
 
@@ -34,8 +35,8 @@ public class DisplayedPhysxBox extends PhysxBox {
      */
     public int swapPhase = 0;
 
-    public DisplayedPhysxBox(PxPhysics physics, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, BlockDisplay[] display) {
-        super(physics, defaultMaterial, pos, quat, boxGeometry);
+    public DisplayedPhysxBox(PxPhysics physics, PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, BlockDisplay[] display) {
+        super(physics, defaultMaterial, pos, quat, boxGeometries);
 
         this.display = display;
     }

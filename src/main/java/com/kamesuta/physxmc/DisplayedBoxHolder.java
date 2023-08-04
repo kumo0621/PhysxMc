@@ -1,9 +1,11 @@
 package com.kamesuta.physxmc;
 
 import org.bukkit.Location;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
@@ -17,8 +19,7 @@ import physx.physics.PxActor;
 import physx.physics.PxForceModeEnum;
 import physx.physics.PxRigidActor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
 
@@ -56,8 +57,22 @@ public class DisplayedBoxHolder {
         Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
         // なめらかな補完のために2つBlockDisplayを作る
         BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
-        PxBoxGeometry boxGeometry = new PxBoxGeometry((float) (0.5f * scale.getX()), (float) (0.5f * scale.getY()), (float) (0.5f * scale.getZ()));
-        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometry, display);
+        
+        BlockData blockData = itemStack.getType().createBlockData();
+        Collection<BoundingBox> boundingBoxes;
+        try {
+            boundingBoxes = BoundingBoxUtil.getOutlineBoxes(BoundingBoxUtil.getOutline(display[0], blockData));
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+        Map<PxBoxGeometry, PxVec3> boxGeometries = new HashMap<>();
+        for (BoundingBox boundingBox : boundingBoxes) {
+            Vector geometry = BoundingBoxUtil.getGeometryFromBoundingBox(boundingBox).multiply(scale);
+            Vector center = BoundingBoxUtil.getCenterFromBoundingBox(boundingBox).multiply(scale);
+            boxGeometries.put(new PxBoxGeometry((float) geometry.getX(), (float) geometry.getY(), (float) geometry.getZ()), new PxVec3((float)center.getX(),(float)center.getY(),(float)center.getZ()));
+        }
+        
+        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries, display);
         blockDisplayList.add(box);
         return box;
     }
