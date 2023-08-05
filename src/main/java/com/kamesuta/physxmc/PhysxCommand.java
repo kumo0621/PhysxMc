@@ -40,6 +40,7 @@ public class PhysxCommand extends CommandBase implements Listener {
     @Override
     public boolean onCommand(CommandSender sender, @Nullable String[] arguments) {
         if (arguments[0].equals(resetArgument)) {
+            PhysxMc.grabTool.forceClear();
             PhysxMc.displayedBoxHolder.destroyAll();
             return true;
         } else if (arguments[0].equals(debugArgument)) {

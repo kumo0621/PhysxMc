@@ -22,6 +22,8 @@ public final class PhysxMc extends JavaPlugin {
     public static IntegratedPhysxWorld physxWorld;
     public static DisplayedBoxHolder displayedBoxHolder;
     public static PlayerTriggerHolder playerTriggerHolder;
+    
+    public static GrabTool grabTool;
     public ProtocolManager protocolManager;
 
     @Override
@@ -37,6 +39,7 @@ public final class PhysxMc extends JavaPlugin {
         physxWorld.setUpScene();
         displayedBoxHolder = new DisplayedBoxHolder();
         playerTriggerHolder = new PlayerTriggerHolder();
+        grabTool = new GrabTool();
 
         new BukkitRunnable() {
             @Override
@@ -44,6 +47,7 @@ public final class PhysxMc extends JavaPlugin {
                 physxWorld.tick();
                 displayedBoxHolder.update();
                 playerTriggerHolder.update();
+                grabTool.update();
             }
         }.runTaskTimer(this, 1, 1);
 

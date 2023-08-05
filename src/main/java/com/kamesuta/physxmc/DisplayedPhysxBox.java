@@ -9,11 +9,14 @@ import org.bukkit.util.Vector;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import physx.common.PxIDENTITYEnum;
 import physx.common.PxQuat;
+import physx.common.PxTransform;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
 import physx.physics.PxForceModeEnum;
 import physx.physics.PxPhysics;
+import physx.physics.PxRigidBodyFlagEnum;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -156,5 +159,23 @@ public class DisplayedPhysxBox extends PhysxBox {
         Location loc = new Location(display[0].getWorld(), vec3.getX(), vec3.getY(), vec3.getZ());
         loc.setDirection(dir2);
         return loc;
+    }
+    
+    public void makeKinematic(boolean flag){
+        getActor().setRigidBodyFlag(PxRigidBodyFlagEnum.eKINEMATIC, flag);
+    }
+    
+    public void moveKinematic(Location location){
+        PxVec3 p = new PxVec3((float) location.x(), (float) location.y(), (float) location.z());
+        Vector dir = location.getDirection();
+        Quaternionf quat = ConversionUtility.convertToQuaternion(dir.getX(), dir.getY(), dir.getZ());
+        PxQuat q = new PxQuat(quat.x, quat.y, quat.z, quat.w);
+        PxTransform transform = new PxTransform(PxIDENTITYEnum.PxIdentity);
+        transform.setP(p);
+        transform.setQ(q);
+        getActor().setKinematicTarget(transform);
+        p.destroy();
+        q.destroy();
+        transform.destroy();
     }
 }

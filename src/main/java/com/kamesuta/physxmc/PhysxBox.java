@@ -129,6 +129,9 @@ public class PhysxBox {
      * @param vec3 箱に加える力
      */
     public void addForce(PxVec3 vec3, PxForceModeEnum mode) {
+        if(actor.getRigidBodyFlags().isSet(PxRigidBodyFlagEnum.eKINEMATIC))
+            return;
+            
         actor.addForce(vec3, mode);
         vec3.destroy();
     }
