@@ -29,7 +29,7 @@ import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
  */
 public class DisplayedBoxHolder {
 
-    private static final List<DisplayedPhysxBox> blockDisplayList = new ArrayList<>();
+    private final List<DisplayedPhysxBox> blockDisplayList = new ArrayList<>();
 
     /**
      * デバッグモードでプレイヤーがブロックを右クリックした時、座標にBlockDisplayを1個生成して、箱と紐づける
@@ -96,6 +96,8 @@ public class DisplayedBoxHolder {
      * ワールドに存在する全ての箱を更新する
      */
     public void update() {
+
+        destroyTooLowBox();
         for (DisplayedPhysxBox displayedPhysxBox : blockDisplayList) {
             displayedPhysxBox.update();
 
@@ -103,8 +105,6 @@ public class DisplayedBoxHolder {
                 PhysxMc.physxWorld.registerChunksToLoadNextTick(displayedPhysxBox.getSurroundingChunks());
         }
         PhysxMc.physxWorld.setReadyToUpdateChunks();
-        
-        destroyTooLowBox();
     }
 
     /**
@@ -114,7 +114,7 @@ public class DisplayedBoxHolder {
         blockDisplayList.removeIf(box -> {
             if (box == null)
                 return false;
-
+            
             if(box.getLocation().y() < -128){
                 for (BlockDisplay blockDisplay : box.display) {
                     blockDisplay.remove();
@@ -141,14 +141,13 @@ public class DisplayedBoxHolder {
     }
 
     public void destroySpecific(DisplayedPhysxBox box) {
-        if (box == null)
+        if (box == null || !blockDisplayList.remove(box))
             return;
 
         for (BlockDisplay blockDisplay : box.display) {
             blockDisplay.remove();
         }
         PhysxMc.physxWorld.removeBox(box);
-        blockDisplayList.remove(box);
     }
 
     /**

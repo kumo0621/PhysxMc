@@ -119,8 +119,12 @@ public class PhysxBox {
      * 箱を破壊する。このクラスを消す際に必ず呼ぶこと
      */
     public void release() {
-        actor.release();
-        boxShapes.forEach(PxBase::release);
+        if(actor.isReleasable())
+            actor.release();
+        for (int i = 0; i < boxShapes.size();) {
+            boxShapes.get(i).release();
+            boxShapes.remove(i);
+        }
     }
 
     /**
