@@ -20,6 +20,7 @@ import physx.physics.PxForceModeEnum;
 import physx.physics.PxRigidActor;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
 
@@ -95,13 +96,35 @@ public class DisplayedBoxHolder {
      * ワールドに存在する全ての箱を更新する
      */
     public void update() {
-        blockDisplayList.forEach(displayedPhysxBox -> {
+        for (DisplayedPhysxBox displayedPhysxBox : blockDisplayList) {
             displayedPhysxBox.update();
 
             if (!displayedPhysxBox.isSleeping())
                 PhysxMc.physxWorld.registerChunksToLoadNextTick(displayedPhysxBox.getSurroundingChunks());
-        });
+        }
         PhysxMc.physxWorld.setReadyToUpdateChunks();
+        
+        destroyTooLowBox();
+    }
+
+    /**
+     * ワールドの外に落ちた箱を削除
+     */
+    private void destroyTooLowBox(){
+        blockDisplayList.removeIf(box -> {
+            if (box == null)
+                return false;
+
+            if(box.getLocation().y() < -128){
+                for (BlockDisplay blockDisplay : box.display) {
+                    blockDisplay.remove();
+                }
+                PhysxMc.physxWorld.removeBox(box);
+                return true;
+            }
+
+            return false;
+        });
     }
 
     /**
