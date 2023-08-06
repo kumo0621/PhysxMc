@@ -167,8 +167,12 @@ public class DisplayedPhysxBox extends PhysxBox {
     
     public void moveKinematic(Location location){
         PxVec3 p = new PxVec3((float) location.x(), (float) location.y(), (float) location.z());
-        Vector dir = location.getDirection();
-        Quaternionf quat = ConversionUtility.convertToQuaternion(dir.getX(), dir.getY(), dir.getZ());
+
+        // プレイヤーの向きと相対的に回転させる
+        Quaternionf quat = new Quaternionf();
+        quat.rotateY((float) -Math.toRadians(location.getYaw()));
+        quat.rotateX((float) Math.toRadians(location.getPitch()));
+
         PxQuat q = new PxQuat(quat.x, quat.y, quat.z, quat.w);
         PxTransform transform = new PxTransform(PxIDENTITYEnum.PxIdentity);
         transform.setP(p);
