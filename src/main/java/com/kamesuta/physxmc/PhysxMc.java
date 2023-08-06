@@ -1,7 +1,6 @@
 package com.kamesuta.physxmc;
 
 import com.comphenix.protocol.PacketType;
-import com.comphenix.protocol.ProtocolLib;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.ListenerPriority;
@@ -17,12 +16,14 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class PhysxMc extends JavaPlugin{
+public final class PhysxMc extends JavaPlugin {
 
     public static Physx physx;
     public static IntegratedPhysxWorld physxWorld;
     public static DisplayedBoxHolder displayedBoxHolder;
-    public static  PlayerTriggerHolder playerTriggerHolder;
+    public static PlayerTriggerHolder playerTriggerHolder;
+    
+    public static GrabTool grabTool;
     public ProtocolManager protocolManager;
 
     @Override
@@ -38,6 +39,7 @@ public final class PhysxMc extends JavaPlugin{
         physxWorld.setUpScene();
         displayedBoxHolder = new DisplayedBoxHolder();
         playerTriggerHolder = new PlayerTriggerHolder();
+        grabTool = new GrabTool();
 
         new BukkitRunnable() {
             @Override
@@ -45,18 +47,24 @@ public final class PhysxMc extends JavaPlugin{
                 physxWorld.tick();
                 displayedBoxHolder.update();
                 playerTriggerHolder.update();
+                grabTool.update();
             }
         }.runTaskTimer(this, 1, 1);
 
         getServer().getPluginManager().registerEvents(new PhysxCommand(), this);
         getServer().getPluginManager().registerEvents(new EventHandler(), this);
-        
+
         initProtocolLib();
-        
+        try {
+            BoundingBoxUtil.init();
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+
         forceInit(PhysxTerrain.class);
     }
-    
-    private void initProtocolLib(){
+
+    private void initProtocolLib() {
         protocolManager = ProtocolLibrary.getProtocolManager();
         protocolManager.addPacketListener(new PacketAdapter(this, ListenerPriority.NORMAL, PacketType.Play.Server.BLOCK_CHANGE) {
             @Override
@@ -109,6 +117,7 @@ public final class PhysxMc extends JavaPlugin{
 
     /**
      * BukkitのOnDisableでエラーが出ないようにクラスを強制的にロードする
+     *
      * @param klass
      * @param <T>
      * @return

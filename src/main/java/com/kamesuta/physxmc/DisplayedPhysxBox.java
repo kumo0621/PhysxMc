@@ -9,14 +9,18 @@ import org.bukkit.util.Vector;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import physx.common.PxIDENTITYEnum;
 import physx.common.PxQuat;
+import physx.common.PxTransform;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
 import physx.physics.PxForceModeEnum;
 import physx.physics.PxPhysics;
+import physx.physics.PxRigidBodyFlagEnum;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 import static com.kamesuta.physxmc.Physx.defaultMaterial;
 
@@ -24,7 +28,7 @@ import static com.kamesuta.physxmc.Physx.defaultMaterial;
  * Minecraft世界で表示可能なPhysxBox
  */
 public class DisplayedPhysxBox extends PhysxBox {
-    
+
     /**
      * 表示用のBlockDisplay
      */
@@ -34,20 +38,20 @@ public class DisplayedPhysxBox extends PhysxBox {
      */
     public int swapPhase = 0;
 
-    public DisplayedPhysxBox(PxPhysics physics, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, BlockDisplay[] display) {
-        super(physics, defaultMaterial, pos, quat, boxGeometry);
+    public DisplayedPhysxBox(PxPhysics physics, PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, BlockDisplay[] display) {
+        super(physics, defaultMaterial, pos, quat, boxGeometries);
 
         this.display = display;
     }
-    
-    public void update(){
+
+    public void update() {
         trySwap();
     }
 
     /**
      * 物理の箱とBlockDisplayを同期する
      */
-    private void trySwap(){
+    private void trySwap() {
         PxQuat q = getPos().getQ();
         PxVec3 p = getPos().getP();
         Location pos = new Location(display[0].getWorld(), p.getX(), p.getY(), p.getZ());
@@ -85,6 +89,7 @@ public class DisplayedPhysxBox extends PhysxBox {
 
     /**
      * スワップの1ティック前に呼ぶ
+     *
      * @param pos 新しい位置
      */
     private void preSwap(Location pos) {
@@ -93,6 +98,7 @@ public class DisplayedPhysxBox extends PhysxBox {
 
     /**
      * TPの移動が見えないようにスワップする
+     *
      * @param pos 新しい位置
      */
     private void swap(Location pos) {
@@ -106,25 +112,27 @@ public class DisplayedPhysxBox extends PhysxBox {
 
     /**
      * 箱をコンフィグで設定したパワーで投げる
+     *
      * @param location 向き
      */
-    public void throwBox(Location location){
+    public void throwBox(Location location) {
         double power = PhysxSetting.getThrowPower();
         Vector3f rot = location.getDirection().clone().multiply(power).toVector3f();
         PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
         addForce(force, PxForceModeEnum.eVELOCITY_CHANGE);
     }
-    
-    public boolean isSleeping(){
+
+    public boolean isSleeping() {
         return getActor().isSleeping();
     }
 
     /**
      * 箱の周囲のチャンクを取得
+     *
      * @return 箱があるチャンクとその8方にあるチャンク
      */
     public Collection<Chunk> getSurroundingChunks() {
-        int[] offset = {-1,0,1};
+        int[] offset = {-1, 0, 1};
 
         World world = display[0].getWorld();
         PxVec3 p = getPos().getP();
@@ -133,16 +141,16 @@ public class DisplayedPhysxBox extends PhysxBox {
         int baseZ = pos.getChunk().getZ();
 
         Collection<Chunk> chunksAround = new HashSet<>();
-        for(int x : offset) {
-            for(int z : offset) {
+        for (int x : offset) {
+            for (int z : offset) {
                 Chunk chunk = world.getChunkAt(baseX + x, baseZ + z);
                 chunksAround.add(chunk);
             }
-        } 
+        }
         return chunksAround;
     }
-    
-    public Location getLocation(){
+
+    public Location getLocation() {
         PxVec3 vec3 = getPos().getP();
         PxQuat q = getPos().getQ();
         Quaternionf boxQuat = new Quaternionf(q.getX(), q.getY(), q.getZ(), q.getW());
@@ -151,5 +159,27 @@ public class DisplayedPhysxBox extends PhysxBox {
         Location loc = new Location(display[0].getWorld(), vec3.getX(), vec3.getY(), vec3.getZ());
         loc.setDirection(dir2);
         return loc;
+    }
+    
+    public void makeKinematic(boolean flag){
+        getActor().setRigidBodyFlag(PxRigidBodyFlagEnum.eKINEMATIC, flag);
+    }
+    
+    public void moveKinematic(Location location){
+        PxVec3 p = new PxVec3((float) location.x(), (float) location.y(), (float) location.z());
+
+        // プレイヤーの向きと相対的に回転させる
+        Quaternionf quat = new Quaternionf();
+        quat.rotateY((float) -Math.toRadians(location.getYaw()));
+        quat.rotateX((float) Math.toRadians(location.getPitch()));
+
+        PxQuat q = new PxQuat(quat.x, quat.y, quat.z, quat.w);
+        PxTransform transform = new PxTransform(PxIDENTITYEnum.PxIdentity);
+        transform.setP(p);
+        transform.setQ(q);
+        getActor().setKinematicTarget(transform);
+        p.destroy();
+        q.destroy();
+        transform.destroy();
     }
 }

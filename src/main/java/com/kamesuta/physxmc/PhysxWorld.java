@@ -9,7 +9,9 @@ import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
 import physx.physics.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static com.kamesuta.physxmc.Physx.*;
 
@@ -17,9 +19,9 @@ import static com.kamesuta.physxmc.Physx.*;
  * Physxのシーン管理クラス
  */
 public class PhysxWorld {
-    
+
     protected PxScene scene;
-    
+
     @Getter
     protected SimulationCallback simCallback;
 
@@ -33,6 +35,7 @@ public class PhysxWorld {
 
     /**
      * シーン本体を作る
+     *
      * @return
      */
     public PxScene createScene() {
@@ -62,7 +65,8 @@ public class PhysxWorld {
 
     /**
      * シーンに箱オブジェクトを追加する
-     * @param pos 座標
+     *
+     * @param pos  座標
      * @param quat 回転
      * @return 箱オブジェクト
      */
@@ -74,8 +78,9 @@ public class PhysxWorld {
 
     /**
      * シーンに箱オブジェクトを追加する
-     * @param pos 座標
-     * @param quat 回転
+     *
+     * @param pos         座標
+     * @param quat        回転
      * @param boxGeometry 箱の大きさ
      * @return 追加した箱オブジェクト
      */
@@ -85,15 +90,16 @@ public class PhysxWorld {
         return box;
     }
 
-    public PhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry, boolean isTrigger) {
-        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat, boxGeometry, isTrigger);
+    public PhysxBox addBox(PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, boolean isTrigger) {
+        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat, boxGeometries, isTrigger);
         scene.addActor(box.getActor());
         return box;
     }
 
     /**
-     * シーンから箱オブジェクトを取り除く
-     * @param box　箱オフジェクト
+     * シーンから箱オブジェクトを取り除いて箱を削除する
+     *
+     * @param box 　箱オフジェクト
      */
     public void removeBox(PhysxBox box) {
         scene.removeActor(box.getActor());
@@ -107,9 +113,9 @@ public class PhysxWorld {
         scene.simulate(3f / 60f); // 1 second = 60 frame = 20tick
         scene.fetchResults(true);
     }
-    
-    public void setGravity(Vector gravity){
-        PxVec3 pxGravity = new PxVec3((float)gravity.getX(), (float)gravity.getY(), (float)gravity.getZ());
+
+    public void setGravity(Vector gravity) {
+        PxVec3 pxGravity = new PxVec3((float) gravity.getX(), (float) gravity.getY(), (float) gravity.getZ());
         scene.setGravity(pxGravity);
         pxGravity.destroy();
     }
@@ -130,7 +136,7 @@ public class PhysxWorld {
             //入れるとなぜかクラッシュする
 //            if(actor0.getType().equals(PxActorTypeEnum.eRIGID_STATIC) || actor1.getType().equals(PxActorTypeEnum.eRIGID_STATIC)) 
 //                return;
-            
+
             for (int i = 0; i < nbPairs; i++) {
                 PxContactPair pair = PxContactPair.arrayGet(pairs.getAddress(), i);
                 PxPairFlags events = pair.getEvents();
@@ -152,7 +158,7 @@ public class PhysxWorld {
                 PxTriggerPair pair = PxTriggerPair.arrayGet(pairs.getAddress(), i);
                 PxActor actor0 = pair.getTriggerActor();
                 PxActor actor1 = pair.getOtherActor();
-                
+
                 PxPairFlagEnum status = pair.getStatus();
                 String event;
                 if (status == PxPairFlagEnum.eNOTIFY_TOUCH_FOUND) {

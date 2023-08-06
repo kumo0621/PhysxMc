@@ -1,7 +1,6 @@
 package com.kamesuta.physxmc;
 
 import org.apache.logging.log4j.util.BiConsumer;
-import org.apache.logging.log4j.util.TriConsumer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -29,10 +28,10 @@ public class PlayerTriggerHolder {
      */
     public List<BiConsumer<Player, DisplayedPhysxBox>> playerTriggerReceivers = new ArrayList<>();
 
-    public PlayerTriggerHolder(){
+    public PlayerTriggerHolder() {
         PhysxMc.physxWorld.simCallback.triggerReceivers.add(this::onPlayerEnterBox);
     }
-    
+
     public void update() {
         Bukkit.getOnlinePlayers().forEach(player -> {
             Location loc = player.getLocation();
@@ -45,50 +44,53 @@ public class PlayerTriggerHolder {
             vec3.destroy();
             playerCollisionList.get(player).setPos(tmpPose);
         });
-        
+
         playerCollisionList.forEach((player, physxBox) -> {
-            if(!player.isOnline() && physxBox != null){
+            if (!player.isOnline() && physxBox != null) {
                 PhysxMc.physxWorld.removeBox(physxBox);
                 playerCollisionList.put(player, null);
             }
         });
     }
-    
-    private PhysxBox createPlayerTriggerBox(Location loc, Player player){
+
+    private PhysxBox createPlayerTriggerBox(Location loc, Player player) {
         PxVec3 pos = new PxVec3((float) loc.x(), (float) loc.y() + 0.9f, (float) loc.z());
         PxQuat rot = new PxQuat(PxIDENTITYEnum.PxIdentity);
         PxBoxGeometry geometry = new PxBoxGeometry(0.3f, 0.9f, 0.3f);//Steve is 1.8m tall and has 0.6m width
-        PhysxBox box = PhysxMc.physxWorld.addBox(pos, rot, geometry, true);
+        PhysxBox box = PhysxMc.physxWorld.addBox(pos, rot, Map.of(geometry, new PxVec3()), true);
         box.getActor().setName(player.getName());
         return box;
     }
 
     public void destroyAll() {
         playerCollisionList.forEach((player, physxBox) -> {
-            PhysxMc.physxWorld.removeBox(physxBox);
+            if(physxBox != null)
+                PhysxMc.physxWorld.removeBox(physxBox);
         });
         playerCollisionList.clear();
     }
-    
-    public Player getPlayer(PxActor actor){
-        for (Map.Entry<Player, PhysxBox> entry : playerCollisionList.entrySet()){
-            if(entry.getValue().getActor().equals(actor))
+
+    public Player getPlayer(PxActor actor) {
+        for (Map.Entry<Player, PhysxBox> entry : playerCollisionList.entrySet()) {
+            if (entry.getValue() == null)
+                continue;
+            if (entry.getValue().getActor().equals(actor))
                 return entry.getKey();
         }
         return null;
     }
-    
-    public void onPlayerEnterBox(PxActor actor1, PxActor actor2, String event){
-        if(!event.equals("TRIGGER_ENTER"))
+
+    public void onPlayerEnterBox(PxActor actor1, PxActor actor2, String event) {
+        if (!event.equals("TRIGGER_ENTER"))
             return;
 
         Player player;
         DisplayedPhysxBox box;
-        
+
         player = getPlayer(actor1);
-        if(player != null){
+        if (player != null) {
             box = PhysxMc.displayedBoxHolder.getBox(actor2);
-            if(box != null){
+            if (box != null) {
                 Player finalPlayer = player;
                 DisplayedPhysxBox finalBox = box;
                 playerTriggerReceivers.forEach(playerDisplayedPhysxBoxBiConsumer -> playerDisplayedPhysxBoxBiConsumer.accept(finalPlayer, finalBox));
@@ -96,9 +98,9 @@ public class PlayerTriggerHolder {
         }
 
         player = getPlayer(actor2);
-        if(player != null){
+        if (player != null) {
             box = PhysxMc.displayedBoxHolder.getBox(actor1);
-            if(box != null){
+            if (box != null) {
                 Player finalPlayer = player;
                 DisplayedPhysxBox finalBox = box;
                 playerTriggerReceivers.forEach(playerDisplayedPhysxBoxBiConsumer -> playerDisplayedPhysxBoxBiConsumer.accept(finalPlayer, finalBox));
