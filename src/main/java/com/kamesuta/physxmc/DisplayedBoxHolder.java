@@ -151,6 +151,10 @@ public class DisplayedBoxHolder {
         }
         PhysxMc.physxWorld.removeBox(box);
     }
+    
+    public boolean hasBox(DisplayedPhysxBox box){
+        return blockDisplayList.contains(box);
+    }
 
     /**
      * 全ての箱に対して爆発を適用する

@@ -59,8 +59,11 @@ public class GrabTool {
 
     public void update() {
         for (Map.Entry<Player, DisplayedPhysxBox> entry : grabbedPlayerMap.entrySet()) {
-            if (entry.getValue() == null || !originalRotationMap.containsKey(entry.getKey()))
+            if (!displayedBoxHolder.hasBox(entry.getValue()) || !originalRotationMap.containsKey(entry.getKey())){ //既に他の要因でboxが取り除かれている場合
+                grabbedPlayerMap.remove(entry.getKey());
+                originalRotationMap.remove(entry.getKey());
                 return;
+            }
 
             Location eyeLocation = entry.getKey().getEyeLocation().clone();
             Vector playerDir = eyeLocation.getDirection().clone().normalize().multiply(3);
