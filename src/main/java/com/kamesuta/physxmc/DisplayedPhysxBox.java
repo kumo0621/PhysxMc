@@ -150,6 +150,11 @@ public class DisplayedPhysxBox extends PhysxBox {
         return chunksAround;
     }
 
+    public Quaternionf getQuat(){
+        PxQuat q = getPos().getQ();
+        return new Quaternionf(q.getX(), q.getY(), q.getZ(), q.getW());
+    }
+    
     public Location getLocation() {
         PxVec3 vec3 = getPos().getP();
         PxQuat q = getPos().getQ();
@@ -166,14 +171,20 @@ public class DisplayedPhysxBox extends PhysxBox {
     }
     
     public void moveKinematic(Location location){
-        PxVec3 p = new PxVec3((float) location.x(), (float) location.y(), (float) location.z());
+        Vector p = new Vector((float) location.x(), (float) location.y(), (float) location.z());
 
-        // プレイヤーの向きと相対的に回転させる
+        // 相対的に回転させる
         Quaternionf quat = new Quaternionf();
         quat.rotateY((float) -Math.toRadians(location.getYaw()));
         quat.rotateX((float) Math.toRadians(location.getPitch()));
+        
+        moveKinematic(p, quat);
+    }
+    
+    public void moveKinematic(Vector pos, Quaternionf rot){
+        PxVec3 p = new PxVec3((float) pos.getX(), (float) pos.getY(), (float) pos.getZ());
 
-        PxQuat q = new PxQuat(quat.x, quat.y, quat.z, quat.w);
+        PxQuat q = new PxQuat(rot.x, rot.y, rot.z, rot.w);
         PxTransform transform = new PxTransform(PxIDENTITYEnum.PxIdentity);
         transform.setP(p);
         transform.setQ(q);

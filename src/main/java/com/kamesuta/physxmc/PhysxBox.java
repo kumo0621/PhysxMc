@@ -1,8 +1,6 @@
 package com.kamesuta.physxmc;
 
 import lombok.Getter;
-import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 import physx.common.*;
 import physx.extensions.PxRigidBodyExt;
 import physx.geometry.PxBoxGeometry;
