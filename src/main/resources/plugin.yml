@@ -2,3 +2,5 @@ name: PhysxMc
 version: '${version}'
 main: com.kamesuta.physxmc.PhysxMc
 api-version: 1.19
+depend:
+  - ProtocolLib
