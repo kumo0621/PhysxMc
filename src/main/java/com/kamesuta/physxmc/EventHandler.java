@@ -45,6 +45,15 @@ public class EventHandler implements Listener {
                     event.setCancelled(true);
                     return;
                 }
+
+                if(event.getItem() != null && event.getItem().getType() == Material.FLINT_AND_STEEL){
+                    DisplayedPhysxBox box = displayedBoxHolder.raycast(event.getPlayer().getEyeLocation(), 4);
+                    if (box != null){
+                        displayedBoxHolder.destroySpecific(box);
+                    }
+                    event.setCancelled(true);
+                    return;
+                }
                 
                 if(PhysxMc.grabTool.tryGrab(event.getPlayer()))
                     event.setCancelled(true);
