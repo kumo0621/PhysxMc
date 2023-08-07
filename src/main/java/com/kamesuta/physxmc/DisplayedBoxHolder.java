@@ -54,8 +54,10 @@ public class DisplayedBoxHolder {
      * @return
      */
     public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack) {
-        Vector3f rot = location.getDirection().clone().toVector3f();
-        Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
+        Quaternionf quat = new Quaternionf()
+                .rotateY((float) -Math.toRadians(location.getYaw()))
+                .rotateX((float) Math.toRadians(location.getPitch()));
+
         // なめらかな補完のために2つBlockDisplayを作る
         BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
         
