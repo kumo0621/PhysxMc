@@ -1,5 +1,6 @@
 package com.kamesuta.physxmc;
 
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -36,6 +37,15 @@ public class EventHandler implements Listener {
                 PhysxMc.grabTool.release(event.getPlayer());
             }
             else{
+                if(event.getItem() != null && event.getItem().getType() == Material.STICK){
+                    DisplayedPhysxBox box = displayedBoxHolder.raycast(event.getPlayer().getEyeLocation(), 4);
+                    if (box != null){
+                        box.throwBox(event.getPlayer().getEyeLocation());
+                    }
+                    event.setCancelled(true);
+                    return;
+                }
+                
                 if(PhysxMc.grabTool.tryGrab(event.getPlayer()))
                     event.setCancelled(true);
             }
