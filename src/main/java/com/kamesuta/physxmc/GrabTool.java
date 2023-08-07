@@ -12,20 +12,21 @@ import static com.kamesuta.physxmc.PhysxMc.displayedBoxHolder;
 
 public class GrabTool {
 
-    private Map<Player, DisplayedPhysxBox> grabbedPlayerMap = new HashMap<>();
+    private final Map<Player, DisplayedPhysxBox> grabbedPlayerMap = new HashMap<>();
     
     public GrabTool(){
         
     }
 
-    public void tryGrab(Player player){
+    public boolean tryGrab(Player player){
         DisplayedPhysxBox box = displayedBoxHolder.raycast(player.getEyeLocation(), 10);
-        if(box == null){
-            return;
+        if(box == null || grabbedPlayerMap.containsValue(box)){
+            return false;
         }
         
         grabbedPlayerMap.put(player, box);
         box.makeKinematic(true);
+        return true;
     }
 
     public void release(Player player){

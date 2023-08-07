@@ -32,10 +32,12 @@ public class EventHandler implements Listener {
         }
         if ((event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) && PhysxSetting.isDebugMode()) {
             if(PhysxMc.grabTool.isGrabbing(event.getPlayer())){
+                event.setCancelled(true);
                 PhysxMc.grabTool.release(event.getPlayer());
             }
             else{
-                PhysxMc.grabTool.tryGrab(event.getPlayer());
+                if(PhysxMc.grabTool.tryGrab(event.getPlayer()))
+                    event.setCancelled(true);
             }
         }
     }
