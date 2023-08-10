@@ -1,10 +1,7 @@
 package com.kamesuta.physxmc.core;
 
-import com.kamesuta.physxmc.PhysxSetting;
-import lombok.Data;
 import lombok.Getter;
 import physx.common.PxIDENTITYEnum;
-import physx.common.PxQuat;
 import physx.common.PxTransform;
 import physx.common.PxVec3;
 import physx.extensions.PxRigidBodyExt;

@@ -68,9 +68,6 @@ public class PhysxWorld {
 
     /**
      * シーンに箱オブジェクトを追加する
-     *
-     * @param pos  座標
-     * @param quat 回転
      * @return 箱オブジェクト
      */
     public PhysxBox addBox(BoxData data) {

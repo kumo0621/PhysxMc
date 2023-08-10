@@ -98,7 +98,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
      * @param display       表示用のBlockDisplay
      * @return 追加した箱オブジェクト
      */
-    public DisplayedPhysxBox addBox(BoxData data, BlockDisplay[] display) {
+    public DisplayedPhysxBox addBox(BoxData data, Map<BlockDisplay[], Vector> display) {
         DisplayedPhysxBox box = new DisplayedPhysxBox(physics, data, display);
         scene.addActor(box.getActor());
         return box;

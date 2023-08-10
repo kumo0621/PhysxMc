@@ -5,8 +5,6 @@ import lombok.Data;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
-import physx.physics.PxMaterial;
-import physx.physics.PxPhysics;
 
 import java.util.Map;
 

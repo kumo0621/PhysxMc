@@ -6,6 +6,7 @@ import com.kamesuta.physxmc.utils.BoundingBoxUtil;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.BlockDisplay;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BoundingBox;
@@ -55,14 +56,44 @@ public class DisplayedBoxHolder {
         Quaternionf quat = new Quaternionf()
                 .rotateY((float) -Math.toRadians(location.getYaw()))
                 .rotateX((float) Math.toRadians(location.getPitch()));
+        Map<BlockDisplay[], Vector> displayMap = new HashMap<>();
+        Map<PxBoxGeometry, PxVec3> boxGeometries = new HashMap<>();
 
         // なめらかな補完のために2つBlockDisplayを作る
         BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
+        displayMap.put(display, new Vector());
+        Map<PxBoxGeometry, PxVec3> boxGeometry = getBoxGeometries(itemStack, display[0], scale, new Vector().multiply(scale));
+        boxGeometries.putAll(boxGeometry);
 
+        BlockDisplay[] display2 = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
+        displayMap.put(display2, new Vector(0,1,0));
+        Map<PxBoxGeometry, PxVec3> boxGeometry2 = getBoxGeometries(itemStack, display[0], scale, new Vector(0, 1, 0).multiply(scale));
+        boxGeometries.putAll(boxGeometry2);
+
+        BlockDisplay[] display3 = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
+        displayMap.put(display3, new Vector(0,2,0));
+        Map<PxBoxGeometry, PxVec3> boxGeometry3 = getBoxGeometries(itemStack, display[0], scale, new Vector(0, 2, 0).multiply(scale));
+        boxGeometries.putAll(boxGeometry3);
+
+        BlockDisplay[] display4 = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
+        displayMap.put(display4, new Vector(1,0,0));
+        Map<PxBoxGeometry, PxVec3> boxGeometry4 = getBoxGeometries(itemStack, display[0], scale, new Vector(1, 0, 0).multiply(scale));
+        boxGeometries.putAll(boxGeometry4);
+
+        BoxData data = new BoxData(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries);
+        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, displayMap);
+        blockDisplayList.add(box);
+        return box;
+    }
+
+    /**
+     * ブロックの判定取得
+     */
+    private static Map<PxBoxGeometry, PxVec3> getBoxGeometries(ItemStack itemStack, Entity display, Vector scale, Vector offset){
         BlockData blockData = itemStack.getType().createBlockData();
         Collection<BoundingBox> boundingBoxes;
         try {
-            boundingBoxes = BoundingBoxUtil.getOutlineBoxes(BoundingBoxUtil.getOutline(display[0], blockData));
+            boundingBoxes = BoundingBoxUtil.getOutlineBoxes(BoundingBoxUtil.getOutline(display, blockData));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -70,13 +101,9 @@ public class DisplayedBoxHolder {
         for (BoundingBox boundingBox : boundingBoxes) {
             Vector geometry = BoundingBoxUtil.getGeometryFromBoundingBox(boundingBox).multiply(scale);
             Vector center = BoundingBoxUtil.getCenterFromBoundingBox(boundingBox).multiply(scale);
-            boxGeometries.put(new PxBoxGeometry((float) geometry.getX(), (float) geometry.getY(), (float) geometry.getZ()), new PxVec3((float) center.getX(), (float) center.getY(), (float) center.getZ()));
+            boxGeometries.put(new PxBoxGeometry((float) geometry.getX(), (float) geometry.getY(), (float) geometry.getZ()), new PxVec3((float) center.getX() + (float)offset.getX(), (float) center.getY() + (float)offset.getY(), (float) center.getZ() + (float)offset.getZ()));
         }
-
-        BoxData data = new BoxData(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries);
-        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, display);
-        blockDisplayList.add(box);
-        return box;
+        return boxGeometries;
     }
 
     /**
@@ -126,8 +153,10 @@ public class DisplayedBoxHolder {
                 return false;
 
             if (box.getLocation().y() < -128 || box.isDisplayDead()) {
-                for (BlockDisplay blockDisplay : box.display) {
-                    blockDisplay.remove();
+                for (DisplayedPhysxBox.DisplayData data : box.displayMap){
+                    for (BlockDisplay blockDisplay : data.getDisplays()) {
+                        blockDisplay.remove();
+                    }
                 }
                 PhysxMc.physxWorld.removeBox(box);
                 return true;
@@ -141,11 +170,13 @@ public class DisplayedBoxHolder {
      * 全てのBlockDisplayと箱を消去する
      */
     public void destroyAll() {
-        blockDisplayList.forEach(block -> {
-            for (BlockDisplay blockDisplay : block.display) {
-                blockDisplay.remove();
+        blockDisplayList.forEach(box -> {
+            for (DisplayedPhysxBox.DisplayData data : box.displayMap){
+                for (BlockDisplay blockDisplay : data.getDisplays()) {
+                    blockDisplay.remove();
+                }
             }
-            PhysxMc.physxWorld.removeBox(block);
+            PhysxMc.physxWorld.removeBox(box);
         });
         blockDisplayList.clear();
     }
@@ -154,8 +185,10 @@ public class DisplayedBoxHolder {
         if (box == null || !blockDisplayList.remove(box))
             return;
 
-        for (BlockDisplay blockDisplay : box.display) {
-            blockDisplay.remove();
+        for (DisplayedPhysxBox.DisplayData data : box.displayMap){
+            for (BlockDisplay blockDisplay : data.getDisplays()) {
+                blockDisplay.remove();
+            }
         }
         PhysxMc.physxWorld.removeBox(box);
     }

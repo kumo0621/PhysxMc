@@ -4,6 +4,9 @@ import com.kamesuta.physxmc.PhysxSetting;
 import com.kamesuta.physxmc.core.BoxData;
 import com.kamesuta.physxmc.core.PhysxBox;
 import com.kamesuta.physxmc.utils.ConversionUtility;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -17,14 +20,11 @@ import physx.common.PxIDENTITYEnum;
 import physx.common.PxQuat;
 import physx.common.PxTransform;
 import physx.common.PxVec3;
-import physx.geometry.PxBoxGeometry;
 import physx.physics.PxForceModeEnum;
 import physx.physics.PxPhysics;
 import physx.physics.PxRigidBodyFlagEnum;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 import static com.kamesuta.physxmc.core.Physx.defaultMaterial;
 
@@ -36,16 +36,16 @@ public class DisplayedPhysxBox extends PhysxBox {
     /**
      * 表示用のBlockDisplay
      */
-    public BlockDisplay[] display;
-    /**
-     * スワップのフェーズ管理
-     */
-    public int swapPhase = 0;
+    public List<DisplayData> displayMap = new ArrayList<>();
+    
+    private World world;
 
-    public DisplayedPhysxBox(PxPhysics physics, BoxData data, BlockDisplay[] display) {
+    public DisplayedPhysxBox(PxPhysics physics, BoxData data, Map<BlockDisplay[], Vector> display) {
         super(physics, defaultMaterial, data);
 
-        this.display = display;
+        display.forEach((blockDisplays, vector) -> this.displayMap.add(new DisplayData(blockDisplays, vector, 0)));
+        BlockDisplay[] firstDisplay = displayMap.get(0).displays;
+        world = firstDisplay[0].getWorld();
     }
 
     public void update() {
@@ -56,38 +56,44 @@ public class DisplayedPhysxBox extends PhysxBox {
      * 物理の箱とBlockDisplayを同期する
      */
     private void trySwap() {
-        PxQuat q = getPos().getQ();
-        PxVec3 p = getPos().getP();
-        Location pos = new Location(display[0].getWorld(), p.getX(), p.getY(), p.getZ());
+        for (DisplayData displayData : displayMap) {
+            BlockDisplay[] displays = displayData.getDisplays();
+            Vector offset = displayData.getOffset();
+            int swapPhase = displayData.getSwapPhase();
+            
+            PxQuat q = getPos().getQ();
+            PxVec3 p = getPos().getP();
+            Location pos = new Location(displays[0].getWorld(), p.getX(), p.getY(), p.getZ());
 
-        // スワップのフェーズ管理 (2ティックかけてスワップが完了する)
-        if (swapPhase == 2) {
-            swap(pos);
-            swapPhase = 0;
-        }
-        if (swapPhase == 1) {
-            preSwap(pos);
-            swapPhase = 2;
-        }
-        // 位置が16マス以上離れていたら次のティックからスワップを開始する
-        if (swapPhase == 0 && display[0].getLocation().toVector().distance(new Vector(p.getX(), p.getY(), p.getZ())) > 16) {
-            swapPhase = 1;
-        }
+            // スワップのフェーズ管理 (2ティックかけてスワップが完了する)
+            if (swapPhase == 2) {
+                swap(pos, displays);
+                swapPhase = 0;
+            }
+            if (swapPhase == 1) {
+                preSwap(pos, displays);
+                swapPhase = 2;
+            }
+            // 位置が16マス以上離れていたら次のティックからスワップを開始する
+            if (swapPhase == 0 && displays[0].getLocation().toVector().distance(new Vector(p.getX(), p.getY(), p.getZ())) > 16) {
+                swapPhase = 1;
+            }
 
-        for (BlockDisplay blockDisplay : display) {
-            Location prev = blockDisplay.getLocation();
+            for (BlockDisplay blockDisplay : displays) {
+                Location prev = blockDisplay.getLocation();
 
-            Quaternionf boxQuat = new Quaternionf(q.getX(), q.getY(), q.getZ(), q.getW());
-            Transformation transformation = blockDisplay.getTransformation();
-            transformation.getLeftRotation().set(boxQuat);
-            transformation.getTranslation().set(p.getX() - prev.getX(), p.getY() - prev.getY(), p.getZ() - prev.getZ());
-            Matrix4f matrix = ConversionUtility.getTransformationMatrix(transformation);
-            matrix.translate(-.5f, -.5f, -.5f);
-            blockDisplay.setTransformationMatrix(matrix);
-            // なめらかに補完する
-            blockDisplay.setInterpolationDelay(0);
-            blockDisplay.setInterpolationDuration(1);
-            // blockDisplay.teleport(new Location(blockDisplay.getWorld(), p.getX(), p.getY(), p.getZ()));
+                Quaternionf boxQuat = new Quaternionf(q.getX(), q.getY(), q.getZ(), q.getW());
+                Transformation transformation = blockDisplay.getTransformation();
+                transformation.getLeftRotation().set(boxQuat);
+                transformation.getTranslation().set(p.getX() - prev.getX(), p.getY() - prev.getY(), p.getZ() - prev.getZ());
+                Matrix4f matrix = ConversionUtility.getTransformationMatrix(transformation);
+                matrix.translate(-.5f + (float) offset.getX(), -.5f + (float) offset.getY(), -.5f + (float) offset.getZ());
+                blockDisplay.setTransformationMatrix(matrix);
+                // なめらかに補完する
+                blockDisplay.setInterpolationDelay(0);
+                blockDisplay.setInterpolationDuration(1);
+                // blockDisplay.teleport(new Location(blockDisplay.getWorld(), p.getX(), p.getY(), p.getZ()));
+            }
         }
     }
 
@@ -96,7 +102,7 @@ public class DisplayedPhysxBox extends PhysxBox {
      *
      * @param pos 新しい位置
      */
-    private void preSwap(Location pos) {
+    private void preSwap(Location pos, BlockDisplay[] display) {
         display[0].setVisibleByDefault(true);
     }
 
@@ -105,7 +111,7 @@ public class DisplayedPhysxBox extends PhysxBox {
      *
      * @param pos 新しい位置
      */
-    private void swap(Location pos) {
+    private void swap(Location pos, BlockDisplay[] display) {
         display[1].setVisibleByDefault(false);
         display[1].teleport(pos);
 
@@ -133,10 +139,9 @@ public class DisplayedPhysxBox extends PhysxBox {
      */
     public Collection<Chunk> getSurroundingChunks() {
         int[] offset = {-1, 0, 1};
-
-        World world = display[0].getWorld();
+        
         PxVec3 p = getPos().getP();
-        Location pos = new Location(display[0].getWorld(), p.getX(), p.getY(), p.getZ());
+        Location pos = new Location(world, p.getX(), p.getY(), p.getZ());
         int baseX = pos.getChunk().getX();
         int baseZ = pos.getChunk().getZ();
 
@@ -171,7 +176,7 @@ public class DisplayedPhysxBox extends PhysxBox {
         Quaternionf boxQuat = new Quaternionf(q.getX(), q.getY(), q.getZ(), q.getW());
         Vector3f dir = ConversionUtility.convertToEulerAngles(boxQuat);
         Vector dir2 = new Vector(dir.x, dir.y, dir.z);
-        Location loc = new Location(display[0].getWorld(), vec3.getX(), vec3.getY(), vec3.getZ());
+        Location loc = new Location(world, vec3.getX(), vec3.getY(), vec3.getZ());
         loc.setDirection(dir2);
         return loc;
     }
@@ -215,6 +220,19 @@ public class DisplayedPhysxBox extends PhysxBox {
      * @return
      */
     public boolean isDisplayDead(){
+        BlockDisplay[] display = displayMap.get(0).displays;
         return display[0].isDead() || display[1].isDead();
+    }
+
+    @AllArgsConstructor
+    @Data
+    public class DisplayData{
+        private final BlockDisplay[] displays;
+        private final Vector offset;
+        
+        /**
+         * スワップのフェーズ管理
+         */
+        private int swapPhase;
     }
 }
