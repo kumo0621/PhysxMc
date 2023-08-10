@@ -20,8 +20,11 @@ import static com.kamesuta.physxmc.core.Physx.*;
  */
 public class PhysxWorld {
 
+    /**
+     * シーン本体
+     */
     protected PxScene scene;
-
+    
     @Getter
     protected SimulationCallback simCallback;
 
@@ -114,6 +117,10 @@ public class PhysxWorld {
         scene.fetchResults(true);
     }
 
+    /**
+     * シーンの重力を設定する
+     * @param gravity
+     */
     public void setGravity(Vector gravity) {
         PxVec3 pxGravity = new PxVec3((float) gravity.getX(), (float) gravity.getY(), (float) gravity.getZ());
         scene.setGravity(pxGravity);
@@ -125,7 +132,14 @@ public class PhysxWorld {
      */
     public static class SimulationCallback extends PxSimulationEventCallbackImpl {
 
+        /**
+         * 衝突イベントを受信したいメソッドをここに登録する
+         */
         public List<TriConsumer<PxActor, PxActor, String>> contactReceivers = new ArrayList<>();
+
+        /**
+         * 重なりイベントを受信したいメソッドをここに登録する
+         */
         public List<TriConsumer<PxActor, PxActor, String>> triggerReceivers = new ArrayList<>();
 
         @Override

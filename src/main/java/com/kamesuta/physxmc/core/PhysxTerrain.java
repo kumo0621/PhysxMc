@@ -20,8 +20,15 @@ import java.util.List;
  */
 public class PhysxTerrain {
 
+    /**
+     * 地形本体
+     */
     @Getter
     private final PxRigidStatic actor;
+
+    /**
+     * 地形にアタッチされた形状たち
+     */
     private final List<PxShape> terrainShapes = new ArrayList<>();
 
     public static final String name = "terrain";

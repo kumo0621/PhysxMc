@@ -16,8 +16,15 @@ import java.util.Map;
  */
 public class PhysxBox {
 
+    /**
+     * 箱本体
+     */
     @Getter
     private final PxRigidDynamic actor;
+
+    /**
+     * 箱にアタッチされた形状(接触判定)達
+     */
     private final List<PxShape> boxShapes = new ArrayList<>();
 
     /**
@@ -137,5 +144,12 @@ public class PhysxBox {
             
         actor.addForce(vec3, mode);
         vec3.destroy();
+    }
+
+    /**
+     * Boxがスリープ中(更新停止中)か取得する
+     */
+    public boolean isSleeping() {
+        return actor.isSleeping();
     }
 }

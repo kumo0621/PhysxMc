@@ -11,6 +11,9 @@ import java.util.Map;
 
 import static com.kamesuta.physxmc.PhysxMc.displayedBoxHolder;
 
+/**
+ * 物理オブジェクトをMinecraft世界で掴めるようにするクラス
+ */
 public class GrabTool {
 
     private final Map<Player, DisplayedPhysxBox> grabbedPlayerMap = new HashMap<>();
@@ -20,6 +23,11 @@ public class GrabTool {
 
     }
 
+    /**
+     * プレイヤーの視線の先のブロックを掴む
+     * @param player　プレイヤー
+     * @return 掴んだかどうか
+     */
     public boolean tryGrab(Player player) {
         DisplayedPhysxBox box = displayedBoxHolder.raycast(player.getEyeLocation(), 10);
         if (box == null || grabbedPlayerMap.containsValue(box)) {
@@ -44,6 +52,10 @@ public class GrabTool {
         return true;
     }
 
+    /**
+     * 掴んだブロックを開放する
+     * @param player
+     */
     public void release(Player player) {
         if (!isGrabbing(player))
             return;
@@ -54,11 +66,23 @@ public class GrabTool {
         originalRotationMap.remove(player);
     }
 
+    /**
+     * 掴んでいるかどうか
+     * @param player
+     * @return
+     */
     public boolean isGrabbing(Player player) {
         return grabbedPlayerMap.containsKey(player);
     }
 
     public void update() {
+        updateGrabbingObjPos();
+    }
+
+    /**
+     * 掴んでいる物理オブジェクトの座標をアップデートする
+     */
+    private void updateGrabbingObjPos(){
         for (Map.Entry<Player, DisplayedPhysxBox> entry : grabbedPlayerMap.entrySet()) {
             if (!displayedBoxHolder.hasBox(entry.getValue()) || !originalRotationMap.containsKey(entry.getKey())){ //既に他の要因でboxが取り除かれている場合
                 grabbedPlayerMap.remove(entry.getKey());
@@ -85,6 +109,10 @@ public class GrabTool {
         }
     }
 
+    /**
+     * 掴んでいる状態を全リセット
+     * 掴んでいるブロックは残るので注意
+     */
     public void forceClear() {
         grabbedPlayerMap.clear();
         originalRotationMap.clear();

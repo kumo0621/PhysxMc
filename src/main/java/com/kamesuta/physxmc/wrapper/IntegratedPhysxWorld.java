@@ -68,6 +68,9 @@ public class IntegratedPhysxWorld extends PhysxWorld {
         chunkTerrainMap.remove(chunk);
     }
 
+    /**
+     * チャンクが物理地形として読み込まれているか
+     */
     public boolean isChunkLoadedAsTerrain(Chunk chunk) {
         return chunkTerrainMap.get(chunk) != null;
     }

@@ -13,14 +13,17 @@ import org.bukkit.inventory.EquipmentSlot;
 
 import static com.kamesuta.physxmc.PhysxMc.displayedBoxHolder;
 
+/**
+ * Bukkitのイベントを受信するクラス
+ */
 public class EventHandler implements Listener {
     
     @org.bukkit.event.EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if(event.getHand() == EquipmentSlot.OFF_HAND)
+        if(event.getHand() == EquipmentSlot.OFF_HAND && !PhysxSetting.isDebugMode())
             return;
         
-        if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) && PhysxSetting.isDebugMode()) {
+        if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
             if(event.getAction() == Action.RIGHT_CLICK_AIR){
                 DisplayedPhysxBox box = displayedBoxHolder.debugCreate(event.getPlayer());
                 if (box != null){
@@ -29,7 +32,7 @@ public class EventHandler implements Listener {
                 }
             }
         }
-        if ((event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) && PhysxSetting.isDebugMode()) {
+        if ((event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK)) {
             if(PhysxMc.grabTool.isGrabbing(event.getPlayer())){
                 event.setCancelled(true);
                 PhysxMc.grabTool.release(event.getPlayer());

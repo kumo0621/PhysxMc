@@ -12,6 +12,7 @@ import com.kamesuta.physxmc.command.PhysxCommand;
 import com.kamesuta.physxmc.core.Physx;
 import com.kamesuta.physxmc.core.PhysxTerrain;
 import com.kamesuta.physxmc.utils.BoundingBoxUtil;
+import com.kamesuta.physxmc.utils.ConversionUtility;
 import com.kamesuta.physxmc.utils.PhysxLoader;
 import com.kamesuta.physxmc.widget.EventHandler;
 import com.kamesuta.physxmc.widget.GrabTool;
@@ -94,7 +95,7 @@ public final class PhysxMc extends JavaPlugin {
                 var shortLocations = packet.getShortArrays().read(0);
 
                 for (short shortLocation : shortLocations) {
-                    var loc = convertShortLocation(event.getPlayer().getWorld(), sectionPos, shortLocation);
+                    var loc = ConversionUtility.convertShortLocation(event.getPlayer().getWorld(), sectionPos, shortLocation);
                     locations.add(loc);
                 }
 
@@ -103,13 +104,6 @@ public final class PhysxMc extends JavaPlugin {
                 }
             }
         });
-    }
-
-    private static Location convertShortLocation(World world, BlockPosition sectionPosition, short shortLoc) {
-        int y = (sectionPosition.getY() * 16) + (shortLoc & 0xF);
-        int z = (sectionPosition.getZ() * 16) + ((shortLoc >> 4) & 0xF);
-        int x = (sectionPosition.getX() * 16) + ((shortLoc >> 8) & 0xF);
-        return new Location(world, x, y, z);
     }
 
     @Override
@@ -127,10 +121,6 @@ public final class PhysxMc extends JavaPlugin {
 
     /**
      * BukkitのOnDisableでエラーが出ないようにクラスを強制的にロードする
-     *
-     * @param klass
-     * @param <T>
-     * @return
      */
     public static <T> Class<T> forceInit(Class<T> klass) {
         try {

@@ -1,5 +1,8 @@
 package com.kamesuta.physxmc.utils;
 
+import com.comphenix.protocol.wrappers.BlockPosition;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.util.Transformation;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
@@ -95,5 +98,15 @@ public class ConversionUtility {
         matrix4f.scale(transformation.getScale());
         matrix4f.rotate(transformation.getRightRotation());
         return matrix4f;
+    }
+
+    /**
+     * チャンクのshortLocを通常のLocationに変換する
+     */
+    public static Location convertShortLocation(World world, BlockPosition sectionPosition, short shortLoc) {
+        int y = (sectionPosition.getY() * 16) + (shortLoc & 0xF);
+        int z = (sectionPosition.getZ() * 16) + ((shortLoc >> 4) & 0xF);
+        int x = (sectionPosition.getX() * 16) + ((shortLoc >> 8) & 0xF);
+        return new Location(world, x, y, z);
     }
 }

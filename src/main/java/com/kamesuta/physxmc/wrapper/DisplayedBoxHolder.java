@@ -79,7 +79,15 @@ public class DisplayedBoxHolder {
         return box;
     }
 
-    private BlockDisplay createDisplay(ItemStack itemStack, Location location, Vector scale, Quaternionf boxQuat) {
+    /**
+     * 指定されたパラメータでBlockDisplayを生成
+     * @param itemStack itemstack
+     * @param location 場所
+     * @param scale 大きさ
+     * @param boxQuat 回転
+     * @return　作ったBlockDisplay
+     */
+    private static BlockDisplay createDisplay(ItemStack itemStack, Location location, Vector scale, Quaternionf boxQuat) {
         BlockDisplay blockDisplay = location.getWorld().spawn(location, BlockDisplay.class);
         blockDisplay.setBlock(itemStack.getType().createBlockData());
         Transformation transformation = blockDisplay.getTransformation();
@@ -198,6 +206,11 @@ public class DisplayedBoxHolder {
         return blockDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
     }
 
+    /**
+     * 箱本体をDisplaydPhysxBoxの形に変換
+     * @param actor 箱の物理オブジェクトクラス
+     * @return ワールドにあるDisplaydPhysxBox
+     */
     public DisplayedPhysxBox getBox(PxActor actor) {
         return blockDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
     }

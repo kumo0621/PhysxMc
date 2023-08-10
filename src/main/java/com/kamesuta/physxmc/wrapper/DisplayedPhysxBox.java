@@ -125,10 +125,6 @@ public class DisplayedPhysxBox extends PhysxBox {
         addForce(force, PxForceModeEnum.eVELOCITY_CHANGE);
     }
 
-    public boolean isSleeping() {
-        return getActor().isSleeping();
-    }
-
     /**
      * 箱の周囲のチャンクを取得
      *
@@ -153,11 +149,19 @@ public class DisplayedPhysxBox extends PhysxBox {
         return chunksAround;
     }
 
+    /**
+     * boxの持つ回転を取得する
+     * @return
+     */
     public Quaternionf getQuat(){
         PxQuat q = getPos().getQ();
         return new Quaternionf(q.getX(), q.getY(), q.getZ(), q.getW());
     }
-    
+
+    /**
+     * boxの座標と回転をminecraftのLocationの形式で取得する(rollは失われる)
+     * @return location
+     */
     public Location getLocation() {
         PxVec3 vec3 = getPos().getP();
         PxQuat q = getPos().getQ();
@@ -168,11 +172,17 @@ public class DisplayedPhysxBox extends PhysxBox {
         loc.setDirection(dir2);
         return loc;
     }
-    
+
+    /**
+     * boxが重力の影響を受けないようにするか変更する
+     */
     public void makeKinematic(boolean flag){
         getActor().setRigidBodyFlag(PxRigidBodyFlagEnum.eKINEMATIC, flag);
     }
-    
+
+    /**
+     * 重力の影響を受けないboxを移動させる
+     */
     public void moveKinematic(Location location){
         Vector p = new Vector((float) location.x(), (float) location.y(), (float) location.z());
 

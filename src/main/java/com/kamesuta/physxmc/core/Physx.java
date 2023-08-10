@@ -42,7 +42,7 @@ public class Physx {
     }
 
     /**
-     * プラグイン終了時にコアコンポーネントを破壊してメモリリークを防ぐ
+     * プラグイン終了時にコアコンポーネントを解放してメモリリークを防ぐ
      */
     public void terminate() {
         if (defaultMaterial != null) {
