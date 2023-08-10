@@ -20,7 +20,7 @@ public class EventHandler implements Listener {
 
     @org.bukkit.event.EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getHand() == EquipmentSlot.OFF_HAND && !PhysxSetting.isDebugMode())
+        if (event.getHand() == EquipmentSlot.OFF_HAND || !PhysxSetting.isDebugMode())
             return;
 
         if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {

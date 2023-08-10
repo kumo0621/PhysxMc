@@ -208,4 +208,12 @@ public class DisplayedPhysxBox extends PhysxBox {
         q.destroy();
         transform.destroy();
     }
+
+    /**
+     * 表示部分のDisplayがMinecraft側でkillされたかどうか
+     * @return
+     */
+    public boolean isDisplayDead(){
+        return display[0].isDead() || display[1].isDead();
+    }
 }

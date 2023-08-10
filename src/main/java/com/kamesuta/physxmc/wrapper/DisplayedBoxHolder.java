@@ -106,7 +106,7 @@ public class DisplayedBoxHolder {
      */
     public void update() {
 
-        destroyTooLowBox();
+        destroyUnusableBox();
         for (DisplayedPhysxBox displayedPhysxBox : blockDisplayList) {
             displayedPhysxBox.update();
 
@@ -117,14 +117,14 @@ public class DisplayedBoxHolder {
     }
 
     /**
-     * ワールドの外に落ちた箱を削除
+     * ワールドの外に落ちたりdisplayが破壊されていたりする不良品を削除
      */
-    private void destroyTooLowBox() {
+    private void destroyUnusableBox() {
         blockDisplayList.removeIf(box -> {
             if (box == null)
                 return false;
 
-            if (box.getLocation().y() < -128) {
+            if (box.getLocation().y() < -128 || box.isDisplayDead()) {
                 for (BlockDisplay blockDisplay : box.display) {
                     blockDisplay.remove();
                 }
