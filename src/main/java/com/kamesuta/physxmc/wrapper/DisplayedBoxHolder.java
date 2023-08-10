@@ -41,7 +41,7 @@ public class DisplayedBoxHolder {
             return null;
         }
         int scale = player.getInventory().getHeldItemSlot() + 1;
-        return createDisplayedBox(player.getEyeLocation(), new Vector(scale, scale, scale), player.getInventory().getItemInMainHand());
+        return createDisplayedBox(player.getEyeLocation(), new Vector(scale, scale, scale), player.getInventory().getItemInMainHand(), List.of(new Vector()));
     }
 
     /**
@@ -52,33 +52,20 @@ public class DisplayedBoxHolder {
      * @param itemStack 元となるブロック
      * @return
      */
-    public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack) {
+    public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack, List<Vector> offsets) {
         Quaternionf quat = new Quaternionf()
                 .rotateY((float) -Math.toRadians(location.getYaw()))
                 .rotateX((float) Math.toRadians(location.getPitch()));
         Map<BlockDisplay[], Vector> displayMap = new HashMap<>();
         Map<PxBoxGeometry, PxVec3> boxGeometries = new HashMap<>();
 
-        // なめらかな補完のために2つBlockDisplayを作る
-        BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
-        displayMap.put(display, new Vector());
-        Map<PxBoxGeometry, PxVec3> boxGeometry = getBoxGeometries(itemStack, display[0], scale, new Vector().multiply(scale));
-        boxGeometries.putAll(boxGeometry);
-
-        BlockDisplay[] display2 = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
-        displayMap.put(display2, new Vector(0,1,0));
-        Map<PxBoxGeometry, PxVec3> boxGeometry2 = getBoxGeometries(itemStack, display[0], scale, new Vector(0, 1, 0).multiply(scale));
-        boxGeometries.putAll(boxGeometry2);
-
-        BlockDisplay[] display3 = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
-        displayMap.put(display3, new Vector(0,2,0));
-        Map<PxBoxGeometry, PxVec3> boxGeometry3 = getBoxGeometries(itemStack, display[0], scale, new Vector(0, 2, 0).multiply(scale));
-        boxGeometries.putAll(boxGeometry3);
-
-        BlockDisplay[] display4 = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
-        displayMap.put(display4, new Vector(1,0,0));
-        Map<PxBoxGeometry, PxVec3> boxGeometry4 = getBoxGeometries(itemStack, display[0], scale, new Vector(1, 0, 0).multiply(scale));
-        boxGeometries.putAll(boxGeometry4);
+        for (Vector offset : offsets) {
+            // なめらかな補完のために2つBlockDisplayを作る
+            BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
+            displayMap.put(display, new Vector(offset.getX(), offset.getY(), offset.getZ()));
+            Map<PxBoxGeometry, PxVec3> boxGeometry = getBoxGeometries(itemStack, display[0], scale, new Vector(offset.getX(), offset.getY(), offset.getZ()).multiply(scale));
+            boxGeometries.putAll(boxGeometry);
+        }
 
         BoxData data = new BoxData(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries);
         DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, displayMap);

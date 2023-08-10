@@ -84,7 +84,7 @@ public class PhysxCommand extends CommandBase implements Listener {
                 sendUsage(sender);
                 return true;
             }
-            PhysxMc.displayedBoxHolder.createDisplayedBox(((Player) sender).getLocation(), new Vector(x, y, z), new ItemStack(Material.COMMAND_BLOCK));
+            PhysxMc.displayedBoxHolder.createDisplayedBox(((Player) sender).getLocation(), new Vector(x, y, z), new ItemStack(Material.COMMAND_BLOCK), List.of(new Vector()));
             sender.sendMessage("テストブロックを生成しました");
             return true;
         } else if (arguments[0].equals(gravityArgument) && arguments[1] != null && arguments[2] != null && arguments[3] != null) {
