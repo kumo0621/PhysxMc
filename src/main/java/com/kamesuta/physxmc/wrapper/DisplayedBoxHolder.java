@@ -3,6 +3,7 @@ package com.kamesuta.physxmc.wrapper;
 import com.kamesuta.physxmc.PhysxMc;
 import com.kamesuta.physxmc.core.BoxData;
 import com.kamesuta.physxmc.utils.BoundingBoxUtil;
+import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.BlockDisplay;
@@ -32,6 +33,12 @@ public class DisplayedBoxHolder {
     private final List<DisplayedPhysxBox> blockDisplayList = new ArrayList<>();
 
     /**
+     * プレイヤーがブロックを投げるとき、連結するブロックのオフセットのマップ
+     */
+    @Getter
+    private final Map<Player, List<Vector>> offsetMap = new HashMap<>();
+
+    /**
      * デバッグモードでプレイヤーがブロックを右クリックした時、座標にBlockDisplayを1個生成して、箱と紐づける
      *
      * @param player プレイヤー
@@ -41,7 +48,10 @@ public class DisplayedBoxHolder {
             return null;
         }
         int scale = player.getInventory().getHeldItemSlot() + 1;
-        return createDisplayedBox(player.getEyeLocation(), new Vector(scale, scale, scale), player.getInventory().getItemInMainHand(), List.of(new Vector()));
+        List<Vector> offsets = offsetMap.get(player);
+        if(offsets == null)
+            offsets = List.of(new Vector());
+        return createDisplayedBox(player.getEyeLocation(), new Vector(scale, scale, scale), player.getInventory().getItemInMainHand(), offsets);
     }
 
     /**
@@ -50,6 +60,7 @@ public class DisplayedBoxHolder {
      * @param location  場所
      * @param scale     大きさ
      * @param itemStack 元となるブロック
+     * @param offsets 複数ブロックを連結する際のオフセット
      * @return
      */
     public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack, List<Vector> offsets) {
