@@ -25,7 +25,8 @@ public class GrabTool {
 
     /**
      * プレイヤーの視線の先のブロックを掴む
-     * @param player　プレイヤー
+     *
+     * @param player 　プレイヤー
      * @return 掴んだかどうか
      */
     public boolean tryGrab(Player player) {
@@ -54,6 +55,7 @@ public class GrabTool {
 
     /**
      * 掴んだブロックを開放する
+     *
      * @param player
      */
     public void release(Player player) {
@@ -68,6 +70,7 @@ public class GrabTool {
 
     /**
      * 掴んでいるかどうか
+     *
      * @param player
      * @return
      */
@@ -82,9 +85,9 @@ public class GrabTool {
     /**
      * 掴んでいる物理オブジェクトの座標をアップデートする
      */
-    private void updateGrabbingObjPos(){
+    private void updateGrabbingObjPos() {
         for (Map.Entry<Player, DisplayedPhysxBox> entry : grabbedPlayerMap.entrySet()) {
-            if (!displayedBoxHolder.hasBox(entry.getValue()) || !originalRotationMap.containsKey(entry.getKey())){ //既に他の要因でboxが取り除かれている場合
+            if (!displayedBoxHolder.hasBox(entry.getValue()) || !originalRotationMap.containsKey(entry.getKey())) { //既に他の要因でboxが取り除かれている場合
                 grabbedPlayerMap.remove(entry.getKey());
                 originalRotationMap.remove(entry.getKey());
                 return;

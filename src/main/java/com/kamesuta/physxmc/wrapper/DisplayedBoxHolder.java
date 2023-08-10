@@ -2,7 +2,6 @@ package com.kamesuta.physxmc.wrapper;
 
 import com.kamesuta.physxmc.PhysxMc;
 import com.kamesuta.physxmc.utils.BoundingBoxUtil;
-import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.BlockDisplay;
@@ -59,7 +58,7 @@ public class DisplayedBoxHolder {
 
         // なめらかな補完のために2つBlockDisplayを作る
         BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
-        
+
         BlockData blockData = itemStack.getType().createBlockData();
         Collection<BoundingBox> boundingBoxes;
         try {
@@ -71,9 +70,9 @@ public class DisplayedBoxHolder {
         for (BoundingBox boundingBox : boundingBoxes) {
             Vector geometry = BoundingBoxUtil.getGeometryFromBoundingBox(boundingBox).multiply(scale);
             Vector center = BoundingBoxUtil.getCenterFromBoundingBox(boundingBox).multiply(scale);
-            boxGeometries.put(new PxBoxGeometry((float) geometry.getX(), (float) geometry.getY(), (float) geometry.getZ()), new PxVec3((float)center.getX(),(float)center.getY(),(float)center.getZ()));
+            boxGeometries.put(new PxBoxGeometry((float) geometry.getX(), (float) geometry.getY(), (float) geometry.getZ()), new PxVec3((float) center.getX(), (float) center.getY(), (float) center.getZ()));
         }
-        
+
         DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries, display);
         blockDisplayList.add(box);
         return box;
@@ -81,10 +80,11 @@ public class DisplayedBoxHolder {
 
     /**
      * 指定されたパラメータでBlockDisplayを生成
+     *
      * @param itemStack itemstack
-     * @param location 場所
-     * @param scale 大きさ
-     * @param boxQuat 回転
+     * @param location  場所
+     * @param scale     大きさ
+     * @param boxQuat   回転
      * @return　作ったBlockDisplay
      */
     private static BlockDisplay createDisplay(ItemStack itemStack, Location location, Vector scale, Quaternionf boxQuat) {
@@ -119,12 +119,12 @@ public class DisplayedBoxHolder {
     /**
      * ワールドの外に落ちた箱を削除
      */
-    private void destroyTooLowBox(){
+    private void destroyTooLowBox() {
         blockDisplayList.removeIf(box -> {
             if (box == null)
                 return false;
-            
-            if(box.getLocation().y() < -128){
+
+            if (box.getLocation().y() < -128) {
                 for (BlockDisplay blockDisplay : box.display) {
                     blockDisplay.remove();
                 }
@@ -158,8 +158,8 @@ public class DisplayedBoxHolder {
         }
         PhysxMc.physxWorld.removeBox(box);
     }
-    
-    public boolean hasBox(DisplayedPhysxBox box){
+
+    public boolean hasBox(DisplayedPhysxBox box) {
         return blockDisplayList.contains(box);
     }
 
@@ -208,6 +208,7 @@ public class DisplayedBoxHolder {
 
     /**
      * 箱本体をDisplaydPhysxBoxの形に変換
+     *
      * @param actor 箱の物理オブジェクトクラス
      * @return ワールドにあるDisplaydPhysxBox
      */

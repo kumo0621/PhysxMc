@@ -1,14 +1,11 @@
 package com.kamesuta.physxmc.utils;
 
 import com.comphenix.protocol.utility.MinecraftReflection;
-import net.kyori.adventure.chat.ChatType;
 import org.bukkit.World;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.BoundingBox;
-import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
-import org.joml.Vector3f;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -170,20 +167,22 @@ public class BoundingBoxUtil {
 
     /**
      * バウンディングボックスの中心点を取得する
+     *
      * @param boundingBox 当たり判定
      * @return 中心点の座標(Physx座標系)
      */
-    public static Vector getCenterFromBoundingBox(BoundingBox boundingBox){
+    public static Vector getCenterFromBoundingBox(BoundingBox boundingBox) {
         Vector center = new Vector(boundingBox.getCenterX(), boundingBox.getCenterY(), boundingBox.getCenterZ());
         return center.subtract(new Vector(0.5d, 0.5d, 0.5d));
     }
 
     /**
      * 当たり判定のPhysXで使うxyzの大きさを取得する
+     *
      * @param boundingBox 当たり判定
      * @return xyzの大きさ(Physx座標系)
      */
-    public static Vector getGeometryFromBoundingBox(BoundingBox boundingBox){
+    public static Vector getGeometryFromBoundingBox(BoundingBox boundingBox) {
         return new Vector(boundingBox.getWidthX() / 2, boundingBox.getHeight() / 2, boundingBox.getWidthZ() / 2);
     }
 }

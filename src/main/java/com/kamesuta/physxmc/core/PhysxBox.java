@@ -2,7 +2,10 @@ package com.kamesuta.physxmc.core;
 
 import com.kamesuta.physxmc.PhysxSetting;
 import lombok.Getter;
-import physx.common.*;
+import physx.common.PxIDENTITYEnum;
+import physx.common.PxQuat;
+import physx.common.PxTransform;
+import physx.common.PxVec3;
 import physx.extensions.PxRigidBodyExt;
 import physx.geometry.PxBoxGeometry;
 import physx.physics.*;
@@ -57,7 +60,7 @@ public class PhysxBox {
      * @param defaultMaterial 　箱のマテリアル
      * @param pos             箱の位置
      * @param quat            箱の角度
-     * @param boxGeometries     箱内で定義された形状の大きさ (1/2)とそれぞれの箱本体に対するオフセット
+     * @param boxGeometries   箱内で定義された形状の大きさ (1/2)とそれぞれの箱本体に対するオフセット
      * @param isTrigger       トリガー(当たり判定検出用の箱)であるかどうか
      * @param density         箱の密度
      */
@@ -125,9 +128,9 @@ public class PhysxBox {
      * 箱を破壊する。このクラスを消す際に必ず呼ぶこと
      */
     public void release() {
-        if(actor.isReleasable())
+        if (actor.isReleasable())
             actor.release();
-        for (int i = 0; i < boxShapes.size();) {
+        for (int i = 0; i < boxShapes.size(); ) {
             boxShapes.get(i).release();
             boxShapes.remove(i);
         }
@@ -139,9 +142,9 @@ public class PhysxBox {
      * @param vec3 箱に加える力
      */
     public void addForce(PxVec3 vec3, PxForceModeEnum mode) {
-        if(actor.getRigidBodyFlags().isSet(PxRigidBodyFlagEnum.eKINEMATIC))
+        if (actor.getRigidBodyFlags().isSet(PxRigidBodyFlagEnum.eKINEMATIC))
             return;
-            
+
         actor.addForce(vec3, mode);
         vec3.destroy();
     }

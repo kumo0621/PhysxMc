@@ -94,10 +94,10 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     /**
      * シーンにMinecraft世界で表示可能な箱オブジェクトを追加する
      *
-     * @param pos         座標
-     * @param quat        回転
+     * @param pos           座標
+     * @param quat          回転
      * @param boxGeometries オブジェクトに含まれるそれぞれの箱の大きさと判定
-     * @param display     表示用のBlockDisplay
+     * @param display       表示用のBlockDisplay
      * @return 追加した箱オブジェクト
      */
     public DisplayedPhysxBox addBox(PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, BlockDisplay[] display) {

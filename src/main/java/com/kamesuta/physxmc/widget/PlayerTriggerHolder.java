@@ -46,7 +46,7 @@ public class PlayerTriggerHolder {
     /**
      * プレイヤーの位置に基づいて当たり判定の座標をアップデートする
      */
-    private void updatePlayerTriggerBox(){
+    private void updatePlayerTriggerBox() {
         Bukkit.getOnlinePlayers().forEach(player -> {
             Location loc = player.getLocation();
             if (playerCollisionList.get(player) == null) {
@@ -63,7 +63,7 @@ public class PlayerTriggerHolder {
     /**
      * オフラインのプレイヤーの当たり判定を削除する
      */
-    private void removeOfflinePlayerTriggerBox(){
+    private void removeOfflinePlayerTriggerBox() {
         playerCollisionList.forEach((player, physxBox) -> {
             if (!player.isOnline() && physxBox != null) {
                 PhysxMc.physxWorld.removeBox(physxBox);
@@ -74,7 +74,8 @@ public class PlayerTriggerHolder {
 
     /**
      * プレイヤーの当たり判定を新たに作成する
-     * @param loc 座標
+     *
+     * @param loc    座標
      * @param player プレイヤー
      * @return 作った当たり判定
      */
@@ -92,7 +93,7 @@ public class PlayerTriggerHolder {
      */
     public void destroyAll() {
         playerCollisionList.forEach((player, physxBox) -> {
-            if(physxBox != null)
+            if (physxBox != null)
                 PhysxMc.physxWorld.removeBox(physxBox);
         });
         playerCollisionList.clear();
@@ -100,6 +101,7 @@ public class PlayerTriggerHolder {
 
     /**
      * 当たり判定本体からプレイヤーを取得
+     *
      * @param actor
      * @return
      */
@@ -115,9 +117,10 @@ public class PlayerTriggerHolder {
 
     /**
      * プレイヤーの当たり判定と他オブジェクトが接触したイベントを受信し、扱いやすい型に変換してイベントを発行する
+     *
      * @param actor1 オブジェクト
      * @param actor2 オブジェクト
-     * @param event イベントの種類
+     * @param event  イベントの種類
      */
     public void onPlayerEnterBox(PxActor actor1, PxActor actor2, String event) {
         if (!event.equals("TRIGGER_ENTER"))

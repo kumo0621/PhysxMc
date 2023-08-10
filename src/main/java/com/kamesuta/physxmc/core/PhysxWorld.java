@@ -24,7 +24,7 @@ public class PhysxWorld {
      * シーン本体
      */
     protected PxScene scene;
-    
+
     @Getter
     protected SimulationCallback simCallback;
 
@@ -119,6 +119,7 @@ public class PhysxWorld {
 
     /**
      * シーンの重力を設定する
+     *
      * @param gravity
      */
     public void setGravity(Vector gravity) {

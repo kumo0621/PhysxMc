@@ -20,7 +20,6 @@ import com.kamesuta.physxmc.widget.PlayerTriggerHolder;
 import com.kamesuta.physxmc.wrapper.DisplayedBoxHolder;
 import com.kamesuta.physxmc.wrapper.IntegratedPhysxWorld;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -33,7 +32,7 @@ public final class PhysxMc extends JavaPlugin {
     public static IntegratedPhysxWorld physxWorld;
     public static DisplayedBoxHolder displayedBoxHolder;
     public static PlayerTriggerHolder playerTriggerHolder;
-    
+
     public static GrabTool grabTool;
     public ProtocolManager protocolManager;
 

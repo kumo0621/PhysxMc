@@ -151,15 +151,17 @@ public class DisplayedPhysxBox extends PhysxBox {
 
     /**
      * boxの持つ回転を取得する
+     *
      * @return
      */
-    public Quaternionf getQuat(){
+    public Quaternionf getQuat() {
         PxQuat q = getPos().getQ();
         return new Quaternionf(q.getX(), q.getY(), q.getZ(), q.getW());
     }
 
     /**
      * boxの座標と回転をminecraftのLocationの形式で取得する(rollは失われる)
+     *
      * @return location
      */
     public Location getLocation() {
@@ -176,25 +178,25 @@ public class DisplayedPhysxBox extends PhysxBox {
     /**
      * boxが重力の影響を受けないようにするか変更する
      */
-    public void makeKinematic(boolean flag){
+    public void makeKinematic(boolean flag) {
         getActor().setRigidBodyFlag(PxRigidBodyFlagEnum.eKINEMATIC, flag);
     }
 
     /**
      * 重力の影響を受けないboxを移動させる
      */
-    public void moveKinematic(Location location){
+    public void moveKinematic(Location location) {
         Vector p = new Vector((float) location.x(), (float) location.y(), (float) location.z());
 
         // 相対的に回転させる
         Quaternionf quat = new Quaternionf();
         quat.rotateY((float) -Math.toRadians(location.getYaw()));
         quat.rotateX((float) Math.toRadians(location.getPitch()));
-        
+
         moveKinematic(p, quat);
     }
-    
-    public void moveKinematic(Vector pos, Quaternionf rot){
+
+    public void moveKinematic(Vector pos, Quaternionf rot) {
         PxVec3 p = new PxVec3((float) pos.getX(), (float) pos.getY(), (float) pos.getZ());
 
         PxQuat q = new PxQuat(rot.x, rot.y, rot.z, rot.w);
