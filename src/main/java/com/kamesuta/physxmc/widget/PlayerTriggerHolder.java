@@ -1,6 +1,7 @@
 package com.kamesuta.physxmc.widget;
 
 import com.kamesuta.physxmc.PhysxMc;
+import com.kamesuta.physxmc.core.BoxData;
 import com.kamesuta.physxmc.core.PhysxBox;
 import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import org.apache.logging.log4j.util.BiConsumer;
@@ -83,7 +84,7 @@ public class PlayerTriggerHolder {
         PxVec3 pos = new PxVec3((float) loc.x(), (float) loc.y() + 0.9f, (float) loc.z());
         PxQuat rot = new PxQuat(PxIDENTITYEnum.PxIdentity);
         PxBoxGeometry geometry = new PxBoxGeometry(0.3f, 0.9f, 0.3f);//Steve is 1.8m tall and has 0.6m width
-        PhysxBox box = PhysxMc.physxWorld.addBox(pos, rot, Map.of(geometry, new PxVec3()), true);
+        PhysxBox box = PhysxMc.physxWorld.addBox(new BoxData(pos, rot, Map.of(geometry, new PxVec3()), true));
         box.getActor().setName(player.getName());
         return box;
     }

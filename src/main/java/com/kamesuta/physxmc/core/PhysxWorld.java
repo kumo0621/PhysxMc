@@ -73,28 +73,8 @@ public class PhysxWorld {
      * @param quat 回転
      * @return 箱オブジェクト
      */
-    public PhysxBox addBox(PxVec3 pos, PxQuat quat) {
-        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat);
-        scene.addActor(box.getActor());
-        return box;
-    }
-
-    /**
-     * シーンに箱オブジェクトを追加する
-     *
-     * @param pos         座標
-     * @param quat        回転
-     * @param boxGeometry 箱の大きさ
-     * @return 追加した箱オブジェクト
-     */
-    public PhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry) {
-        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat, boxGeometry);
-        scene.addActor(box.getActor());
-        return box;
-    }
-
-    public PhysxBox addBox(PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, boolean isTrigger) {
-        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat, boxGeometries, isTrigger);
+    public PhysxBox addBox(BoxData data) {
+        PhysxBox box = new PhysxBox(physics, defaultMaterial, data);
         scene.addActor(box.getActor());
         return box;
     }

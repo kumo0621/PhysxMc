@@ -1,6 +1,7 @@
 package com.kamesuta.physxmc.wrapper;
 
 import com.kamesuta.physxmc.PhysxMc;
+import com.kamesuta.physxmc.core.BoxData;
 import com.kamesuta.physxmc.utils.BoundingBoxUtil;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
@@ -38,7 +39,6 @@ public class DisplayedBoxHolder {
         if (!player.getInventory().getItemInMainHand().getType().isBlock()) {
             return null;
         }
-
         int scale = player.getInventory().getHeldItemSlot() + 1;
         return createDisplayedBox(player.getEyeLocation(), new Vector(scale, scale, scale), player.getInventory().getItemInMainHand());
     }
@@ -73,7 +73,8 @@ public class DisplayedBoxHolder {
             boxGeometries.put(new PxBoxGeometry((float) geometry.getX(), (float) geometry.getY(), (float) geometry.getZ()), new PxVec3((float) center.getX(), (float) center.getY(), (float) center.getZ()));
         }
 
-        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries, display);
+        BoxData data = new BoxData(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries);
+        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, display);
         blockDisplayList.add(box);
         return box;
     }

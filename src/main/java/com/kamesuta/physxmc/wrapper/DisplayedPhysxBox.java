@@ -1,6 +1,7 @@
 package com.kamesuta.physxmc.wrapper;
 
 import com.kamesuta.physxmc.PhysxSetting;
+import com.kamesuta.physxmc.core.BoxData;
 import com.kamesuta.physxmc.core.PhysxBox;
 import com.kamesuta.physxmc.utils.ConversionUtility;
 import org.bukkit.Chunk;
@@ -41,8 +42,8 @@ public class DisplayedPhysxBox extends PhysxBox {
      */
     public int swapPhase = 0;
 
-    public DisplayedPhysxBox(PxPhysics physics, PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, BlockDisplay[] display) {
-        super(physics, defaultMaterial, pos, quat, boxGeometries);
+    public DisplayedPhysxBox(PxPhysics physics, BoxData data, BlockDisplay[] display) {
+        super(physics, defaultMaterial, data);
 
         this.display = display;
     }

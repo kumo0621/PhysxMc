@@ -1,5 +1,6 @@
 package com.kamesuta.physxmc.wrapper;
 
+import com.kamesuta.physxmc.core.BoxData;
 import com.kamesuta.physxmc.core.PhysxTerrain;
 import com.kamesuta.physxmc.core.PhysxWorld;
 import org.bukkit.Chunk;
@@ -94,14 +95,11 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     /**
      * シーンにMinecraft世界で表示可能な箱オブジェクトを追加する
      *
-     * @param pos           座標
-     * @param quat          回転
-     * @param boxGeometries オブジェクトに含まれるそれぞれの箱の大きさと判定
      * @param display       表示用のBlockDisplay
      * @return 追加した箱オブジェクト
      */
-    public DisplayedPhysxBox addBox(PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, BlockDisplay[] display) {
-        DisplayedPhysxBox box = new DisplayedPhysxBox(physics, pos, quat, boxGeometries, display);
+    public DisplayedPhysxBox addBox(BoxData data, BlockDisplay[] display) {
+        DisplayedPhysxBox box = new DisplayedPhysxBox(physics, data, display);
         scene.addActor(box.getActor());
         return box;
     }

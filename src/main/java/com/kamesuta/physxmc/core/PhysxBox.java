@@ -1,6 +1,7 @@
 package com.kamesuta.physxmc.core;
 
 import com.kamesuta.physxmc.PhysxSetting;
+import lombok.Data;
 import lombok.Getter;
 import physx.common.PxIDENTITYEnum;
 import physx.common.PxQuat;
@@ -33,41 +34,11 @@ public class PhysxBox {
     /**
      * 物理演算される箱を作る
      *
-     * @param defaultMaterial 　箱のマテリアル
-     * @param pos             箱の位置
-     * @param quat            箱の角度
-     * @return 箱のオブジェクト
      */
-    public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat) {
-        this(physics, defaultMaterial, pos, quat, new PxBoxGeometry(0.5f, 0.5f, 0.5f));// PxBoxGeometry uses half-sizes
-    }
-
-    public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry) {
-        this(physics, defaultMaterial, pos, quat, Map.of(boxGeometry, new PxVec3()), false);
-    }
-
-    public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries) {
-        this(physics, defaultMaterial, pos, quat, boxGeometries, false);
-    }
-
-    public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, boolean isTrigger) {
-        this(physics, defaultMaterial, pos, quat, boxGeometries, isTrigger, PhysxSetting.getDefaultDensity());
-    }
-
-    /**
-     * 物理演算される箱を作る
-     *
-     * @param defaultMaterial 　箱のマテリアル
-     * @param pos             箱の位置
-     * @param quat            箱の角度
-     * @param boxGeometries   箱内で定義された形状の大きさ (1/2)とそれぞれの箱本体に対するオフセット
-     * @param isTrigger       トリガー(当たり判定検出用の箱)であるかどうか
-     * @param density         箱の密度
-     */
-    public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, boolean isTrigger, float density) {
+    public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, BoxData data) {
         // create default simulation shape flags
         PxShapeFlags defaultShapeFlags;
-        if (!isTrigger)
+        if (!data.isTrigger())
             defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
         else
             defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eTRIGGER_SHAPE.value));//triggerはraycastに引っかからないようにする
@@ -78,11 +49,11 @@ public class PhysxBox {
         PxFilterData tmpFilterData = new PxFilterData(1, -1, reportContactFlags, 0);
 
         // create a small dynamic actor with size 1x1x1, which will fall on the ground
-        tmpPose.setP(pos);
-        tmpPose.setQ(quat);
+        tmpPose.setP(data.getPos());
+        tmpPose.setQ(data.getQuat());
         PxRigidDynamic box = physics.createRigidDynamic(tmpPose);
 
-        for (Map.Entry<PxBoxGeometry, PxVec3> entry : boxGeometries.entrySet()) {
+        for (Map.Entry<PxBoxGeometry, PxVec3> entry : data.getBoxGeometries().entrySet()) {
             PxShape tmpShape = physics.createShape(entry.getKey(), defaultMaterial, true, defaultShapeFlags);
             tmpShape.setSimulationFilterData(tmpFilterData);
             PxTransform tmpPose2 = new PxTransform(PxIDENTITYEnum.PxIdentity);
@@ -95,12 +66,12 @@ public class PhysxBox {
             entry.getKey().destroy();
         }
 
-        PxRigidBodyExt.updateMassAndInertia(box, density);
+        PxRigidBodyExt.updateMassAndInertia(box, data.getDensity());
 
         defaultShapeFlags.destroy();
         tmpFilterData.destroy();
         tmpPose.destroy();
-        pos.destroy();
+        data.getPos().destroy();
 
         this.actor = box;
     }
