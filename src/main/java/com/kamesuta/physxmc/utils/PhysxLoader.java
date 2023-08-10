@@ -1,4 +1,4 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.utils;
 
 import sun.misc.Unsafe;
 

@@ -1,17 +1,15 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.widget;
 
+import com.kamesuta.physxmc.PhysxMc;
+import com.kamesuta.physxmc.PhysxSetting;
+import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import org.bukkit.Material;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.kamesuta.physxmc.PhysxMc.displayedBoxHolder;
 

@@ -1,5 +1,8 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.wrapper;
 
+import com.kamesuta.physxmc.PhysxSetting;
+import com.kamesuta.physxmc.core.PhysxBox;
+import com.kamesuta.physxmc.utils.ConversionUtility;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -22,7 +25,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
-import static com.kamesuta.physxmc.Physx.defaultMaterial;
+import static com.kamesuta.physxmc.core.Physx.defaultMaterial;
 
 /**
  * Minecraft世界で表示可能なPhysxBox

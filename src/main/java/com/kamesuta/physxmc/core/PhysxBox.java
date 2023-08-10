@@ -1,5 +1,6 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.core;
 
+import com.kamesuta.physxmc.PhysxSetting;
 import lombok.Getter;
 import physx.common.*;
 import physx.extensions.PxRigidBodyExt;

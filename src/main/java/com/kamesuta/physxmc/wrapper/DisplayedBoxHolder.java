@@ -1,5 +1,8 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.wrapper;
 
+import com.kamesuta.physxmc.PhysxMc;
+import com.kamesuta.physxmc.utils.BoundingBoxUtil;
+import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.BlockDisplay;
@@ -11,7 +14,6 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
-import org.joml.Vector3f;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
@@ -20,9 +22,6 @@ import physx.physics.PxForceModeEnum;
 import physx.physics.PxRigidActor;
 
 import java.util.*;
-import java.util.function.Consumer;
-
-import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
 
 /**
  * OverWorld内の全てのDisplayedPhysxBoxを保持するクラス
@@ -185,7 +184,7 @@ public class DisplayedBoxHolder {
     }
 
     /**
-     * 世界内でraycastしてBoxを探す
+     * 世界内でRayCastしてBoxを探す
      *
      * @param location 始点
      * @param distance 距離

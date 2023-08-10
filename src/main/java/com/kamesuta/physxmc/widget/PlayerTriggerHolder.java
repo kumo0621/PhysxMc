@@ -1,5 +1,8 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.widget;
 
+import com.kamesuta.physxmc.PhysxMc;
+import com.kamesuta.physxmc.core.PhysxBox;
+import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import org.apache.logging.log4j.util.BiConsumer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -29,7 +32,7 @@ public class PlayerTriggerHolder {
     public List<BiConsumer<Player, DisplayedPhysxBox>> playerTriggerReceivers = new ArrayList<>();
 
     public PlayerTriggerHolder() {
-        PhysxMc.physxWorld.simCallback.triggerReceivers.add(this::onPlayerEnterBox);
+        PhysxMc.physxWorld.getSimCallback().triggerReceivers.add(this::onPlayerEnterBox);
     }
 
     public void update() {

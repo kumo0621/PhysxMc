@@ -1,4 +1,4 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.core;
 
 import physx.PxTopLevelFunctions;
 import physx.common.*;

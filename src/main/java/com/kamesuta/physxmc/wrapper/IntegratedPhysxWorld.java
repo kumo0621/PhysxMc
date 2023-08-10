@@ -1,5 +1,7 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.wrapper;
 
+import com.kamesuta.physxmc.core.PhysxTerrain;
+import com.kamesuta.physxmc.core.PhysxWorld;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.entity.BlockDisplay;
@@ -11,8 +13,8 @@ import physx.physics.*;
 
 import java.util.*;
 
-import static com.kamesuta.physxmc.Physx.defaultMaterial;
-import static com.kamesuta.physxmc.Physx.physics;
+import static com.kamesuta.physxmc.core.Physx.defaultMaterial;
+import static com.kamesuta.physxmc.core.Physx.physics;
 
 /**
  * マイクラとの連携機能を付け足したPhysxWorld

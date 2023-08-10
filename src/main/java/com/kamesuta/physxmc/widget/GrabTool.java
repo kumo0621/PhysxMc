@@ -1,5 +1,6 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.widget;
 
+import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;

@@ -1,4 +1,4 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.core;
 
 import lombok.Getter;
 import org.apache.logging.log4j.util.TriConsumer;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.kamesuta.physxmc.Physx.*;
+import static com.kamesuta.physxmc.core.Physx.*;
 
 /**
  * Physxのシーン管理クラス

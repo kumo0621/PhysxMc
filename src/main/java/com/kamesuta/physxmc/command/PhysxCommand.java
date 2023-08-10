@@ -1,6 +1,8 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.command;
 
 import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
+import com.kamesuta.physxmc.PhysxMc;
+import com.kamesuta.physxmc.PhysxSetting;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;

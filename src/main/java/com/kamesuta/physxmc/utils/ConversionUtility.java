@@ -1,4 +1,4 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.utils;
 
 import org.bukkit.util.Transformation;
 import org.joml.Matrix4f;
