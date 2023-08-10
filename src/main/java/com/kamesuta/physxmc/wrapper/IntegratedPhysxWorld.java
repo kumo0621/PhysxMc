@@ -24,7 +24,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     /**
      * チャンクごとに地形を生成して管理
      */
-    private final Map<Chunk, PhysxTerrain> chunkTerrainMap = new HashMap<>();
+    private final Map<Chunk, IntegratedPhysxTerrain> chunkTerrainMap = new HashMap<>();
 
     /**
      * 次のtickで保持しておかなくてはいけない現在アクティブな物理オブジェクトが存在するチャンク
@@ -48,7 +48,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
         if (chunkTerrainMap.containsKey(chunk))
             return;
 
-        PhysxTerrain terrain = new PhysxTerrain(physics, defaultMaterial, chunk);
+        IntegratedPhysxTerrain terrain = new IntegratedPhysxTerrain(physics, defaultMaterial, chunk);
         scene.addActor(terrain.getActor());
         chunkTerrainMap.put(chunk, terrain);
     }
@@ -56,7 +56,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     /**
      * チャンクごとに存在する地形を破壊する
      *
-     * @param chunk
+     * @param chunk　チャンク
      */
     public void unloadChunkAsTerrain(Chunk chunk, boolean wakeOnLostTouch) {
         if (chunkTerrainMap.get(chunk) == null)
@@ -153,7 +153,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
             loadChunkAsTerrain(chunk);
         }
         Collection<Chunk> chunksToUnload = new ArrayList<>();
-        for (Map.Entry<Chunk, PhysxTerrain> chunkPhysxTerrainEntry : chunkTerrainMap.entrySet()) {
+        for (Map.Entry<Chunk, IntegratedPhysxTerrain> chunkPhysxTerrainEntry : chunkTerrainMap.entrySet()) {
             Chunk chunk = chunkPhysxTerrainEntry.getKey();
             if (!chunksToLoadNextTick.contains(chunk))
                 chunksToUnload.add(chunk);
