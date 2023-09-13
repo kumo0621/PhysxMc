@@ -1,8 +1,13 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.wrapper;
 
+import com.kamesuta.physxmc.PhysxMc;
+import com.kamesuta.physxmc.core.BoxData;
+import com.kamesuta.physxmc.utils.BoundingBoxUtil;
+import lombok.Getter;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.BlockDisplay;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BoundingBox;
@@ -11,7 +16,6 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
-import org.joml.Vector3f;
 import physx.common.PxQuat;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
@@ -20,9 +24,6 @@ import physx.physics.PxForceModeEnum;
 import physx.physics.PxRigidActor;
 
 import java.util.*;
-import java.util.function.Consumer;
-
-import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
 
 /**
  * OverWorld内の全てのDisplayedPhysxBoxを保持するクラス
@@ -30,6 +31,12 @@ import static com.kamesuta.physxmc.ConversionUtility.convertToQuaternion;
 public class DisplayedBoxHolder {
 
     private final List<DisplayedPhysxBox> blockDisplayList = new ArrayList<>();
+
+    /**
+     * プレイヤーがブロックを投げるとき、連結するブロックのオフセットのマップ
+     */
+    @Getter
+    private final Map<Player, List<Vector>> offsetMap = new HashMap<>();
 
     /**
      * デバッグモードでプレイヤーがブロックを右クリックした時、座標にBlockDisplayを1個生成して、箱と紐づける
@@ -40,9 +47,11 @@ public class DisplayedBoxHolder {
         if (!player.getInventory().getItemInMainHand().getType().isBlock()) {
             return null;
         }
-
         int scale = player.getInventory().getHeldItemSlot() + 1;
-        return createDisplayedBox(player.getEyeLocation(), new Vector(scale, scale, scale), player.getInventory().getItemInMainHand());
+        List<Vector> offsets = offsetMap.get(player);
+        if(offsets == null)
+            offsets = List.of(new Vector());
+        return createDisplayedBox(player.getEyeLocation(), new Vector(scale, scale, scale), player.getInventory().getItemInMainHand(), offsets);
     }
 
     /**
@@ -51,18 +60,38 @@ public class DisplayedBoxHolder {
      * @param location  場所
      * @param scale     大きさ
      * @param itemStack 元となるブロック
+     * @param offsets 複数ブロックを連結する際のオフセット
      * @return
      */
-    public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack) {
-        Vector3f rot = location.getDirection().clone().toVector3f();
-        Quaternionf quat = convertToQuaternion(rot.x, rot.y, rot.z);
-        // なめらかな補完のために2つBlockDisplayを作る
-        BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
-        
+    public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack, List<Vector> offsets) {
+        Quaternionf quat = new Quaternionf()
+                .rotateY((float) -Math.toRadians(location.getYaw()))
+                .rotateX((float) Math.toRadians(location.getPitch()));
+        Map<BlockDisplay[], Vector> displayMap = new HashMap<>();
+        Map<PxBoxGeometry, PxVec3> boxGeometries = new HashMap<>();
+
+        for (Vector offset : offsets) {
+            // なめらかな補完のために2つBlockDisplayを作る
+            BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
+            displayMap.put(display, new Vector(offset.getX(), offset.getY(), offset.getZ()));
+            Map<PxBoxGeometry, PxVec3> boxGeometry = getBoxGeometries(itemStack, display[0], scale, new Vector(offset.getX(), offset.getY(), offset.getZ()).multiply(scale));
+            boxGeometries.putAll(boxGeometry);
+        }
+
+        BoxData data = new BoxData(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries);
+        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, displayMap);
+        blockDisplayList.add(box);
+        return box;
+    }
+
+    /**
+     * ブロックの判定取得
+     */
+    private static Map<PxBoxGeometry, PxVec3> getBoxGeometries(ItemStack itemStack, Entity display, Vector scale, Vector offset){
         BlockData blockData = itemStack.getType().createBlockData();
         Collection<BoundingBox> boundingBoxes;
         try {
-            boundingBoxes = BoundingBoxUtil.getOutlineBoxes(BoundingBoxUtil.getOutline(display[0], blockData));
+            boundingBoxes = BoundingBoxUtil.getOutlineBoxes(BoundingBoxUtil.getOutline(display, blockData));
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
@@ -70,15 +99,21 @@ public class DisplayedBoxHolder {
         for (BoundingBox boundingBox : boundingBoxes) {
             Vector geometry = BoundingBoxUtil.getGeometryFromBoundingBox(boundingBox).multiply(scale);
             Vector center = BoundingBoxUtil.getCenterFromBoundingBox(boundingBox).multiply(scale);
-            boxGeometries.put(new PxBoxGeometry((float) geometry.getX(), (float) geometry.getY(), (float) geometry.getZ()), new PxVec3((float)center.getX(),(float)center.getY(),(float)center.getZ()));
+            boxGeometries.put(new PxBoxGeometry((float) geometry.getX(), (float) geometry.getY(), (float) geometry.getZ()), new PxVec3((float) center.getX() + (float)offset.getX(), (float) center.getY() + (float)offset.getY(), (float) center.getZ() + (float)offset.getZ()));
         }
-        
-        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries, display);
-        blockDisplayList.add(box);
-        return box;
+        return boxGeometries;
     }
 
-    private BlockDisplay createDisplay(ItemStack itemStack, Location location, Vector scale, Quaternionf boxQuat) {
+    /**
+     * 指定されたパラメータでBlockDisplayを生成
+     *
+     * @param itemStack itemstack
+     * @param location  場所
+     * @param scale     大きさ
+     * @param boxQuat   回転
+     * @return　作ったBlockDisplay
+     */
+    private static BlockDisplay createDisplay(ItemStack itemStack, Location location, Vector scale, Quaternionf boxQuat) {
         BlockDisplay blockDisplay = location.getWorld().spawn(location, BlockDisplay.class);
         blockDisplay.setBlock(itemStack.getType().createBlockData());
         Transformation transformation = blockDisplay.getTransformation();
@@ -97,7 +132,7 @@ public class DisplayedBoxHolder {
      */
     public void update() {
 
-        destroyTooLowBox();
+        destroyUnusableBox();
         for (DisplayedPhysxBox displayedPhysxBox : blockDisplayList) {
             displayedPhysxBox.update();
 
@@ -108,16 +143,18 @@ public class DisplayedBoxHolder {
     }
 
     /**
-     * ワールドの外に落ちた箱を削除
+     * ワールドの外に落ちたりdisplayが破壊されていたりする不良品を削除
      */
-    private void destroyTooLowBox(){
+    private void destroyUnusableBox() {
         blockDisplayList.removeIf(box -> {
             if (box == null)
                 return false;
-            
-            if(box.getLocation().y() < -128){
-                for (BlockDisplay blockDisplay : box.display) {
-                    blockDisplay.remove();
+
+            if (box.getLocation().y() < -128 || box.isDisplayDead()) {
+                for (DisplayedPhysxBox.DisplayData data : box.displayMap){
+                    for (BlockDisplay blockDisplay : data.getDisplays()) {
+                        blockDisplay.remove();
+                    }
                 }
                 PhysxMc.physxWorld.removeBox(box);
                 return true;
@@ -131,11 +168,13 @@ public class DisplayedBoxHolder {
      * 全てのBlockDisplayと箱を消去する
      */
     public void destroyAll() {
-        blockDisplayList.forEach(block -> {
-            for (BlockDisplay blockDisplay : block.display) {
-                blockDisplay.remove();
+        blockDisplayList.forEach(box -> {
+            for (DisplayedPhysxBox.DisplayData data : box.displayMap){
+                for (BlockDisplay blockDisplay : data.getDisplays()) {
+                    blockDisplay.remove();
+                }
             }
-            PhysxMc.physxWorld.removeBox(block);
+            PhysxMc.physxWorld.removeBox(box);
         });
         blockDisplayList.clear();
     }
@@ -144,10 +183,16 @@ public class DisplayedBoxHolder {
         if (box == null || !blockDisplayList.remove(box))
             return;
 
-        for (BlockDisplay blockDisplay : box.display) {
-            blockDisplay.remove();
+        for (DisplayedPhysxBox.DisplayData data : box.displayMap){
+            for (BlockDisplay blockDisplay : data.getDisplays()) {
+                blockDisplay.remove();
+            }
         }
         PhysxMc.physxWorld.removeBox(box);
+    }
+
+    public boolean hasBox(DisplayedPhysxBox box) {
+        return blockDisplayList.contains(box);
     }
 
     /**
@@ -179,7 +224,7 @@ public class DisplayedBoxHolder {
     }
 
     /**
-     * 世界内でraycastしてBoxを探す
+     * 世界内でRayCastしてBoxを探す
      *
      * @param location 始点
      * @param distance 距離
@@ -193,6 +238,12 @@ public class DisplayedBoxHolder {
         return blockDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
     }
 
+    /**
+     * 箱本体をDisplaydPhysxBoxの形に変換
+     *
+     * @param actor 箱の物理オブジェクトクラス
+     * @return ワールドにあるDisplaydPhysxBox
+     */
     public DisplayedPhysxBox getBox(PxActor actor) {
         return blockDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
     }

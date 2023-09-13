@@ -1,5 +1,8 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.wrapper;
 
+import com.kamesuta.physxmc.core.BoxData;
+import com.kamesuta.physxmc.core.PhysxTerrain;
+import com.kamesuta.physxmc.core.PhysxWorld;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.entity.BlockDisplay;
@@ -11,8 +14,8 @@ import physx.physics.*;
 
 import java.util.*;
 
-import static com.kamesuta.physxmc.Physx.defaultMaterial;
-import static com.kamesuta.physxmc.Physx.physics;
+import static com.kamesuta.physxmc.core.Physx.defaultMaterial;
+import static com.kamesuta.physxmc.core.Physx.physics;
 
 /**
  * マイクラとの連携機能を付け足したPhysxWorld
@@ -22,7 +25,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     /**
      * チャンクごとに地形を生成して管理
      */
-    private final Map<Chunk, PhysxTerrain> chunkTerrainMap = new HashMap<>();
+    private final Map<Chunk, IntegratedPhysxTerrain> chunkTerrainMap = new HashMap<>();
 
     /**
      * 次のtickで保持しておかなくてはいけない現在アクティブな物理オブジェクトが存在するチャンク
@@ -46,7 +49,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
         if (chunkTerrainMap.containsKey(chunk))
             return;
 
-        PhysxTerrain terrain = new PhysxTerrain(physics, defaultMaterial, chunk);
+        IntegratedPhysxTerrain terrain = new IntegratedPhysxTerrain(physics, defaultMaterial, chunk);
         scene.addActor(terrain.getActor());
         chunkTerrainMap.put(chunk, terrain);
     }
@@ -54,7 +57,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     /**
      * チャンクごとに存在する地形を破壊する
      *
-     * @param chunk
+     * @param chunk　チャンク
      */
     public void unloadChunkAsTerrain(Chunk chunk, boolean wakeOnLostTouch) {
         if (chunkTerrainMap.get(chunk) == null)
@@ -66,6 +69,9 @@ public class IntegratedPhysxWorld extends PhysxWorld {
         chunkTerrainMap.remove(chunk);
     }
 
+    /**
+     * チャンクが物理地形として読み込まれているか
+     */
     public boolean isChunkLoadedAsTerrain(Chunk chunk) {
         return chunkTerrainMap.get(chunk) != null;
     }
@@ -89,14 +95,11 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     /**
      * シーンにMinecraft世界で表示可能な箱オブジェクトを追加する
      *
-     * @param pos         座標
-     * @param quat        回転
-     * @param boxGeometries オブジェクトに含まれるそれぞれの箱の大きさと判定
-     * @param display     表示用のBlockDisplay
+     * @param display       表示用のBlockDisplay
      * @return 追加した箱オブジェクト
      */
-    public DisplayedPhysxBox addBox(PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, BlockDisplay[] display) {
-        DisplayedPhysxBox box = new DisplayedPhysxBox(physics, pos, quat, boxGeometries, display);
+    public DisplayedPhysxBox addBox(BoxData data, Map<BlockDisplay[], Vector> display) {
+        DisplayedPhysxBox box = new DisplayedPhysxBox(physics, data, display);
         scene.addActor(box.getActor());
         return box;
     }
@@ -148,7 +151,7 @@ public class IntegratedPhysxWorld extends PhysxWorld {
             loadChunkAsTerrain(chunk);
         }
         Collection<Chunk> chunksToUnload = new ArrayList<>();
-        for (Map.Entry<Chunk, PhysxTerrain> chunkPhysxTerrainEntry : chunkTerrainMap.entrySet()) {
+        for (Map.Entry<Chunk, IntegratedPhysxTerrain> chunkPhysxTerrainEntry : chunkTerrainMap.entrySet()) {
             Chunk chunk = chunkPhysxTerrainEntry.getKey();
             if (!chunksToLoadNextTick.contains(chunk))
                 chunksToUnload.add(chunk);

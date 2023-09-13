@@ -1,4 +1,4 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.core;
 
 import physx.PxTopLevelFunctions;
 import physx.common.*;
@@ -42,7 +42,7 @@ public class Physx {
     }
 
     /**
-     * プラグイン終了時にコアコンポーネントを破壊してメモリリークを防ぐ
+     * プラグイン終了時にコアコンポーネントを解放してメモリリークを防ぐ
      */
     public void terminate() {
         if (defaultMaterial != null) {

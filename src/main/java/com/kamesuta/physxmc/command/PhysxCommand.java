@@ -1,6 +1,8 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.command;
 
 import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
+import com.kamesuta.physxmc.PhysxMc;
+import com.kamesuta.physxmc.PhysxSetting;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
@@ -82,7 +84,7 @@ public class PhysxCommand extends CommandBase implements Listener {
                 sendUsage(sender);
                 return true;
             }
-            PhysxMc.displayedBoxHolder.createDisplayedBox(((Player) sender).getLocation(), new Vector(x, y, z), new ItemStack(Material.COMMAND_BLOCK));
+            PhysxMc.displayedBoxHolder.createDisplayedBox(((Player) sender).getLocation(), new Vector(x, y, z), new ItemStack(Material.COMMAND_BLOCK), List.of(new Vector()));
             sender.sendMessage("テストブロックを生成しました");
             return true;
         } else if (arguments[0].equals(gravityArgument) && arguments[1] != null && arguments[2] != null && arguments[3] != null) {
@@ -106,8 +108,8 @@ public class PhysxCommand extends CommandBase implements Listener {
 
     @Override
     public void sendUsage(CommandSender sender) {
-        sender.sendMessage(Component.text("/physxmc reset: 物理演算をリセットする\n" +
-                "/physxmc debug: 右クリックで持っているアイテムが投げられるデバッグモードを有効/無効にする\n" +
+        sender.sendMessage(Component.text("/physxmc reset: 物理オブジェクトをリセットする\n" +
+                "/physxmc debugmode: 右クリックで持っているアイテムが投げられたり掴めたりするデバッグモードを有効/無効にする\n" +
                 "/physxmc density {float型}: 召喚する物理オブジェクトの既定の密度を設定する\n" +
                 "/physxmc updateCurrentChunk: プレイヤーが今いるチャンクの地形をリロードする\n" +
                 "/physxmc summon {縦}　{高さ}　{横}: テストオブジェクトを1個召喚する\n" +

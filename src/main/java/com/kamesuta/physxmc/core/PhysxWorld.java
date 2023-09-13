@@ -1,4 +1,4 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.core;
 
 import lombok.Getter;
 import org.apache.logging.log4j.util.TriConsumer;
@@ -13,13 +13,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.kamesuta.physxmc.Physx.*;
+import static com.kamesuta.physxmc.core.Physx.*;
 
 /**
  * Physxのシーン管理クラス
  */
 public class PhysxWorld {
 
+    /**
+     * シーン本体
+     */
     protected PxScene scene;
 
     @Getter
@@ -65,33 +68,10 @@ public class PhysxWorld {
 
     /**
      * シーンに箱オブジェクトを追加する
-     *
-     * @param pos  座標
-     * @param quat 回転
      * @return 箱オブジェクト
      */
-    public PhysxBox addBox(PxVec3 pos, PxQuat quat) {
-        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat);
-        scene.addActor(box.getActor());
-        return box;
-    }
-
-    /**
-     * シーンに箱オブジェクトを追加する
-     *
-     * @param pos         座標
-     * @param quat        回転
-     * @param boxGeometry 箱の大きさ
-     * @return 追加した箱オブジェクト
-     */
-    public PhysxBox addBox(PxVec3 pos, PxQuat quat, PxBoxGeometry boxGeometry) {
-        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat, boxGeometry);
-        scene.addActor(box.getActor());
-        return box;
-    }
-
-    public PhysxBox addBox(PxVec3 pos, PxQuat quat, Map<PxBoxGeometry, PxVec3> boxGeometries, boolean isTrigger) {
-        PhysxBox box = new PhysxBox(physics, defaultMaterial, pos, quat, boxGeometries, isTrigger);
+    public PhysxBox addBox(BoxData data) {
+        PhysxBox box = new PhysxBox(physics, defaultMaterial, data);
         scene.addActor(box.getActor());
         return box;
     }
@@ -114,6 +94,11 @@ public class PhysxWorld {
         scene.fetchResults(true);
     }
 
+    /**
+     * シーンの重力を設定する
+     *
+     * @param gravity
+     */
     public void setGravity(Vector gravity) {
         PxVec3 pxGravity = new PxVec3((float) gravity.getX(), (float) gravity.getY(), (float) gravity.getZ());
         scene.setGravity(pxGravity);
@@ -125,7 +110,14 @@ public class PhysxWorld {
      */
     public static class SimulationCallback extends PxSimulationEventCallbackImpl {
 
+        /**
+         * 衝突イベントを受信したいメソッドをここに登録する
+         */
         public List<TriConsumer<PxActor, PxActor, String>> contactReceivers = new ArrayList<>();
+
+        /**
+         * 重なりイベントを受信したいメソッドをここに登録する
+         */
         public List<TriConsumer<PxActor, PxActor, String>> triggerReceivers = new ArrayList<>();
 
         @Override

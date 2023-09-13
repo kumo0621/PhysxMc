@@ -1,39 +1,28 @@
-package com.kamesuta.physxmc;
+package com.kamesuta.physxmc.wrapper;
 
-import lombok.Getter;
+import com.kamesuta.physxmc.core.PhysxTerrain;
 import org.bukkit.Chunk;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import physx.common.PxBase;
 import physx.common.PxIDENTITYEnum;
 import physx.common.PxTransform;
 import physx.common.PxVec3;
 import physx.geometry.PxBoxGeometry;
 import physx.physics.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
-/**
- * 地形(動かない箱)をその形状と共に保持するクラス
- */
-public class PhysxTerrain {
-
-    @Getter
-    private final PxRigidStatic actor;
-    private final List<PxShape> terrainShapes = new ArrayList<>();
-
-    public static final String name = "terrain";
-
+public class IntegratedPhysxTerrain extends PhysxTerrain {
+    
     /**
      * チャンクの形に応じた地形を作る
      *
+     * @param physics
      * @param defaultMaterial 　地形のマテリアル
      * @param chunk           チャンク
      * @return 地形のオブジェクト
      */
-    public PhysxTerrain(PxPhysics physics, PxMaterial defaultMaterial, Chunk chunk) {
+    public IntegratedPhysxTerrain(PxPhysics physics, PxMaterial defaultMaterial, Chunk chunk) {
+        super(null, null);
         // create default simulation shape flags
         PxShapeFlags defaultShapeFlags = new PxShapeFlags((byte) (PxShapeFlagEnum.eSCENE_QUERY_SHAPE.value | PxShapeFlagEnum.eSIMULATION_SHAPE.value));
         // create a few temporary objects used during setup
@@ -74,14 +63,6 @@ public class PhysxTerrain {
         terrainGeometry.destroy();
 
         actor = terrain;
-    }
-
-    /**
-     * 地形とその形状を破壊する
-     */
-    public void release() {
-        actor.release();
-        terrainShapes.forEach(PxBase::release);
     }
 
     /**
