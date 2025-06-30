@@ -34,7 +34,7 @@ public class PhysxSetting {
      */
     @Getter
     @Setter
-    private static boolean coinSystemEnabled = false;
+    private static boolean coinSystemEnabled = true;
 
     /**
      * コインの投擲力
