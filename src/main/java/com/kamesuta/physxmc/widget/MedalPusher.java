@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * メダルゲーム用のプッシャークラス
- * 基本壁と動的押し出し部分の2つの物理オブジェクトで構成
+ * 単一の物理オブジェクトによるサイズ変化方式で伸び縮みを実現
  */
 public class MedalPusher {
     
@@ -31,10 +31,11 @@ public class MedalPusher {
     @Getter
     private final double speed;  // 個別速度
     
-    private DisplayedPhysxBox baseWall;     // 基本の固定壁
-    private DisplayedPhysxBox dynamicPart;  // 動的な押し出し部分
-    private double currentPosition = 0.0;   // 0.0からmoveRangeまでの位置
+    private DisplayedPhysxBox pusher;       // 単一のプッシャーオブジェクト
+    private double currentScale = 0.5;      // 初期スケール（0.5から0.5+moveRangeまで）
     private boolean extending = true;       // 伸び中かどうか
+    private final double baseScale = 0.5;   // 基本サイズ
+    private final Vector originalScale;     // 元のスケール
     
     /**
      * プッシャーを作成
@@ -57,6 +58,9 @@ public class MedalPusher {
         this.pusherMaterial = material;
         this.speed = speed;  // 個別速度を保存
         
+        // 元のスケールを設定（幅, 高さ, 基本の奥行き）
+        this.originalScale = new Vector(width, height, baseScale);
+        
         createPusher();
     }
     
@@ -67,32 +71,15 @@ public class MedalPusher {
         ItemStack pusherItem = new ItemStack(pusherMaterial);
         List<Vector> offsets = List.of(new Vector()); // 単一のオブジェクト
         
-        // 1. 基本壁の作成（固定、厚さ0.5ブロック）
-        Vector baseWallScale = new Vector(width, height, 0.5);
-        Location baseWallLocation = centerLocation.clone();
-        
-        baseWall = PhysxMc.displayedBoxHolder.createDisplayedBox(
-            baseWallLocation,
-            baseWallScale,
+        // 単一のプッシャーオブジェクトを作成
+        pusher = PhysxMc.displayedBoxHolder.createDisplayedBox(
+            centerLocation.clone(),
+            originalScale.clone(), // 初期スケール
             pusherItem,
             offsets,
             1000.0f // 重い密度で確実な衝突
         );
-        baseWall.makeKinematic(true); // 重力の影響を受けない固定壁
-        
-        // 2. 動的押し出し部分の作成（移動する、厚さ可変）
-        Vector dynamicPartScale = new Vector(width, height, 0.1); // 初期は薄く
-        Location dynamicPartLocation = centerLocation.clone();
-        dynamicPartLocation.add(0, 0, -0.75); // 基本壁の前方に配置
-        
-        dynamicPart = PhysxMc.displayedBoxHolder.createDisplayedBox(
-            dynamicPartLocation,
-            dynamicPartScale,
-            pusherItem,
-            offsets,
-            1000.0f // 重い密度で確実な押し出し
-        );
-        dynamicPart.makeKinematic(true); // 重力の影響を受けず、手動制御
+        pusher.makeKinematic(true); // 重力の影響を受けない、手動制御
     }
     
     /**
@@ -108,39 +95,35 @@ public class MedalPusher {
         
         // 位置変化を決定
         if (extending) {
-            currentPosition += moveSpeed;
-            if (currentPosition >= moveRange) {
-                currentPosition = moveRange;
+            currentScale += moveSpeed;
+            if (currentScale >= baseScale + moveRange) {
+                currentScale = baseScale + moveRange;
                 extending = false;
             }
         } else {
-            currentPosition -= moveSpeed;
-            if (currentPosition <= 0.0) {
-                currentPosition = 0.0;
+            currentScale -= moveSpeed;
+            if (currentScale <= baseScale) {
+                currentScale = baseScale;
                 extending = true;
             }
         }
         
-        // 動的部分の新しい位置を計算（Z軸方向に移動）
+        // プッシャーの新しい位置を計算（Z軸方向に移動）
         Location newLocation = centerLocation.clone();
-        newLocation.add(0, 0, -0.75 - currentPosition); // 基本壁から前方に押し出し
+        double pushDistance = (currentScale - baseScale); // 0.0 から moveRange まで
+        newLocation.add(0, 0, -pushDistance); // 北向きに押し出し
         
-        // 動的部分を新しい位置に移動（角度は固定）
-        Vector newPos = new Vector(newLocation.getX(), newLocation.getY(), newLocation.getZ());
-        dynamicPart.moveKinematic(newPos, dynamicPart.getQuat());
+        // プッシャーを新しい位置に移動（キネマティック制御）
+        pusher.moveKinematic(newLocation);
     }
     
     /**
      * プッシャーを破壊
      */
     public void destroy() {
-        if (baseWall != null) {
-            PhysxMc.displayedBoxHolder.destroySpecific(baseWall);
-            baseWall = null;
-        }
-        if (dynamicPart != null) {
-            PhysxMc.displayedBoxHolder.destroySpecific(dynamicPart);
-            dynamicPart = null;
+        if (pusher != null) {
+            PhysxMc.displayedBoxHolder.destroySpecific(pusher);
+            pusher = null;
         }
     }
     
@@ -148,7 +131,6 @@ public class MedalPusher {
      * プッシャーが有効かどうか
      */
     public boolean isValid() {
-        return baseWall != null && !baseWall.isDisplayDead() 
-            && dynamicPart != null && !dynamicPart.isDisplayDead();
+        return pusher != null && !pusher.isDisplayDead();
     }
 } 

@@ -1,5 +1,6 @@
 package com.kamesuta.physxmc.wrapper;
 
+import com.kamesuta.physxmc.PhysxMc;
 import com.kamesuta.physxmc.PhysxSetting;
 import com.kamesuta.physxmc.core.BoxData;
 import com.kamesuta.physxmc.core.PhysxBox;
@@ -20,9 +21,9 @@ import physx.common.PxIDENTITYEnum;
 import physx.common.PxQuat;
 import physx.common.PxTransform;
 import physx.common.PxVec3;
-import physx.physics.PxForceModeEnum;
-import physx.physics.PxPhysics;
-import physx.physics.PxRigidBodyFlagEnum;
+import physx.extensions.PxRigidBodyExt;
+import physx.geometry.PxBoxGeometry;
+import physx.physics.*;
 
 import java.util.*;
 
@@ -245,6 +246,7 @@ public class DisplayedPhysxBox extends PhysxBox {
 
     /**
      * オブジェクトのスケールを変更する（プッシャー用）
+     * 表示のみを更新する（物理形状は固定）
      * @param newScale 新しいスケール
      */
     public void updateScale(Vector newScale) {
@@ -252,6 +254,7 @@ public class DisplayedPhysxBox extends PhysxBox {
             return;
         }
         
+        // 表示部分のスケールを更新
         for (DisplayData displayData : displayMap) {
             for (BlockDisplay blockDisplay : displayData.getDisplays()) {
                 Transformation transformation = blockDisplay.getTransformation();
@@ -264,6 +267,9 @@ public class DisplayedPhysxBox extends PhysxBox {
                 blockDisplay.setInterpolationDuration(1);
             }
         }
+        
+        // 注意: 物理形状は元のサイズのまま（見た目だけ変化）
+        // プッシャーの当たり判定は基本サイズで動作する
     }
 
     @AllArgsConstructor
