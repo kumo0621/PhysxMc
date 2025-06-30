@@ -39,13 +39,30 @@ public class DisplayedPhysxBox extends PhysxBox {
     public List<DisplayData> displayMap = new ArrayList<>();
     
     private World world;
+    
+    /**
+     * このオブジェクトがコインかどうか
+     */
+    private boolean isCoin = false;
 
     public DisplayedPhysxBox(PxPhysics physics, BoxData data, Map<BlockDisplay[], Vector> display) {
+        this(physics, data, display, false);
+    }
+
+    public DisplayedPhysxBox(PxPhysics physics, BoxData data, Map<BlockDisplay[], Vector> display, boolean isCoin) {
         super(physics, defaultMaterial, data);
 
         display.forEach((blockDisplays, vector) -> this.displayMap.add(new DisplayData(blockDisplays, vector, 0)));
         BlockDisplay[] firstDisplay = displayMap.get(0).displays;
         world = firstDisplay[0].getWorld();
+        this.isCoin = isCoin;
+    }
+
+    /**
+     * このオブジェクトがコインかどうか
+     */
+    public boolean isCoin() {
+        return isCoin;
     }
 
     public void update() {

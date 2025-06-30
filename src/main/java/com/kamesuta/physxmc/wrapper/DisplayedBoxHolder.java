@@ -96,7 +96,7 @@ public class DisplayedBoxHolder {
         float finalDensity = density > 0 ? density : com.kamesuta.physxmc.PhysxSetting.getDefaultDensity();
         
         BoxData data = new BoxData(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries, false, finalDensity);
-        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, displayMap);
+        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, displayMap, density == com.kamesuta.physxmc.PhysxSetting.getCoinDensity());
         blockDisplayList.add(box);
         return box;
     }

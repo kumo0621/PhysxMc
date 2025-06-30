@@ -99,7 +99,18 @@ public class IntegratedPhysxWorld extends PhysxWorld {
      * @return 追加した箱オブジェクト
      */
     public DisplayedPhysxBox addBox(BoxData data, Map<BlockDisplay[], Vector> display) {
-        DisplayedPhysxBox box = new DisplayedPhysxBox(physics, data, display);
+        return addBox(data, display, false);
+    }
+
+    /**
+     * シーンにMinecraft世界で表示可能な箱オブジェクトを追加する（コインフラグ指定可能）
+     *
+     * @param display       表示用のBlockDisplay
+     * @param isCoin        コインかどうか
+     * @return 追加した箱オブジェクト
+     */
+    public DisplayedPhysxBox addBox(BoxData data, Map<BlockDisplay[], Vector> display, boolean isCoin) {
+        DisplayedPhysxBox box = new DisplayedPhysxBox(physics, data, display, isCoin);
         scene.addActor(box.getActor());
         return box;
     }

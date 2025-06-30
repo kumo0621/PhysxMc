@@ -18,10 +18,14 @@ import com.kamesuta.physxmc.widget.EventHandler;
 import com.kamesuta.physxmc.widget.GrabTool;
 import com.kamesuta.physxmc.widget.PlayerTriggerHolder;
 import com.kamesuta.physxmc.wrapper.DisplayedBoxHolder;
+import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import com.kamesuta.physxmc.wrapper.IntegratedPhysxWorld;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import physx.physics.PxActor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +54,9 @@ public final class PhysxMc extends JavaPlugin {
         displayedBoxHolder = new DisplayedBoxHolder();
         playerTriggerHolder = new PlayerTriggerHolder();
         grabTool = new GrabTool();
+
+        // コインの黒曜石接触検出を追加
+        physxWorld.getSimCallback().contactReceivers.add(this::onCoinContact);
 
         new BukkitRunnable() {
             @Override
@@ -115,6 +122,45 @@ public final class PhysxMc extends JavaPlugin {
         if (physx != null) {
             physxWorld.destroyScene();
             physx.terminate();
+        }
+    }
+
+    /**
+     * コインと地形の接触を検出する
+     */
+    private void onCoinContact(PxActor actor1, PxActor actor2, String event) {
+        if (!"TOUCH_FOUND".equals(event)) {
+            return;
+        }
+
+        // 動的オブジェクト（コイン）を特定
+        DisplayedPhysxBox coin = displayedBoxHolder.getBox(actor1);
+        if (coin == null) {
+            coin = displayedBoxHolder.getBox(actor2);
+        }
+
+        // コインかどうかチェック
+        if (coin == null || !coin.isCoin()) {
+            return;
+        }
+
+        // コインの位置を取得
+        Location coinLocation = coin.getLocation();
+        
+        // コインの下のブロックを確認
+        Location belowLocation = coinLocation.clone().add(0, -1, 0);
+        Material blockBelow = belowLocation.getBlock().getType();
+
+        // 黒曜石の場合、コインをアイテム化
+        if (blockBelow == Material.OBSIDIAN) {
+            // コインをアイテムとしてドロップ
+            ItemStack coinItem = new ItemStack(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, 1);
+            coinLocation.getWorld().dropItemNaturally(coinLocation, coinItem);
+            
+            // 物理オブジェクトを削除
+            displayedBoxHolder.destroySpecific(coin);
+            
+            getLogger().info("コインが黒曜石に接触してアイテム化されました");
         }
     }
 
