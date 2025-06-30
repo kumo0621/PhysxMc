@@ -27,6 +27,7 @@ import physx.physics.PxRigidBodyFlagEnum;
 import java.util.*;
 
 import static com.kamesuta.physxmc.core.Physx.defaultMaterial;
+import static com.kamesuta.physxmc.core.Physx.coinMaterial;
 
 /**
  * Minecraft世界で表示可能なPhysxBox
@@ -50,7 +51,7 @@ public class DisplayedPhysxBox extends PhysxBox {
     }
 
     public DisplayedPhysxBox(PxPhysics physics, BoxData data, Map<BlockDisplay[], Vector> display, boolean isCoin) {
-        super(physics, defaultMaterial, data);
+        super(physics, isCoin ? coinMaterial : defaultMaterial, data);
 
         display.forEach((blockDisplays, vector) -> this.displayMap.add(new DisplayData(blockDisplays, vector, 0)));
         BlockDisplay[] firstDisplay = displayMap.get(0).displays;
@@ -143,7 +144,8 @@ public class DisplayedPhysxBox extends PhysxBox {
      * @param location 向き
      */
     public void throwBox(Location location) {
-        double power = PhysxSetting.getThrowPower();
+        // コインの場合はコイン専用の投擲力を使用
+        double power = isCoin ? PhysxSetting.getCoinThrowPower() : PhysxSetting.getThrowPower();
         Vector3f rot = location.getDirection().clone().multiply(power).toVector3f();
         PxVec3 force = new PxVec3(rot.x, rot.y, rot.z);
         addForce(force, PxForceModeEnum.eVELOCITY_CHANGE);

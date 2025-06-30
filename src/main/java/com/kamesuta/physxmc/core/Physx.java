@@ -27,6 +27,9 @@ public class Physx {
 
     //create default material
     public static final PxMaterial defaultMaterial;
+    
+    //create coin material with appropriate friction and restitution
+    public static final PxMaterial coinMaterial;
 
     /**
      * コアコンポーネントを初期化する
@@ -39,6 +42,8 @@ public class Physx {
         physics = PxTopLevelFunctions.CreatePhysics(version, foundation, tolerances);
         cpuDispatcher = PxTopLevelFunctions.DefaultCpuDispatcherCreate(4);
         defaultMaterial = physics.createMaterial(0.5f, 0.5f, 0.5f);
+        // コイン用マテリアル: 高摩擦、低弾性（適度に止まりやすく、跳ねにくい）
+        coinMaterial = physics.createMaterial(0.8f, 0.7f, 0.2f);
     }
 
     /**
@@ -47,6 +52,7 @@ public class Physx {
     public void terminate() {
         if (defaultMaterial != null) {
             defaultMaterial.release();
+            coinMaterial.release();
             tolerances.destroy();
 
             physics.release();

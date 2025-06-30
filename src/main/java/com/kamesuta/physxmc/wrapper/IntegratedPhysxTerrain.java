@@ -73,9 +73,13 @@ public class IntegratedPhysxTerrain extends PhysxTerrain {
      * @return ブロックの隣に空洞があるかどうか
      */
     private static boolean areNeighboursEmpty(World level, Block pos) {
+        // 地面の上面は必ず物理オブジェクトとして生成する（コインなどの着地を改善）
+        if (pos.getY() < level.getMaxHeight() - 1 && pos.getRelative(BlockFace.UP).isEmpty()) {
+            return true;
+        }
+        
         return pos.getY() >= level.getMaxHeight() || pos.getY() <= level.getMinHeight()
-                || (pos.getY() < level.getMaxHeight() - 1 && pos.getRelative(BlockFace.UP).isEmpty())
-                || (pos.getY() > level.getMaxHeight() && pos.getRelative(BlockFace.DOWN).isEmpty())
+                || (pos.getY() > level.getMinHeight() && pos.getRelative(BlockFace.DOWN).isEmpty())
                 || pos.getRelative(BlockFace.NORTH).isEmpty()
                 || pos.getRelative(BlockFace.EAST).isEmpty()
                 || pos.getRelative(BlockFace.SOUTH).isEmpty()

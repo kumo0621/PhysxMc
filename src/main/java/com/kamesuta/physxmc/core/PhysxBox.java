@@ -32,7 +32,7 @@ public class PhysxBox {
      * 物理演算される箱を作る
      *
      */
-    public PhysxBox(PxPhysics physics, PxMaterial defaultMaterial, BoxData data) {
+    public PhysxBox(PxPhysics physics, PxMaterial material, BoxData data) {
         // create default simulation shape flags
         PxShapeFlags defaultShapeFlags;
         if (!data.isTrigger())
@@ -51,7 +51,7 @@ public class PhysxBox {
         PxRigidDynamic box = physics.createRigidDynamic(tmpPose);
 
         for (Map.Entry<PxBoxGeometry, PxVec3> entry : data.getBoxGeometries().entrySet()) {
-            PxShape tmpShape = physics.createShape(entry.getKey(), defaultMaterial, true, defaultShapeFlags);
+            PxShape tmpShape = physics.createShape(entry.getKey(), material, true, defaultShapeFlags);
             tmpShape.setSimulationFilterData(tmpFilterData);
             PxTransform tmpPose2 = new PxTransform(PxIDENTITYEnum.PxIdentity);
             tmpPose2.setP(entry.getValue());

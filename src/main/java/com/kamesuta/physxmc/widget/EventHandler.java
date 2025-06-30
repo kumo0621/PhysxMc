@@ -31,12 +31,12 @@ public class EventHandler implements Listener {
 
         // コイン投擲システムの処理
         if (PhysxSetting.isCoinSystemEnabled() && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
-            if (event.getItem() != null && event.getItem().getType() == Material.LIGHT_WEIGHTED_PRESSURE_PLATE) {
+            if (event.getItem() != null && event.getItem().getType() == Material.IRON_TRAPDOOR) {
                 if (event.getAction() == Action.RIGHT_CLICK_AIR) {
                     DisplayedPhysxBox coin = createCoin(event.getPlayer());
                     if (coin != null) {
                         coin.throwBox(event.getPlayer().getEyeLocation());
-                        // 金の感圧板を1個消費
+                        // 鉄製のトラップドアを1個消費
                         event.getItem().setAmount(event.getItem().getAmount() - 1);
                         return;
                     }
@@ -110,20 +110,26 @@ public class EventHandler implements Listener {
      * @return 作成されたコイン
      */
     public DisplayedPhysxBox createCoin(org.bukkit.entity.Player player) {
-        // 金の感圧板でコインを作成
-        org.bukkit.inventory.ItemStack coinItem = new org.bukkit.inventory.ItemStack(Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
+        // 鉄製のトラップドアでコインを作成
+        org.bukkit.inventory.ItemStack coinItem = new org.bukkit.inventory.ItemStack(Material.IRON_TRAPDOOR);
         float coinSize = PhysxSetting.getCoinSize();
-        Vector scale = new Vector(coinSize, coinSize / 4.0, coinSize); // コインの形状（薄い）
+        Vector scale = new Vector(coinSize, coinSize / 4.0 * 3.0, coinSize); // コインの形状（厚さを3倍に）
         List<Vector> offsets = List.of(new Vector()); // 単一のオブジェクト
         float coinDensity = PhysxSetting.getCoinDensity(); // 金の密度
         
-        return displayedBoxHolder.createDisplayedBox(
-            player.getEyeLocation(), 
+        // コインの投擲位置をプレイヤーの胸の高さに設定（足元から1.5ブロック上）
+        Location coinLocation = player.getLocation().clone();
+        coinLocation.setY(coinLocation.getY() + 1.5);
+        
+        DisplayedPhysxBox coin = displayedBoxHolder.createDisplayedBox(
+            coinLocation, 
             scale, 
             coinItem, 
             offsets,
-            coinDensity
+            coinDensity  // コイン専用密度を指定（これによりコイン判定される）
         );
+        
+        return coin;
     }
 
     public static List<Vector> scanOffsets(Location location, Material material){
