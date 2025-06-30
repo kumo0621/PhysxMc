@@ -26,7 +26,26 @@ public class EventHandler implements Listener {
 
     @org.bukkit.event.EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.getHand() == EquipmentSlot.OFF_HAND || !PhysxSetting.isDebugMode())
+        if (event.getHand() == EquipmentSlot.OFF_HAND)
+            return;
+
+        // コイン投擲システムの処理
+        if (PhysxSetting.isCoinSystemEnabled() && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
+            if (event.getItem() != null && event.getItem().getType() == Material.LIGHT_WEIGHTED_PRESSURE_PLATE) {
+                if (event.getAction() == Action.RIGHT_CLICK_AIR) {
+                    DisplayedPhysxBox coin = createCoin(event.getPlayer());
+                    if (coin != null) {
+                        coin.throwBox(event.getPlayer().getEyeLocation());
+                        // 金の感圧板を1個消費
+                        event.getItem().setAmount(event.getItem().getAmount() - 1);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // デバッグモードの処理
+        if (!PhysxSetting.isDebugMode())
             return;
 
         if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
@@ -85,6 +104,28 @@ public class EventHandler implements Listener {
         PhysxMc.grabTool.release(event.getPlayer());
     }
     
+    /**
+     * コインを作成する
+     * @param player プレイヤー
+     * @return 作成されたコイン
+     */
+    public DisplayedPhysxBox createCoin(org.bukkit.entity.Player player) {
+        // 金の感圧板でコインを作成
+        org.bukkit.inventory.ItemStack coinItem = new org.bukkit.inventory.ItemStack(Material.LIGHT_WEIGHTED_PRESSURE_PLATE);
+        float coinSize = PhysxSetting.getCoinSize();
+        Vector scale = new Vector(coinSize, coinSize / 4.0, coinSize); // コインの形状（薄い）
+        List<Vector> offsets = List.of(new Vector()); // 単一のオブジェクト
+        float coinDensity = PhysxSetting.getCoinDensity(); // 金の密度
+        
+        return displayedBoxHolder.createDisplayedBox(
+            player.getEyeLocation(), 
+            scale, 
+            coinItem, 
+            offsets,
+            coinDensity
+        );
+    }
+
     public static List<Vector> scanOffsets(Location location, Material material){
         List<Vector> offsets = new ArrayList<>();
         for (int i = -5; i <= 5; i++) {

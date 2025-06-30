@@ -64,6 +64,20 @@ public class DisplayedBoxHolder {
      * @return
      */
     public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack, List<Vector> offsets) {
+        return createDisplayedBox(location, scale, itemStack, offsets, -1f); // デフォルト密度を使用
+    }
+
+    /**
+     * DisplayedPhysxBoxを1個生成（密度指定可能）
+     *
+     * @param location  場所
+     * @param scale     大きさ
+     * @param itemStack 元となるブロック
+     * @param offsets 複数ブロックを連結する際のオフセット
+     * @param density 密度（負の値の場合はデフォルト密度を使用）
+     * @return
+     */
+    public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack, List<Vector> offsets, float density) {
         Quaternionf quat = new Quaternionf()
                 .rotateY((float) -Math.toRadians(location.getYaw()))
                 .rotateX((float) Math.toRadians(location.getPitch()));
@@ -78,7 +92,10 @@ public class DisplayedBoxHolder {
             boxGeometries.putAll(boxGeometry);
         }
 
-        BoxData data = new BoxData(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries);
+        // 密度の決定
+        float finalDensity = density > 0 ? density : com.kamesuta.physxmc.PhysxSetting.getDefaultDensity();
+        
+        BoxData data = new BoxData(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries, false, finalDensity);
         DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, displayMap);
         blockDisplayList.add(box);
         return box;

@@ -29,11 +29,12 @@ public class PhysxCommand extends CommandBase implements Listener {
     private static final String summonArgument = "summon";
 
     private static final String gravityArgument = "gravity";
+    private static final String coinArgument = "coin";
 
     /**
      * 引数のリスト
      */
-    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument);
+    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument, coinArgument);
 
     public PhysxCommand() {
         super(commandName, 1, 4, false);
@@ -100,6 +101,12 @@ public class PhysxCommand extends CommandBase implements Listener {
             PhysxMc.physxWorld.setGravity(new Vector(x, y, z));
             sender.sendMessage("重力を変更しました");
             return true;
+        } else if (arguments[0].equals(coinArgument) && arguments[1] != null) {
+            if (arguments[1].equals("enable")) {
+                PhysxSetting.setCoinSystemEnabled(!PhysxSetting.isCoinSystemEnabled());
+                sender.sendMessage("コイン投擲システムを" + (PhysxSetting.isCoinSystemEnabled() ? "有効" : "無効") + "にしました");
+                return true;
+            }
         }
 
         sendUsage(sender);
@@ -113,7 +120,8 @@ public class PhysxCommand extends CommandBase implements Listener {
                 "/physxmc density {float型}: 召喚する物理オブジェクトの既定の密度を設定する\n" +
                 "/physxmc updateCurrentChunk: プレイヤーが今いるチャンクの地形をリロードする\n" +
                 "/physxmc summon {縦}　{高さ}　{横}: テストオブジェクトを1個召喚する\n" +
-                "/physxmc gravity {x}　{y}　{z}: 重力の大きさを設定する\n"));
+                "/physxmc gravity {x}　{y}　{z}: 重力の大きさを設定する\n" +
+                "/physxmc coin enable: 金の感圧板を使ったコイン投擲システムを有効/無効にする\n"));
     }
 
     @EventHandler
