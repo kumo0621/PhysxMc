@@ -117,7 +117,7 @@ public class PhysxCommand extends CommandBase implements Listener {
             Player player = (Player) sender;
             
             if (arguments[1].equals("create") && arguments[2] != null && arguments[3] != null && arguments[4] != null) {
-                // /physxmc pusher create <height> <width> <range> [material]
+                // /physxmc pusher create <height> <width> <range> [material] [speed]
                 try {
                     int height = Integer.parseInt(arguments[2]);
                     int width = Integer.parseInt(arguments[3]);
@@ -133,13 +133,27 @@ public class PhysxCommand extends CommandBase implements Listener {
                         }
                     }
                     
+                    double speed = PhysxSetting.getPusherSpeed(); // デフォルト速度
+                    if (arguments.length > 6 && arguments[6] != null) {
+                        try {
+                            speed = Double.parseDouble(arguments[6]);
+                            if (speed <= 0) {
+                                sender.sendMessage("速度は正の値である必要があります");
+                                return true;
+                            }
+                        } catch (NumberFormatException e) {
+                            sender.sendMessage("速度の数値が正しくありません");
+                            return true;
+                        }
+                    }
+                    
                     if (height <= 0 || width <= 0 || range <= 0) {
                         sender.sendMessage("高さ、幅、伸び範囲は正の値である必要があります");
                         return true;
                     }
                     
-                    PhysxMc.pusherManager.createPusher(player.getLocation(), height, width, range, material);
-                    sender.sendMessage("プッシャーを作成しました (高さ:" + height + ", 幅:" + width + ", 伸び範囲:" + range + ", ブロック:" + material + ")");
+                    PhysxMc.pusherManager.createPusher(player.getLocation(), height, width, range, material, speed);
+                    sender.sendMessage("プッシャーを作成しました (高さ:" + height + ", 幅:" + width + ", 伸び範囲:" + range + ", ブロック:" + material + ", 速度:" + speed + ")");
                     return true;
                     
                 } catch (NumberFormatException e) {
@@ -179,7 +193,7 @@ public class PhysxCommand extends CommandBase implements Listener {
                 "/physxmc summon {縦}　{高さ}　{横}: テストオブジェクトを1個召喚する\n" +
                 "/physxmc gravity {x}　{y}　{z}: 重力の大きさを設定する\n" +
                 "/physxmc coin enable: 鉄製のトラップドアを使ったコイン投擲システムを有効/無効にする\n" +
-                "/physxmc pusher create {高さ} {幅} {伸び範囲} [ブロック名]: 壁が伸び縮みするプッシャーを作成する\n" +
+                "/physxmc pusher create {高さ} {幅} {伸び範囲} [ブロック名] [速度]: 壁が伸び縮みするプッシャーを作成する\n" +
                 "/physxmc pusher remove: 近くのプッシャーを削除する\n" +
                 "/physxmc pusher clear: 全てのプッシャーを削除する\n" +
                 "/physxmc pusher count: プッシャーの数を表示する\n"));

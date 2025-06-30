@@ -56,4 +56,11 @@ public class PhysxSetting {
     @Getter
     @Setter
     private static float coinDensity = 5.0f;
+
+    /**
+     * プッシャーの動作速度
+     */
+    @Getter
+    @Setter
+    private static double pusherSpeed = 0.02;
 }
