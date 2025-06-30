@@ -17,6 +17,7 @@ import com.kamesuta.physxmc.utils.PhysxLoader;
 import com.kamesuta.physxmc.widget.EventHandler;
 import com.kamesuta.physxmc.widget.GrabTool;
 import com.kamesuta.physxmc.widget.PlayerTriggerHolder;
+import com.kamesuta.physxmc.widget.PusherManager;
 import com.kamesuta.physxmc.wrapper.DisplayedBoxHolder;
 import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import com.kamesuta.physxmc.wrapper.IntegratedPhysxWorld;
@@ -36,6 +37,7 @@ public final class PhysxMc extends JavaPlugin {
     public static IntegratedPhysxWorld physxWorld;
     public static DisplayedBoxHolder displayedBoxHolder;
     public static PlayerTriggerHolder playerTriggerHolder;
+    public static PusherManager pusherManager;
 
     public static GrabTool grabTool;
     public ProtocolManager protocolManager;
@@ -53,6 +55,7 @@ public final class PhysxMc extends JavaPlugin {
         physxWorld.setUpScene();
         displayedBoxHolder = new DisplayedBoxHolder();
         playerTriggerHolder = new PlayerTriggerHolder();
+        pusherManager = new PusherManager();
         grabTool = new GrabTool();
 
         // コインの黒曜石接触検出を追加
@@ -64,6 +67,7 @@ public final class PhysxMc extends JavaPlugin {
                 physxWorld.tick();
                 displayedBoxHolder.update();
                 playerTriggerHolder.update();
+                pusherManager.update();
                 grabTool.update();
             }
         }.runTaskTimer(this, 1, 1);
@@ -117,6 +121,7 @@ public final class PhysxMc extends JavaPlugin {
         if (displayedBoxHolder != null) {
             displayedBoxHolder.destroyAll();
             playerTriggerHolder.destroyAll();
+            pusherManager.destroyAll();
         }
 
         if (physx != null) {
@@ -154,8 +159,8 @@ public final class PhysxMc extends JavaPlugin {
         // 黒曜石の場合、コインをアイテム化
         if (blockBelow == Material.OBSIDIAN) {
             // コインをアイテムとしてドロップ
-            ItemStack coinItem = new ItemStack(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, 1);
-            coinLocation.getWorld().dropItemNaturally(coinLocation, coinItem);
+            ItemStack droppedCoin = new ItemStack(Material.IRON_TRAPDOOR, 1);
+            coinLocation.getWorld().dropItemNaturally(coinLocation, droppedCoin);
             
             // 物理オブジェクトを削除
             displayedBoxHolder.destroySpecific(coin);

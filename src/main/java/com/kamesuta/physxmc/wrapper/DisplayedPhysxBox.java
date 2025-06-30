@@ -243,6 +243,29 @@ public class DisplayedPhysxBox extends PhysxBox {
         return display[0].isDead() || display[1].isDead();
     }
 
+    /**
+     * オブジェクトのスケールを変更する（プッシャー用）
+     * @param newScale 新しいスケール
+     */
+    public void updateScale(Vector newScale) {
+        if (displayMap == null || displayMap.isEmpty()) {
+            return;
+        }
+        
+        for (DisplayData displayData : displayMap) {
+            for (BlockDisplay blockDisplay : displayData.getDisplays()) {
+                Transformation transformation = blockDisplay.getTransformation();
+                transformation.getScale().x = (float) newScale.getX();
+                transformation.getScale().y = (float) newScale.getY();
+                transformation.getScale().z = (float) newScale.getZ();
+                blockDisplay.setTransformation(transformation);
+                // なめらかに補完する
+                blockDisplay.setInterpolationDelay(0);
+                blockDisplay.setInterpolationDuration(1);
+            }
+        }
+    }
+
     @AllArgsConstructor
     @Data
     public class DisplayData{

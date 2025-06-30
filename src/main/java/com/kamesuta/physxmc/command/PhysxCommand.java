@@ -30,14 +30,15 @@ public class PhysxCommand extends CommandBase implements Listener {
 
     private static final String gravityArgument = "gravity";
     private static final String coinArgument = "coin";
+    private static final String pusherArgument = "pusher";
 
     /**
      * 引数のリスト
      */
-    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument, coinArgument);
+    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument, coinArgument, pusherArgument);
 
     public PhysxCommand() {
-        super(commandName, 1, 4, false);
+        super(commandName, 1, 6, false);
     }
 
     @Override
@@ -107,6 +108,62 @@ public class PhysxCommand extends CommandBase implements Listener {
                 sender.sendMessage("コイン投擲システムを" + (PhysxSetting.isCoinSystemEnabled() ? "有効" : "無効") + "にしました");
                 return true;
             }
+        } else if (arguments[0].equals(pusherArgument) && arguments[1] != null) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("プレイヤーしか実行できません");
+                return true;
+            }
+            
+            Player player = (Player) sender;
+            
+            if (arguments[1].equals("create") && arguments[2] != null && arguments[3] != null && arguments[4] != null) {
+                // /physxmc pusher create <height> <width> <range> [material]
+                try {
+                    int height = Integer.parseInt(arguments[2]);
+                    int width = Integer.parseInt(arguments[3]);
+                    double range = Double.parseDouble(arguments[4]);
+                    
+                    Material material = Material.IRON_BLOCK; // デフォルト
+                    if (arguments.length > 5 && arguments[5] != null) {
+                        try {
+                            material = Material.valueOf(arguments[5].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage("無効なブロック名です: " + arguments[5]);
+                            return true;
+                        }
+                    }
+                    
+                    if (height <= 0 || width <= 0 || range <= 0) {
+                        sender.sendMessage("高さ、幅、伸び範囲は正の値である必要があります");
+                        return true;
+                    }
+                    
+                    PhysxMc.pusherManager.createPusher(player.getLocation(), height, width, range, material);
+                    sender.sendMessage("プッシャーを作成しました (高さ:" + height + ", 幅:" + width + ", 伸び範囲:" + range + ", ブロック:" + material + ")");
+                    return true;
+                    
+                } catch (NumberFormatException e) {
+                    sender.sendMessage("数値が正しくありません");
+                    return true;
+                }
+            } else if (arguments[1].equals("remove")) {
+                // /physxmc pusher remove
+                if (PhysxMc.pusherManager.removeNearestPusher(player.getLocation(), 10.0)) {
+                    sender.sendMessage("近くのプッシャーを削除しました");
+                } else {
+                    sender.sendMessage("近くにプッシャーが見つかりません");
+                }
+                return true;
+            } else if (arguments[1].equals("clear")) {
+                // /physxmc pusher clear
+                PhysxMc.pusherManager.destroyAll();
+                sender.sendMessage("全てのプッシャーを削除しました");
+                return true;
+            } else if (arguments[1].equals("count")) {
+                // /physxmc pusher count
+                sender.sendMessage("現在のプッシャー数: " + PhysxMc.pusherManager.getPusherCount());
+                return true;
+            }
         }
 
         sendUsage(sender);
@@ -121,7 +178,11 @@ public class PhysxCommand extends CommandBase implements Listener {
                 "/physxmc updateCurrentChunk: プレイヤーが今いるチャンクの地形をリロードする\n" +
                 "/physxmc summon {縦}　{高さ}　{横}: テストオブジェクトを1個召喚する\n" +
                 "/physxmc gravity {x}　{y}　{z}: 重力の大きさを設定する\n" +
-                "/physxmc coin enable: 金の感圧板を使ったコイン投擲システムを有効/無効にする\n"));
+                "/physxmc coin enable: 鉄製のトラップドアを使ったコイン投擲システムを有効/無効にする\n" +
+                "/physxmc pusher create {高さ} {幅} {伸び範囲} [ブロック名]: 壁が伸び縮みするプッシャーを作成する\n" +
+                "/physxmc pusher remove: 近くのプッシャーを削除する\n" +
+                "/physxmc pusher clear: 全てのプッシャーを削除する\n" +
+                "/physxmc pusher count: プッシャーの数を表示する\n"));
     }
 
     @EventHandler
