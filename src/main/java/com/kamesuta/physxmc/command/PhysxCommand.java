@@ -38,7 +38,7 @@ public class PhysxCommand extends CommandBase implements Listener {
     private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument, coinArgument, pusherArgument);
 
     public PhysxCommand() {
-        super(commandName, 1, 6, false);
+        super(commandName, 1, 7, false);
     }
 
     @Override
