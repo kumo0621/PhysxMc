@@ -38,7 +38,7 @@ public class PhysxCommand extends CommandBase implements Listener {
     private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument, coinArgument, pusherArgument);
 
     public PhysxCommand() {
-        super(commandName, 1, 7, false);
+        super(commandName, 1, 8, false);
     }
 
     @Override
@@ -116,27 +116,28 @@ public class PhysxCommand extends CommandBase implements Listener {
             
             Player player = (Player) sender;
             
-            if (arguments[1].equals("create") && arguments[2] != null && arguments[3] != null && arguments[4] != null) {
-                // /physxmc pusher create <height> <width> <range> [material] [speed]
+            if (arguments[1].equals("create") && arguments[2] != null && arguments[3] != null && arguments[4] != null && arguments[5] != null) {
+                // /physxmc pusher create <height> <width> <length> <range> [material] [speed]
                 try {
                     int height = Integer.parseInt(arguments[2]);
                     int width = Integer.parseInt(arguments[3]);
-                    double range = Double.parseDouble(arguments[4]);
+                    double length = Double.parseDouble(arguments[4]);
+                    double range = Double.parseDouble(arguments[5]);
                     
                     Material material = Material.IRON_BLOCK; // デフォルト
-                    if (arguments.length > 5 && arguments[5] != null) {
+                    if (arguments.length > 6 && arguments[6] != null) {
                         try {
-                            material = Material.valueOf(arguments[5].toUpperCase());
+                            material = Material.valueOf(arguments[6].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("無効なブロック名です: " + arguments[5]);
+                            sender.sendMessage("無効なブロック名です: " + arguments[6]);
                             return true;
                         }
                     }
                     
                     double speed = PhysxSetting.getPusherSpeed(); // デフォルト速度
-                    if (arguments.length > 6 && arguments[6] != null) {
+                    if (arguments.length > 7 && arguments[7] != null) {
                         try {
-                            speed = Double.parseDouble(arguments[6]);
+                            speed = Double.parseDouble(arguments[7]);
                             if (speed <= 0) {
                                 sender.sendMessage("速度は正の値である必要があります");
                                 return true;
@@ -147,13 +148,13 @@ public class PhysxCommand extends CommandBase implements Listener {
                         }
                     }
                     
-                    if (height <= 0 || width <= 0 || range <= 0) {
-                        sender.sendMessage("高さ、幅、伸び範囲は正の値である必要があります");
+                    if (height <= 0 || width <= 0 || length <= 0 || range <= 0) {
+                        sender.sendMessage("高さ、幅、長さ、移動範囲は正の値である必要があります");
                         return true;
                     }
                     
-                    PhysxMc.pusherManager.createPusher(player.getLocation(), height, width, range, material, speed);
-                    sender.sendMessage("プッシャーを作成しました (高さ:" + height + ", 幅:" + width + ", 伸び範囲:" + range + ", ブロック:" + material + ", 速度:" + speed + ")");
+                    PhysxMc.pusherManager.createPusher(player.getLocation(), height, width, length, range, material, speed);
+                    sender.sendMessage("プッシャーを作成しました (高さ:" + height + ", 幅:" + width + ", 長さ:" + length + ", 移動範囲:" + range + ", ブロック:" + material + ", 速度:" + speed + ")");
                     return true;
                     
                 } catch (NumberFormatException e) {
@@ -193,7 +194,7 @@ public class PhysxCommand extends CommandBase implements Listener {
                 "/physxmc summon {縦}　{高さ}　{横}: テストオブジェクトを1個召喚する\n" +
                 "/physxmc gravity {x}　{y}　{z}: 重力の大きさを設定する\n" +
                 "/physxmc coin enable: 鉄製のトラップドアを使ったコイン投擲システムを有効/無効にする\n" +
-                "/physxmc pusher create {高さ} {幅} {伸び範囲} [ブロック名] [速度]: 壁が伸び縮みするプッシャーを作成する\n" +
+                "/physxmc pusher create {高さ} {幅} {長さ} {移動範囲} [ブロック名] [速度]: 指定サイズのプッシャーを作成する\n" +
                 "/physxmc pusher remove: 近くのプッシャーを削除する\n" +
                 "/physxmc pusher clear: 全てのプッシャーを削除する\n" +
                 "/physxmc pusher count: プッシャーの数を表示する\n"));

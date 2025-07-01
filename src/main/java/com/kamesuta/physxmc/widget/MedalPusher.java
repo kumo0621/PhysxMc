@@ -14,7 +14,8 @@ import java.util.List;
 
 /**
  * メダルゲーム用のプッシャークラス
- * 単一の物理オブジェクトによるサイズ変化方式で伸び縮みを実現
+ * 固定サイズの四角形が前後に位置移動する方式でメダルを押し出す
+ * 本物のメダルゲームのプッシャーと同じ動作を再現
  */
 public class MedalPusher {
     
@@ -25,28 +26,30 @@ public class MedalPusher {
     @Getter
     private final int width;
     @Getter
+    private final double length;  // 追加: 長さ（奥行き）
+    @Getter
     private final double moveRange;
     @Getter
     private final Material pusherMaterial;
     @Getter
     private final double speed;  // 個別速度
     
-    private DisplayedPhysxBox pusher;       // 単一のプッシャーオブジェクト
-    private double currentScale = 0.5;      // 初期スケール（0.5から0.5+moveRangeまで）
-    private boolean extending = true;       // 伸び中かどうか
-    private final double baseScale = 0.5;   // 基本サイズ
-    private final Vector originalScale;     // 元のスケール
+    private DisplayedPhysxBox pusher;           // 固定サイズのプッシャーオブジェクト
+    private double currentPosition = 0.0;       // 現在の位置（0.0から moveRange まで）
+    private boolean movingForward = true;       // 前に進んでいるかどうか
+    private final Vector pusherSize;            // プッシャーの固定サイズ
     
     /**
      * プッシャーを作成
      * @param location 中心位置
      * @param height 高さ（ブロック数）
      * @param width 横幅（ブロック数）
-     * @param moveRange 伸びる範囲（ブロック数）
+     * @param length 長さ・奥行き（ブロック数）
+     * @param moveRange 前後の移動範囲（ブロック数）
      * @param material プッシャーのブロック
      * @param speed 個別の動作速度
      */
-    public MedalPusher(Location location, int height, int width, double moveRange, Material material, double speed) {
+    public MedalPusher(Location location, int height, int width, double length, double moveRange, Material material, double speed) {
         // プレイヤーの向きに関係なく、常に北向き（Z軸負方向）に固定
         this.centerLocation = location.clone();
         this.centerLocation.setYaw(0);    // 北向き固定
@@ -54,27 +57,29 @@ public class MedalPusher {
         
         this.height = height;
         this.width = width;
+        this.length = length;  // 長さを保存
         this.moveRange = moveRange;
         this.pusherMaterial = material;
         this.speed = speed;  // 個別速度を保存
         
-        // 元のスケールを設定（幅, 高さ, 基本の奥行き）
-        this.originalScale = new Vector(width, height, baseScale);
+        // プッシャーの固定サイズを設定（幅, 高さ, 奥行き）
+        // 奥行きは指定された長さを使用
+        this.pusherSize = new Vector(width, height, length);
         
         createPusher();
     }
     
     /**
-     * プッシャーの物理オブジェクトを作成
+     * 固定サイズのプッシャー物理オブジェクトを作成
      */
     private void createPusher() {
         ItemStack pusherItem = new ItemStack(pusherMaterial);
         List<Vector> offsets = List.of(new Vector()); // 単一のオブジェクト
         
-        // 単一のプッシャーオブジェクトを作成
+        // 固定サイズのプッシャーオブジェクトを作成
         pusher = PhysxMc.displayedBoxHolder.createDisplayedBox(
             centerLocation.clone(),
-            originalScale.clone(), // 初期スケール
+            pusherSize.clone(), // 固定サイズ（長さ含む）
             pusherItem,
             offsets,
             1000.0f // 重い密度で確実な衝突
@@ -84,6 +89,7 @@ public class MedalPusher {
     
     /**
      * プッシャーの更新処理（毎tick呼び出される）
+     * 固定サイズの四角形が前後に位置移動してメダルを押し出す
      */
     public void update() {
         if (!isValid()) {
@@ -93,27 +99,26 @@ public class MedalPusher {
         // 個別に設定された速度を使用
         double moveSpeed = this.speed;
         
-        // 位置変化を決定
-        if (extending) {
-            currentScale += moveSpeed;
-            if (currentScale >= baseScale + moveRange) {
-                currentScale = baseScale + moveRange;
-                extending = false;
+        // 前後の位置移動を計算
+        if (movingForward) {
+            currentPosition += moveSpeed;
+            if (currentPosition >= moveRange) {
+                currentPosition = moveRange;
+                movingForward = false; // 後退開始
             }
         } else {
-            currentScale -= moveSpeed;
-            if (currentScale <= baseScale) {
-                currentScale = baseScale;
-                extending = true;
+            currentPosition -= moveSpeed;
+            if (currentPosition <= 0.0) {
+                currentPosition = 0.0;
+                movingForward = true; // 前進開始
             }
         }
         
         // プッシャーの新しい位置を計算（Z軸方向に移動）
         Location newLocation = centerLocation.clone();
-        double pushDistance = (currentScale - baseScale); // 0.0 から moveRange まで
-        newLocation.add(0, 0, -pushDistance); // 北向きに押し出し
+        newLocation.add(0, 0, -currentPosition); // 北向きに押し出し
         
-        // プッシャーを新しい位置に移動（キネマティック制御）
+        // 固定サイズのプッシャーを新しい位置に移動（キネマティック制御）
         pusher.moveKinematic(newLocation);
     }
     
