@@ -152,12 +152,20 @@ public final class PhysxMc extends JavaPlugin {
         // コインの位置を取得
         Location coinLocation = coin.getLocation();
         
-        // コインの下のブロックを確認
-        Location belowLocation = coinLocation.clone().add(0, -1, 0);
-        Material blockBelow = belowLocation.getBlock().getType();
+        // コインの下3マスまでブロックを確認
+        boolean foundObsidian = false;
+        for (int i = 1; i <= 3; i++) {
+            Location belowLocation = coinLocation.clone().add(0, -i, 0);
+            Material blockBelow = belowLocation.getBlock().getType();
+            
+            if (blockBelow == Material.OBSIDIAN) {
+                foundObsidian = true;
+                break;
+            }
+        }
 
-        // 黒曜石の場合、コインをアイテム化
-        if (blockBelow == Material.OBSIDIAN) {
+        // 黒曜石が見つかった場合、コインをアイテム化
+        if (foundObsidian) {
             // コインをアイテムとしてドロップ
             ItemStack droppedCoin = new ItemStack(Material.IRON_TRAPDOOR, 1);
             coinLocation.getWorld().dropItemNaturally(coinLocation, droppedCoin);
