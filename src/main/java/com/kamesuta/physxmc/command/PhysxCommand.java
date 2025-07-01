@@ -119,7 +119,7 @@ public class PhysxCommand extends CommandBase implements Listener {
             if (arguments[1].equals("create") && arguments[2] != null && arguments[3] != null && arguments[4] != null && arguments[5] != null) {
                 // /physxmc pusher create <height> <width> <length> <range> [material] [speed]
                 try {
-                    int height = Integer.parseInt(arguments[2]);
+                    double height = Double.parseDouble(arguments[2]);
                     int width = Integer.parseInt(arguments[3]);
                     double length = Double.parseDouble(arguments[4]);
                     double range = Double.parseDouble(arguments[5]);

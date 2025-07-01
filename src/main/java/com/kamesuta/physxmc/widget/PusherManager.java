@@ -17,7 +17,7 @@ public class PusherManager {
     /**
      * 新しいプッシャーを作成して追加
      * @param location 中心位置
-     * @param height 高さ
+     * @param height 高さ（小数可）
      * @param width 横幅
      * @param length 長さ・奥行き
      * @param moveRange 動く幅
@@ -25,7 +25,7 @@ public class PusherManager {
      * @param speed 個別の動作速度
      * @return 作成されたプッシャー
      */
-    public MedalPusher createPusher(Location location, int height, int width, double length, double moveRange, Material material, double speed) {
+    public MedalPusher createPusher(Location location, double height, int width, double length, double moveRange, Material material, double speed) {
         MedalPusher pusher = new MedalPusher(location, height, width, length, moveRange, material, speed);
         pushers.add(pusher);
         return pusher;

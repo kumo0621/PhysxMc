@@ -22,7 +22,7 @@ public class MedalPusher {
     @Getter
     private final Location centerLocation;
     @Getter
-    private final int height;
+    private final double height;
     @Getter
     private final int width;
     @Getter
@@ -42,14 +42,14 @@ public class MedalPusher {
     /**
      * プッシャーを作成
      * @param location 中心位置
-     * @param height 高さ（ブロック数）
-     * @param width 横幅（ブロック数）
+     * @param height 高さ（ブロック数、小数可）
+     * @param width 横幅（ブロック数、正の整数）
      * @param length 長さ・奥行き（ブロック数）
      * @param moveRange 前後の移動範囲（ブロック数）
      * @param material プッシャーのブロック
      * @param speed 個別の動作速度
      */
-    public MedalPusher(Location location, int height, int width, double length, double moveRange, Material material, double speed) {
+    public MedalPusher(Location location, double height, int width, double length, double moveRange, Material material, double speed) {
         // プレイヤーの向きに関係なく、常に北向き（Z軸負方向）に固定
         this.centerLocation = location.clone();
         this.centerLocation.setYaw(0);    // 北向き固定
