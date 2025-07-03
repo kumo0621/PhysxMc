@@ -55,8 +55,16 @@ public final class PhysxMc extends JavaPlugin {
         physxWorld.setUpScene();
         displayedBoxHolder = new DisplayedBoxHolder();
         playerTriggerHolder = new PlayerTriggerHolder();
-        pusherManager = new PusherManager();
+        pusherManager = new PusherManager(getDataFolder());
         grabTool = new GrabTool();
+        
+        // プッシャーデータを読み込み（1秒後に実行してワールドが完全に読み込まれてから）
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                pusherManager.loadPushers();
+            }
+        }.runTaskLater(this, 20L); // 1秒後に実行
 
         // コインの黒曜石接触検出を追加
         physxWorld.getSimCallback().contactReceivers.add(this::onCoinContact);
@@ -121,7 +129,11 @@ public final class PhysxMc extends JavaPlugin {
         if (displayedBoxHolder != null) {
             displayedBoxHolder.destroyAll();
             playerTriggerHolder.destroyAll();
-            pusherManager.destroyAll();
+            // プッシャーデータを保存してから破壊
+            if (pusherManager != null) {
+                pusherManager.savePushers();
+                pusherManager.destroyAll();
+            }
         }
 
         if (physx != null) {

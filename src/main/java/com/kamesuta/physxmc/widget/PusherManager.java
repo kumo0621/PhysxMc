@@ -1,11 +1,21 @@
 package com.kamesuta.physxmc.widget;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * プッシャーを管理するクラス
@@ -13,6 +23,20 @@ import java.util.List;
 public class PusherManager {
     
     private final List<MedalPusher> pushers = new ArrayList<>();
+    private final File dataFile;
+    private final Gson gson;
+    private final Logger logger;
+    
+    public PusherManager(File dataFolder) {
+        this.dataFile = new File(dataFolder, "pushers.json");
+        this.gson = new GsonBuilder().setPrettyPrinting().create();
+        this.logger = Bukkit.getLogger();
+        
+        // データフォルダが存在しない場合は作成
+        if (!dataFolder.exists()) {
+            dataFolder.mkdirs();
+        }
+    }
     
     /**
      * 新しいプッシャーを作成して追加
@@ -28,6 +52,8 @@ public class PusherManager {
     public MedalPusher createPusher(Location location, double height, int width, double length, double moveRange, Material material, double speed) {
         MedalPusher pusher = new MedalPusher(location, height, width, length, moveRange, material, speed);
         pushers.add(pusher);
+        // 自動保存
+        savePushers();
         return pusher;
     }
     
@@ -55,6 +81,8 @@ public class PusherManager {
             pusher.destroy();
         }
         pushers.clear();
+        // 自動保存
+        savePushers();
     }
     
     /**
@@ -85,9 +113,79 @@ public class PusherManager {
         if (nearest != null) {
             nearest.destroy();
             pushers.remove(nearest);
+            // 自動保存
+            savePushers();
             return true;
         }
         
         return false;
+    }
+    
+    /**
+     * プッシャー設定をファイルに保存
+     */
+    public void savePushers() {
+        try {
+            List<PusherData> pusherDataList = new ArrayList<>();
+            for (MedalPusher pusher : pushers) {
+                if (pusher.isValid()) {
+                    pusherDataList.add(PusherData.fromPusher(pusher));
+                }
+            }
+            
+            try (FileWriter writer = new FileWriter(dataFile)) {
+                gson.toJson(pusherDataList, writer);
+            }
+            
+            logger.info("プッシャーデータを保存しました: " + pusherDataList.size() + "個");
+        } catch (IOException e) {
+            logger.severe("プッシャーデータの保存に失敗しました: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * プッシャー設定をファイルから読み込み
+     */
+    public void loadPushers() {
+        if (!dataFile.exists()) {
+            logger.info("プッシャーデータファイルが存在しません");
+            return;
+        }
+        
+        try {
+            try (FileReader reader = new FileReader(dataFile)) {
+                Type listType = new TypeToken<List<PusherData>>(){}.getType();
+                List<PusherData> pusherDataList = gson.fromJson(reader, listType);
+                
+                if (pusherDataList == null) {
+                    logger.info("プッシャーデータが空です");
+                    return;
+                }
+                
+                int loadedCount = 0;
+                for (PusherData data : pusherDataList) {
+                    Location location = data.toLocation();
+                    if (location != null) {
+                        MedalPusher pusher = new MedalPusher(
+                            location,
+                            data.getHeight(),
+                            data.getWidth(),
+                            data.getLength(),
+                            data.getMoveRange(),
+                            data.toMaterial(),
+                            data.getSpeed()
+                        );
+                        pushers.add(pusher);
+                        loadedCount++;
+                    } else {
+                        logger.warning("ワールドが見つからないため、プッシャーを復元できませんでした: " + data.getWorldName());
+                    }
+                }
+                
+                logger.info("プッシャーデータを読み込みました: " + loadedCount + "個");
+            }
+        } catch (IOException e) {
+            logger.severe("プッシャーデータの読み込みに失敗しました: " + e.getMessage());
+        }
     }
 } 
