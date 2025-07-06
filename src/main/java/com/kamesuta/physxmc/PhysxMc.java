@@ -20,6 +20,7 @@ import com.kamesuta.physxmc.widget.PlayerTriggerHolder;
 import com.kamesuta.physxmc.widget.PusherManager;
 import com.kamesuta.physxmc.wrapper.DisplayedBoxHolder;
 import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
+import com.kamesuta.physxmc.wrapper.DisplayedSphereHolder;
 import com.kamesuta.physxmc.wrapper.IntegratedPhysxWorld;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -36,6 +37,7 @@ public final class PhysxMc extends JavaPlugin {
     public static Physx physx;
     public static IntegratedPhysxWorld physxWorld;
     public static DisplayedBoxHolder displayedBoxHolder;
+    public static DisplayedSphereHolder displayedSphereHolder;
     public static PlayerTriggerHolder playerTriggerHolder;
     public static PusherManager pusherManager;
 
@@ -54,6 +56,7 @@ public final class PhysxMc extends JavaPlugin {
         physxWorld = new IntegratedPhysxWorld();
         physxWorld.setUpScene();
         displayedBoxHolder = new DisplayedBoxHolder();
+        displayedSphereHolder = new DisplayedSphereHolder();
         playerTriggerHolder = new PlayerTriggerHolder();
         pusherManager = new PusherManager(getDataFolder());
         grabTool = new GrabTool();
@@ -74,6 +77,7 @@ public final class PhysxMc extends JavaPlugin {
             public void run() {
                 physxWorld.tick();
                 displayedBoxHolder.update();
+                displayedSphereHolder.update();
                 playerTriggerHolder.update();
                 pusherManager.update();
                 grabTool.update();
@@ -128,6 +132,7 @@ public final class PhysxMc extends JavaPlugin {
     public void onDisable() {
         if (displayedBoxHolder != null) {
             displayedBoxHolder.destroyAll();
+            displayedSphereHolder.destroyAll();
             playerTriggerHolder.destroyAll();
             // プッシャーデータを保存してから破壊
             if (pusherManager != null) {

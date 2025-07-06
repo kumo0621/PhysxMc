@@ -1,6 +1,7 @@
 package com.kamesuta.physxmc.wrapper;
 
 import com.kamesuta.physxmc.core.BoxData;
+import com.kamesuta.physxmc.core.SphereData;
 import com.kamesuta.physxmc.core.PhysxTerrain;
 import com.kamesuta.physxmc.core.PhysxWorld;
 import org.bukkit.Chunk;
@@ -116,6 +117,40 @@ public class IntegratedPhysxWorld extends PhysxWorld {
     }
 
     /**
+     * シーンにMinecraft世界で表示可能な球体オブジェクトを追加する
+     *
+     * @param data          球体データ
+     * @param display       表示用のBlockDisplay
+     * @param radius        半径
+     * @return 追加した球体オブジェクト
+     */
+    public DisplayedPhysxSphere addSphere(SphereData data, Map<BlockDisplay[], Vector> display, double radius) {
+        DisplayedPhysxSphere sphere = new DisplayedPhysxSphere(physics, data, display, radius);
+        scene.addActor(sphere.getActor());
+        return sphere;
+    }
+
+    /**
+     * シーンから箱オブジェクトを削除する
+     *
+     * @param box 削除する箱オブジェクト
+     */
+    public void removeBox(DisplayedPhysxBox box) {
+        scene.removeActor(box.getActor());
+        box.release();
+    }
+
+    /**
+     * シーンから球体オブジェクトを削除する
+     *
+     * @param sphere 削除する球体オブジェクト
+     */
+    public void removeSphere(DisplayedPhysxSphere sphere) {
+        scene.removeActor(sphere.getActor());
+        sphere.release();
+    }
+
+    /**
      * 次のtickで地形をロードしておきたいチャンクを登録する（これに登録されていないチャンクは次のtickでアンロードされる）
      *
      * @param chunks 地形をロードしておきたいチャンク
@@ -208,5 +243,21 @@ public class IntegratedPhysxWorld extends PhysxWorld {
         if (!isHit)
             return null;
         return raycastHit.getAnyHit(0).getActor();
+    }
+
+    /**
+     * Raycastして球体を検索する
+     *
+     * @param location 始点
+     * @param distance 距離
+     * @return 見つかった最初の球体
+     */
+    public DisplayedPhysxSphere raycastSphere(Location location, float distance) {
+        PxRigidActor actor = raycast(location, distance);
+        if (actor == null)
+            return null;
+        
+        // 球体のホルダーから該当する球体を検索
+        return com.kamesuta.physxmc.PhysxMc.displayedSphereHolder.getSphere(actor);
     }
 }

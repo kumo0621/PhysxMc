@@ -81,8 +81,6 @@ public class PusherManager {
             pusher.destroy();
         }
         pushers.clear();
-        // 自動保存
-        savePushers();
     }
     
     /**

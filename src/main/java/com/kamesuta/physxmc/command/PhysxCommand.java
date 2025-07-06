@@ -31,11 +31,12 @@ public class PhysxCommand extends CommandBase implements Listener {
     private static final String gravityArgument = "gravity";
     private static final String coinArgument = "coin";
     private static final String pusherArgument = "pusher";
+    private static final String ballArgument = "ball";
 
     /**
      * 引数のリスト
      */
-    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument, coinArgument, pusherArgument);
+    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument, coinArgument, pusherArgument, ballArgument);
 
     public PhysxCommand() {
         super(commandName, 1, 8, false);
@@ -179,6 +180,47 @@ public class PhysxCommand extends CommandBase implements Listener {
                 sender.sendMessage("現在のプッシャー数: " + PhysxMc.pusherManager.getPusherCount());
                 return true;
             }
+        } else if (arguments[0].equals(ballArgument) && arguments[1] != null && arguments[2] != null) {
+            // /physxmc ball <radius> <density> [material]
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("プレイヤーしか実行できません");
+                return true;
+            }
+            
+            Player player = (Player) sender;
+            
+            try {
+                double radius = Double.parseDouble(arguments[1]);
+                float density = Float.parseFloat(arguments[2]);
+                
+                if (radius <= 0) {
+                    sender.sendMessage("半径は正の値である必要があります");
+                    return true;
+                }
+                
+                if (density <= 0) {
+                    sender.sendMessage("密度は正の値である必要があります");
+                    return true;
+                }
+                
+                Material material = Material.SLIME_BLOCK; // デフォルトはスライムブロック
+                if (arguments.length > 3 && arguments[3] != null) {
+                    try {
+                        material = Material.valueOf(arguments[3].toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        sender.sendMessage("無効なブロック名です: " + arguments[3]);
+                        return true;
+                    }
+                }
+                
+                PhysxMc.displayedSphereHolder.createDisplayedSphere(player.getEyeLocation(), radius, material, density);
+                sender.sendMessage("球体を召喚しました (半径:" + radius + ", 密度:" + density + ", マテリアル:" + material + ")");
+                return true;
+                
+            } catch (NumberFormatException e) {
+                sender.sendMessage("数値が正しくありません");
+                return true;
+            }
         }
 
         sendUsage(sender);
@@ -197,7 +239,8 @@ public class PhysxCommand extends CommandBase implements Listener {
                 "/physxmc pusher create {高さ} {幅} {長さ} {移動範囲} [ブロック名] [速度]: 指定サイズのプッシャーを作成する\n" +
                 "/physxmc pusher remove: 近くのプッシャーを削除する\n" +
                 "/physxmc pusher clear: 全てのプッシャーを削除する\n" +
-                "/physxmc pusher count: プッシャーの数を表示する\n"));
+                "/physxmc pusher count: プッシャーの数を表示する\n" +
+                "/physxmc ball {半径} {密度} [マテリアル]: 指定サイズと重さの転がる球体を召喚する\n"));
     }
 
     @EventHandler
