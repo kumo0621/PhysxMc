@@ -27,10 +27,12 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import physx.physics.PxActor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public final class PhysxMc extends JavaPlugin {
 
@@ -43,6 +45,9 @@ public final class PhysxMc extends JavaPlugin {
 
     public static GrabTool grabTool;
     public ProtocolManager protocolManager;
+
+    // 衝突した鉄ブロックに対するレッドストーン信号パルスを管理
+    private final Map<Location, BukkitTask> redstonePulseTasks = new java.util.HashMap<>();
 
     @Override
     public void onEnable() {
@@ -71,6 +76,9 @@ public final class PhysxMc extends JavaPlugin {
 
         // コインの黒曜石接触検出を追加
         physxWorld.getSimCallback().contactReceivers.add(this::onCoinContact);
+
+        // 球体と鉄ブロックの接触検出を追加
+        physxWorld.getSimCallback().contactReceivers.add(this::onSphereContact);
 
         new BukkitRunnable() {
             @Override
@@ -192,6 +200,87 @@ public final class PhysxMc extends JavaPlugin {
             
             getLogger().info("コインが黒曜石に接触してアイテム化されました");
         }
+    }
+
+    /**
+     * 球体が鉄ブロックに接触した時の処理
+     */
+    private void onSphereContact(PxActor actor1, PxActor actor2, String event) {
+        if (!"TOUCH_FOUND".equals(event)) {
+            return;
+        }
+
+        // 衝突したオブジェクトのどちらかが球体か確認
+        var sphere = displayedSphereHolder.getSphere(actor1);
+        if (sphere == null) {
+            sphere = displayedSphereHolder.getSphere(actor2);
+        }
+        if (sphere == null) {
+            return; // 球体と無関係
+        }
+
+        // 球体の位置と半径を取得
+        Location center = sphere.getLocation();
+        double radius = sphere.getRadius();
+
+        org.bukkit.World world = center.getWorld();
+        if (world == null) {
+            return;
+        }
+
+        int blockRadius = (int) Math.ceil(radius + 0.5); // ブロック中心判定用
+
+        for (int dx = -blockRadius; dx <= blockRadius; dx++) {
+            for (int dy = -blockRadius; dy <= blockRadius; dy++) {
+                for (int dz = -blockRadius; dz <= blockRadius; dz++) {
+                    int bx = center.getBlockX() + dx;
+                    int by = center.getBlockY() + dy;
+                    int bz = center.getBlockZ() + dz;
+
+                    org.bukkit.block.Block block = world.getBlockAt(bx, by, bz);
+                    if (block.getType() != org.bukkit.Material.IRON_BLOCK) {
+                        continue;
+                    }
+
+                    // ブロック中心と球体中心の距離で接触を近似判定
+                    double distSq = center.clone().add(0.5, 0.5, 0.5).distanceSquared(
+                            new org.bukkit.Location(world, bx + 0.5, by + 0.5, bz + 0.5));
+                    if (distSq > (radius + 0.5) * (radius + 0.5)) {
+                        continue;
+                    }
+
+                    triggerRedstonePulse(block);
+                }
+            }
+        }
+    }
+
+    /**
+     * 指定ブロックをREDSTONE_BLOCKに置き換え、1秒後に元に戻す
+     */
+    private void triggerRedstonePulse(org.bukkit.block.Block block) {
+        Location locKey = block.getLocation();
+        // 既にパルス中なら無視
+        if (redstonePulseTasks.containsKey(locKey)) {
+            return;
+        }
+
+        org.bukkit.block.data.BlockData originalData = block.getBlockData();
+        block.setType(org.bukkit.Material.REDSTONE_BLOCK, false);
+
+        // 1秒（20tick）後に元のブロックへ戻すタスク
+        BukkitTask task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                // ブロックがまだREDSTONE_BLOCKなら元に戻す
+                if (block.getType() == org.bukkit.Material.REDSTONE_BLOCK) {
+                    block.setBlockData(originalData, false);
+                }
+                redstonePulseTasks.remove(locKey);
+            }
+        }.runTaskLater(this, 20L);
+
+        redstonePulseTasks.put(locKey, task);
     }
 
     /**
