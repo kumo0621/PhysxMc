@@ -76,6 +76,39 @@ PhysxMcは、MinecraftのPaperサーバー向けの物理エンジンプラグ�
 
 ## コマンド一覧
 
+### 🔖 クイックリファレンス
+
+```bash
+# 基本コマンド
++/physxmc reset
++/physxmc debugmode
++/physxmc density <float>             # 例: /physxmc density 1.5
++/physxmc updatecurrentchunk
++/physxmc summon <x> <y> <z>          # 例: /physxmc summon 2 2 2
++/physxmc gravity <x> <y> <z>         # 例: /physxmc gravity 0 -19.62 0
+
+# コインシステム
++/physxmc coin enable
+
+# プッシャーシステム
++/physxmc pusher create <高さ> <幅> <長さ> <移動範囲> [ブロック名] [速度]
+# 例: /physxmc pusher create 2.5 2 0.8 1.5 DIAMOND_BLOCK 0.03
++/physxmc pusher remove
++/physxmc pusher clear
++/physxmc pusher count
+
+# 球体システム
++/physxmc ball <半径> <密度> [マテリアル]
+# 例: /physxmc ball 1.5 2.0 SLIME_BLOCK
+
+# ランプシステム
++/physxmc ramp create <角度> <幅> <長さ> <厚み> [ブロック名]
+# 例: /physxmc ramp create 20 3 6 0.5 QUARTZ_BLOCK
++/physxmc ramp remove
++/physxmc ramp clear
++/physxmc ramp count
++```
+
 ### 基本コマンド
 
 #### `/physxmc reset`
@@ -136,6 +169,32 @@ PhysxMcは、MinecraftのPaperサーバー向けの物理エンジンプラグ�
 - **密度**: 球体の密度（正の小数、重さに影響）
 - **マテリアル**: 球体の表示素材（省略時はスライムブロック）
 - **例**: `/physxmc ball 1.5 2.0 MAGMA_BLOCK`
+
+### ランプシステム専用コマンド
+
+傾斜板（斜面）をワールドに設置してオブジェクトを転がすことができます。
+
+#### `/physxmc ramp create <角度> <幅> <長さ> <厚み> [ブロック名]`
+| パラメータ | 説明 |
+|-----------|------|
+| 角度 | ピッチ方向の傾斜角度（度数、正の値で目線方向に下がる） |
+| 幅 | X方向のサイズ（ブロック数、正の値） |
+| 長さ | Z方向のサイズ（ブロック数、正の値） |
+| 厚み | Y方向の厚み（ブロック数、正の値） |
+| ブロック名 | 表面の素材（省略時 `IRON_BLOCK`） |
+
+ランプはキネマティック（静的）オブジェクトとして生成されます。
+
+**例**: `/physxmc ramp create 20 3 6 0.5 QUARTZ_BLOCK`
+
+#### `/physxmc ramp remove`
+プレイヤーから 10 ブロック以内で最も近いランプを削除します。
+
+#### `/physxmc ramp clear`
+ワールド内のすべてのランプを削除します。
+
+#### `/physxmc ramp count`
+現在アクティブなランプの数を表示します。
 
 ## アーキテクチャ
 

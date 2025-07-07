@@ -32,11 +32,12 @@ public class PhysxCommand extends CommandBase implements Listener {
     private static final String coinArgument = "coin";
     private static final String pusherArgument = "pusher";
     private static final String ballArgument = "ball";
+    private static final String rampArgument = "ramp";
 
     /**
      * 引数のリスト
      */
-    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument, coinArgument, pusherArgument, ballArgument);
+    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument, coinArgument, pusherArgument, ballArgument, rampArgument);
 
     public PhysxCommand() {
         super(commandName, 1, 8, false);
@@ -221,6 +222,60 @@ public class PhysxCommand extends CommandBase implements Listener {
                 sender.sendMessage("数値が正しくありません");
                 return true;
             }
+        } else if (arguments[0].equals(rampArgument) && arguments[1] != null) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("プレイヤーしか実行できません");
+                return true;
+            }
+
+            Player player = (Player) sender;
+
+            if (arguments[1].equals("create") && arguments[2] != null && arguments[3] != null && arguments[4] != null && arguments[5] != null) {
+                // /physxmc ramp create <pitch> <width> <length> <thickness> [material]
+                try {
+                    double pitch = Double.parseDouble(arguments[2]);
+                    double width = Double.parseDouble(arguments[3]);
+                    double length = Double.parseDouble(arguments[4]);
+                    double thickness = Double.parseDouble(arguments[5]);
+
+                    if (width <= 0 || length <= 0 || thickness <= 0) {
+                        sender.sendMessage("幅、長さ、厚みは正の値である必要があります");
+                        return true;
+                    }
+
+                    Material material = Material.IRON_BLOCK; // デフォルト
+                    if (arguments.length > 6 && arguments[6] != null) {
+                        try {
+                            material = Material.valueOf(arguments[6].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage("無効なブロック名です: " + arguments[6]);
+                            return true;
+                        }
+                    }
+
+                    PhysxMc.rampManager.createRamp(player.getLocation(), pitch, width, length, thickness, material);
+                    sender.sendMessage("ランプを作成しました (角度:" + pitch + ", 幅:" + width + ", 長さ:" + length + ", 厚み:" + thickness + ", ブロック:" + material + ")");
+                    return true;
+
+                } catch (NumberFormatException e) {
+                    sender.sendMessage("数値が正しくありません");
+                    return true;
+                }
+            } else if (arguments[1].equals("remove")) {
+                if (PhysxMc.rampManager.removeNearestRamp(player.getLocation(), 10.0)) {
+                    sender.sendMessage("近くのランプを削除しました");
+                } else {
+                    sender.sendMessage("近くにランプが見つかりません");
+                }
+                return true;
+            } else if (arguments[1].equals("clear")) {
+                PhysxMc.rampManager.destroyAll();
+                sender.sendMessage("全てのランプを削除しました");
+                return true;
+            } else if (arguments[1].equals("count")) {
+                sender.sendMessage("現在のランプ数: " + PhysxMc.rampManager.getRampCount());
+                return true;
+            }
         }
 
         sendUsage(sender);
@@ -240,7 +295,11 @@ public class PhysxCommand extends CommandBase implements Listener {
                 "/physxmc pusher remove: 近くのプッシャーを削除する\n" +
                 "/physxmc pusher clear: 全てのプッシャーを削除する\n" +
                 "/physxmc pusher count: プッシャーの数を表示する\n" +
-                "/physxmc ball {半径} {密度} [マテリアル]: 指定サイズと重さの転がる球体を召喚する\n"));
+                "/physxmc ball {半径} {密度} [マテリアル]: 指定サイズと重さの転がる球体を召喚する\n" +
+                "/physxmc ramp create {角度} {幅} {長さ} {厚み} [ブロック名]: 傾斜板を作成する\n" +
+                "/physxmc ramp remove: 近くのランプを削除する\n" +
+                "/physxmc ramp clear: 全てのランプを削除する\n" +
+                "/physxmc ramp count: ランプの数を表示する\n"));
     }
 
     @EventHandler

@@ -18,6 +18,7 @@ import com.kamesuta.physxmc.widget.EventHandler;
 import com.kamesuta.physxmc.widget.GrabTool;
 import com.kamesuta.physxmc.widget.PlayerTriggerHolder;
 import com.kamesuta.physxmc.widget.PusherManager;
+import com.kamesuta.physxmc.widget.RampManager;
 import com.kamesuta.physxmc.wrapper.DisplayedBoxHolder;
 import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import com.kamesuta.physxmc.wrapper.DisplayedSphereHolder;
@@ -42,6 +43,7 @@ public final class PhysxMc extends JavaPlugin {
     public static DisplayedSphereHolder displayedSphereHolder;
     public static PlayerTriggerHolder playerTriggerHolder;
     public static PusherManager pusherManager;
+    public static RampManager rampManager;
 
     public static GrabTool grabTool;
     public ProtocolManager protocolManager;
@@ -64,6 +66,7 @@ public final class PhysxMc extends JavaPlugin {
         displayedSphereHolder = new DisplayedSphereHolder();
         playerTriggerHolder = new PlayerTriggerHolder();
         pusherManager = new PusherManager(getDataFolder());
+        rampManager = new RampManager();
         grabTool = new GrabTool();
         
         // プッシャーデータを読み込み（1秒後に実行してワールドが完全に読み込まれてから）
@@ -88,6 +91,7 @@ public final class PhysxMc extends JavaPlugin {
                 displayedSphereHolder.update();
                 playerTriggerHolder.update();
                 pusherManager.update();
+                rampManager.update();
                 grabTool.update();
             }
         }.runTaskTimer(this, 1, 1);
@@ -146,6 +150,10 @@ public final class PhysxMc extends JavaPlugin {
             if (pusherManager != null) {
                 pusherManager.savePushers();
                 pusherManager.destroyAll();
+            }
+
+            if (rampManager != null) {
+                rampManager.destroyAll();
             }
         }
 
@@ -266,7 +274,8 @@ public final class PhysxMc extends JavaPlugin {
         }
 
         org.bukkit.block.data.BlockData originalData = block.getBlockData();
-        block.setType(org.bukkit.Material.REDSTONE_BLOCK, false);
+        // 物理更新を伴って置換して隣接ブロックへ信号を通知
+        block.setType(org.bukkit.Material.REDSTONE_BLOCK, true);
 
         // 1秒（20tick）後に元のブロックへ戻すタスク
         BukkitTask task = new BukkitRunnable() {
@@ -274,7 +283,7 @@ public final class PhysxMc extends JavaPlugin {
             public void run() {
                 // ブロックがまだREDSTONE_BLOCKなら元に戻す
                 if (block.getType() == org.bukkit.Material.REDSTONE_BLOCK) {
-                    block.setBlockData(originalData, false);
+                    block.setBlockData(originalData, true);
                 }
                 redstonePulseTasks.remove(locKey);
             }
