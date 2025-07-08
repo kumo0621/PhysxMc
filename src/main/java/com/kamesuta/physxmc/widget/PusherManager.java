@@ -24,11 +24,13 @@ public class PusherManager {
     
     private final List<MedalPusher> pushers = new ArrayList<>();
     private final File dataFile;
+    private final File yamlFile;
     private final Gson gson;
     private final Logger logger;
     
     public PusherManager(File dataFolder) {
-        this.dataFile = new File(dataFolder, "pushers.json");
+        this.dataFile = new File(dataFolder, "pushers.json"); // 旧互換（未使用）
+        this.yamlFile = new File(dataFolder, "pushers.yml");
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.logger = Bukkit.getLogger();
         
@@ -124,18 +126,30 @@ public class PusherManager {
      */
     public void savePushers() {
         try {
-            List<PusherData> pusherDataList = new ArrayList<>();
+            org.bukkit.configuration.file.YamlConfiguration yaml = new org.bukkit.configuration.file.YamlConfiguration();
+            List<java.util.Map<String, Object>> dataList = new java.util.ArrayList<>();
             for (MedalPusher pusher : pushers) {
                 if (pusher.isValid()) {
-                    pusherDataList.add(PusherData.fromPusher(pusher));
+                    PusherData d = PusherData.fromPusher(pusher);
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("world", d.getWorldName());
+                    map.put("x", d.getX());
+                    map.put("y", d.getY());
+                    map.put("z", d.getZ());
+                    map.put("yaw", d.getYaw());
+                    map.put("pitch", d.getPitch());
+                    map.put("height", d.getHeight());
+                    map.put("width", d.getWidth());
+                    map.put("length", d.getLength());
+                    map.put("range", d.getMoveRange());
+                    map.put("material", d.getMaterialName());
+                    map.put("speed", d.getSpeed());
+                    dataList.add(map);
                 }
             }
-            
-            try (FileWriter writer = new FileWriter(dataFile)) {
-                gson.toJson(pusherDataList, writer);
-            }
-            
-            logger.info("プッシャーデータを保存しました: " + pusherDataList.size() + "個");
+            yaml.set("pushers", dataList);
+            yaml.save(yamlFile);
+            logger.info("プッシャーデータを保存しました: " + dataList.size() + "個");
         } catch (IOException e) {
             logger.severe("プッシャーデータの保存に失敗しました: " + e.getMessage());
         }
@@ -145,23 +159,36 @@ public class PusherManager {
      * プッシャー設定をファイルから読み込み
      */
     public void loadPushers() {
-        if (!dataFile.exists()) {
+        if (!yamlFile.exists()) {
             logger.info("プッシャーデータファイルが存在しません");
             return;
         }
         
         try {
-            try (FileReader reader = new FileReader(dataFile)) {
-                Type listType = new TypeToken<List<PusherData>>(){}.getType();
-                List<PusherData> pusherDataList = gson.fromJson(reader, listType);
-                
-                if (pusherDataList == null) {
-                    logger.info("プッシャーデータが空です");
-                    return;
-                }
-                
-                int loadedCount = 0;
-                for (PusherData data : pusherDataList) {
+            org.bukkit.configuration.file.YamlConfiguration yaml = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(yamlFile);
+            java.util.List<java.util.Map<?,?>> dataList = yaml.getMapList("pushers");
+            if (dataList == null || dataList.isEmpty()) {
+                logger.info("プッシャーデータが空です");
+                return;
+            }
+
+            int loadedCount = 0;
+            for (java.util.Map<?,?> map : dataList) {
+                try {
+                    PusherData data = new PusherData();
+                    data.setWorldName((String) map.get("world"));
+                    data.setX(((Number) map.get("x")).doubleValue());
+                    data.setY(((Number) map.get("y")).doubleValue());
+                    data.setZ(((Number) map.get("z")).doubleValue());
+                    data.setYaw(((Number) map.get("yaw")).floatValue());
+                    data.setPitch(((Number) map.get("pitch")).floatValue());
+                    data.setHeight(((Number) map.get("height")).doubleValue());
+                    data.setWidth(((Number) map.get("width")).intValue());
+                    data.setLength(((Number) map.get("length")).doubleValue());
+                    data.setMoveRange(((Number) map.get("range")).doubleValue());
+                    data.setMaterialName((String) map.get("material"));
+                    data.setSpeed(((Number) map.get("speed")).doubleValue());
+
                     Location location = data.toLocation();
                     if (location != null) {
                         MedalPusher pusher = new MedalPusher(
@@ -178,11 +205,13 @@ public class PusherManager {
                     } else {
                         logger.warning("ワールドが見つからないため、プッシャーを復元できませんでした: " + data.getWorldName());
                     }
+                } catch (Exception e) {
+                    logger.warning("プッシャーデータの解析に失敗しました: " + e.getMessage());
                 }
-                
-                logger.info("プッシャーデータを読み込みました: " + loadedCount + "個");
             }
-        } catch (IOException e) {
+
+            logger.info("プッシャーデータを読み込みました: " + loadedCount + "個");
+        } catch (Exception e) {
             logger.severe("プッシャーデータの読み込みに失敗しました: " + e.getMessage());
         }
     }
