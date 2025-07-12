@@ -198,4 +198,11 @@ public class DisplayedSphereHolder {
         }
         return null;
     }
+
+    /**
+     * 全てのスフィアオブジェクトのリストを取得（永続化用）
+     */
+    public List<DisplayedPhysxSphere> getAllSpheres() {
+        return new ArrayList<>(sphereDisplayList);
+    }
 } 

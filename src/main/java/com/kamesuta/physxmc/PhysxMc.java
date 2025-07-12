@@ -17,6 +17,7 @@ import com.kamesuta.physxmc.utils.PhysxLoader;
 import com.kamesuta.physxmc.widget.EventHandler;
 import com.kamesuta.physxmc.widget.GrabTool;
 import com.kamesuta.physxmc.widget.PlayerTriggerHolder;
+import com.kamesuta.physxmc.widget.PhysicsObjectManager;
 import com.kamesuta.physxmc.widget.PusherManager;
 import com.kamesuta.physxmc.widget.RampManager;
 import com.kamesuta.physxmc.wrapper.DisplayedBoxHolder;
@@ -43,6 +44,7 @@ public final class PhysxMc extends JavaPlugin {
     public static DisplayedSphereHolder displayedSphereHolder;
     public static PlayerTriggerHolder playerTriggerHolder;
     public static PusherManager pusherManager;
+    public static PhysicsObjectManager physicsObjectManager;
     public static RampManager rampManager;
 
     public static GrabTool grabTool;
@@ -50,6 +52,10 @@ public final class PhysxMc extends JavaPlugin {
 
     // 衝突した鉄ブロックに対するレッドストーン信号パルスを管理
     private final Map<Location, BukkitTask> redstonePulseTasks = new java.util.HashMap<>();
+    
+    // 自動保存のカウンター（5分間隔 = 6000 ticks）
+    private int autoSaveCounter = 0;
+    private static final int AUTO_SAVE_INTERVAL = 6000; // 5分間隔
 
     @Override
     public void onEnable() {
@@ -66,13 +72,17 @@ public final class PhysxMc extends JavaPlugin {
         displayedSphereHolder = new DisplayedSphereHolder();
         playerTriggerHolder = new PlayerTriggerHolder();
         pusherManager = new PusherManager(getDataFolder());
+        physicsObjectManager = new PhysicsObjectManager(getDataFolder());
         rampManager = new RampManager();
         grabTool = new GrabTool();
         
-        // プッシャーデータを読み込み（1秒後に実行してワールドが完全に読み込まれてから）
+        // データを読み込み（1秒後に実行してワールドが完全に読み込まれてから）
         new BukkitRunnable() {
             @Override
             public void run() {
+                // 先に物理オブジェクトを読み込み（プッシャーの物理オブジェクトは除外される）
+                physicsObjectManager.loadAll();
+                // 次にプッシャーを読み込み（重複を避けるため）
                 pusherManager.loadPushers();
             }
         }.runTaskLater(this, 20L); // 1秒後に実行
@@ -93,6 +103,30 @@ public final class PhysxMc extends JavaPlugin {
                 pusherManager.update();
                 rampManager.update();
                 grabTool.update();
+                
+                // 自動保存処理（5分間隔）
+                autoSaveCounter++;
+                if (autoSaveCounter >= AUTO_SAVE_INTERVAL) {
+                    autoSaveCounter = 0;
+                    // 非同期で自動保存を実行（メインスレッドをブロックしない）
+                    new BukkitRunnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                getLogger().info("自動保存を開始...");
+                                if (pusherManager != null) {
+                                    pusherManager.savePushers();
+                                }
+                                if (physicsObjectManager != null) {
+                                    physicsObjectManager.saveAll();
+                                }
+                                getLogger().info("自動保存が完了しました");
+                            } catch (Exception e) {
+                                getLogger().warning("自動保存中にエラーが発生しました: " + e.getMessage());
+                            }
+                        }
+                    }.runTaskAsynchronously(PhysxMc.this);
+                }
             }
         }.runTaskTimer(this, 1, 1);
 
@@ -142,25 +176,55 @@ public final class PhysxMc extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (displayedBoxHolder != null) {
-            displayedBoxHolder.destroyAll();
-            displayedSphereHolder.destroyAll();
-            playerTriggerHolder.destroyAll();
-            // プッシャーデータを保存してから破壊
+        // 自動保存カウンターをリセットして即座に保存を実行
+        autoSaveCounter = AUTO_SAVE_INTERVAL;
+        getLogger().info("プラグイン停止中: 最終データ保存を開始...");
+        
+        // 同期で最終保存を実行（非同期だとプラグイン停止前に完了しない可能性）
+        try {
             if (pusherManager != null) {
                 pusherManager.savePushers();
-                pusherManager.destroyAll();
             }
-
-            if (rampManager != null) {
-                rampManager.destroyAll();
+            if (physicsObjectManager != null) {
+                physicsObjectManager.saveAll();
             }
+            getLogger().info("最終データ保存完了");
+        } catch (Exception e) {
+            getLogger().severe("最終データ保存中にエラーが発生しました: " + e.getMessage());
+        }
+        
+        // 物理シミュレーションを停止してからオブジェクトを削除
+        if (physx != null && physxWorld != null) {
+            physxWorld.destroyScene(); // 先にシーンを破棄
         }
 
+        // その後でオブジェクトを削除
+        if (displayedBoxHolder != null) {
+            displayedBoxHolder.destroyAll();
+        }
+        
+        if (displayedSphereHolder != null) {
+            displayedSphereHolder.destroyAll();
+        }
+        
+        if (playerTriggerHolder != null) {
+            playerTriggerHolder.destroyAll();
+        }
+            
+        if (pusherManager != null) {
+            pusherManager.destroyAll();
+        }
+
+        if (rampManager != null) {
+            rampManager.destroyAll();
+        }
+
+        // 最後にPhysXを終了
         if (physx != null) {
-            physxWorld.destroyScene();
             physx.terminate();
         }
+        
+        getLogger().info("プラグイン停止完了");
     }
 
     /**
