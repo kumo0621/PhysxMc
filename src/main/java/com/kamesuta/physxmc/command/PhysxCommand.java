@@ -3,6 +3,7 @@ package com.kamesuta.physxmc.command;
 import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
 import com.kamesuta.physxmc.PhysxMc;
 import com.kamesuta.physxmc.PhysxSetting;
+import com.kamesuta.physxmc.widget.MedalPusher;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
@@ -155,8 +156,12 @@ public class PhysxCommand extends CommandBase implements Listener {
                         return true;
                     }
                     
-                    PhysxMc.pusherManager.createPusher(player.getLocation(), height, width, length, range, material, speed);
-                    sender.sendMessage("プッシャーを作成しました (高さ:" + height + ", 幅:" + width + ", 長さ:" + length + ", 移動範囲:" + range + ", ブロック:" + material + ", 速度:" + speed + ")");
+                    MedalPusher createdPusher = PhysxMc.pusherManager.createPusher(player.getLocation(), height, width, length, range, material, speed);
+                    if (createdPusher != null) {
+                        sender.sendMessage("プッシャーを作成しました (高さ:" + height + ", 幅:" + width + ", 長さ:" + length + ", 移動範囲:" + range + ", ブロック:" + material + ", 速度:" + speed + ")");
+                    } else {
+                        sender.sendMessage("プッシャーの作成に失敗しました。近くに既存のプッシャーがないか確認してください（最小距離: 2ブロック）");
+                    }
                     return true;
                     
                 } catch (NumberFormatException e) {

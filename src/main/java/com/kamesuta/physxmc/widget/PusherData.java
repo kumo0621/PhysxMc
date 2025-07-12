@@ -27,6 +27,8 @@ public class PusherData {
     private double moveRange;
     private String materialName;
     private double speed;
+    private double currentPosition;  // 現在の位置（動作状態）
+    private boolean movingForward;   // 移動方向（動作状態）
     
     /**
      * MedalPusherからPusherDataを作成
@@ -45,7 +47,9 @@ public class PusherData {
             pusher.getLength(),
             pusher.getMoveRange(),
             pusher.getPusherMaterial().name(),
-            pusher.getSpeed()
+            pusher.getSpeed(),
+            pusher.getCurrentPosition(),
+            pusher.isMovingForward()
         );
     }
     

@@ -78,6 +78,21 @@ public class DisplayedBoxHolder {
      * @return
      */
     public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack, List<Vector> offsets, float density) {
+        return createDisplayedBox(location, scale, itemStack, offsets, density, false);
+    }
+
+    /**
+     * DisplayedPhysxBoxを1個生成（密度・プッシャーフラグ指定可能）
+     *
+     * @param location  場所
+     * @param scale     大きさ
+     * @param itemStack 元となるブロック
+     * @param offsets 複数ブロックを連結する際のオフセット
+     * @param density 密度（負の値の場合はデフォルト密度を使用）
+     * @param isPusher プッシャーの一部かどうか
+     * @return
+     */
+    public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack, List<Vector> offsets, float density, boolean isPusher) {
         Quaternionf quat = new Quaternionf()
                 .rotateY((float) -Math.toRadians(location.getYaw()))
                 .rotateX((float) Math.toRadians(location.getPitch()));
@@ -96,7 +111,7 @@ public class DisplayedBoxHolder {
         float finalDensity = density > 0 ? density : com.kamesuta.physxmc.PhysxSetting.getDefaultDensity();
         
         BoxData data = new BoxData(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries, false, finalDensity);
-        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, displayMap, density == com.kamesuta.physxmc.PhysxSetting.getCoinDensity());
+        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, displayMap, density == com.kamesuta.physxmc.PhysxSetting.getCoinDensity(), isPusher);
         blockDisplayList.add(box);
         return box;
     }
@@ -263,5 +278,12 @@ public class DisplayedBoxHolder {
      */
     public DisplayedPhysxBox getBox(PxActor actor) {
         return blockDisplayList.stream().filter(displayedPhysxBox -> displayedPhysxBox.getActor().equals(actor)).findFirst().orElse(null);
+    }
+
+    /**
+     * 全てのボックスオブジェクトのリストを取得（永続化用）
+     */
+    public List<DisplayedPhysxBox> getAllBoxes() {
+        return new ArrayList<>(blockDisplayList);
     }
 }

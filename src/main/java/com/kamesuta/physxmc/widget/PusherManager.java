@@ -1,8 +1,5 @@
 package com.kamesuta.physxmc.widget;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -11,7 +8,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,15 +19,11 @@ import java.util.logging.Logger;
 public class PusherManager {
     
     private final List<MedalPusher> pushers = new ArrayList<>();
-    private final File dataFile;
     private final File yamlFile;
-    private final Gson gson;
     private final Logger logger;
     
     public PusherManager(File dataFolder) {
-        this.dataFile = new File(dataFolder, "pushers.json"); // 旧互換（未使用）
         this.yamlFile = new File(dataFolder, "pushers.yml");
-        this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.logger = Bukkit.getLogger();
         
         // データフォルダが存在しない場合は作成
@@ -49,13 +41,24 @@ public class PusherManager {
      * @param moveRange 動く幅
      * @param material プッシャーのブロック
      * @param speed 個別の動作速度
-     * @return 作成されたプッシャー
+     * @return 作成されたプッシャー、重複する場合はnull
      */
     public MedalPusher createPusher(Location location, double height, int width, double length, double moveRange, Material material, double speed) {
+        // 重複チェック：2ブロック以内に既存のプッシャーがないか確認
+        double minDistance = 2.0;
+        for (MedalPusher existingPusher : pushers) {
+            double distance = existingPusher.getCenterLocation().distance(location);
+            if (distance < minDistance) {
+                logger.warning("プッシャー作成失敗: " + String.format("%.1f", distance) + "ブロック先に既存のプッシャーがあります（最小距離: " + minDistance + "ブロック）");
+                return null; // 重複する場合は作成しない
+            }
+        }
+        
         MedalPusher pusher = new MedalPusher(location, height, width, length, moveRange, material, speed);
         pushers.add(pusher);
         // 自動保存
         savePushers();
+        logger.info("プッシャーを作成しました: " + pushers.size() + "個目");
         return pusher;
     }
     
@@ -128,28 +131,45 @@ public class PusherManager {
         try {
             org.bukkit.configuration.file.YamlConfiguration yaml = new org.bukkit.configuration.file.YamlConfiguration();
             List<java.util.Map<String, Object>> dataList = new java.util.ArrayList<>();
+            int savedCount = 0;
+            int skippedCount = 0;
+            
             for (MedalPusher pusher : pushers) {
-                if (pusher.isValid()) {
-                    PusherData d = PusherData.fromPusher(pusher);
-                    java.util.Map<String, Object> map = new java.util.HashMap<>();
-                    map.put("world", d.getWorldName());
-                    map.put("x", d.getX());
-                    map.put("y", d.getY());
-                    map.put("z", d.getZ());
-                    map.put("yaw", d.getYaw());
-                    map.put("pitch", d.getPitch());
-                    map.put("height", d.getHeight());
-                    map.put("width", d.getWidth());
-                    map.put("length", d.getLength());
-                    map.put("range", d.getMoveRange());
-                    map.put("material", d.getMaterialName());
-                    map.put("speed", d.getSpeed());
-                    dataList.add(map);
+                // より緩い条件で保存を試行（exists()を使用）
+                if (pusher.exists()) {
+                    try {
+                        PusherData d = PusherData.fromPusher(pusher);
+                        java.util.Map<String, Object> map = new java.util.HashMap<>();
+                        map.put("world", d.getWorldName());
+                        map.put("x", d.getX());
+                        map.put("y", d.getY());
+                        map.put("z", d.getZ());
+                        map.put("yaw", d.getYaw());
+                        map.put("pitch", d.getPitch());
+                        map.put("height", d.getHeight());
+                        map.put("width", d.getWidth());
+                        map.put("length", d.getLength());
+                        map.put("range", d.getMoveRange());
+                        map.put("material", d.getMaterialName());
+                        map.put("speed", d.getSpeed());
+                        map.put("currentPosition", d.getCurrentPosition());
+                        map.put("movingForward", d.isMovingForward());
+                        dataList.add(map);
+                        savedCount++;
+                        logger.info("プッシャー保存成功: " + pusher.getStatusInfo());
+                    } catch (Exception e) {
+                        skippedCount++;
+                        logger.warning("プッシャー保存失敗: " + pusher.getStatusInfo() + " エラー: " + e.getMessage());
+                    }
+                } else {
+                    skippedCount++;
+                    logger.warning("プッシャー保存スキップ: " + pusher.getStatusInfo());
                 }
             }
+            
             yaml.set("pushers", dataList);
             yaml.save(yamlFile);
-            logger.info("プッシャーデータを保存しました: " + dataList.size() + "個");
+            logger.info("プッシャーデータを保存しました: " + savedCount + "個保存、" + skippedCount + "個スキップ");
         } catch (IOException e) {
             logger.severe("プッシャーデータの保存に失敗しました: " + e.getMessage());
         }
@@ -159,6 +179,11 @@ public class PusherManager {
      * プッシャー設定をファイルから読み込み
      */
     public void loadPushers() {
+        // 読み込み前に既存のプッシャーをクリア（重複防止）
+        if (!pushers.isEmpty()) {
+            logger.info("既存のプッシャーをクリア中: " + pushers.size() + "個");
+            destroyAll();
+        }
         if (!yamlFile.exists()) {
             logger.info("プッシャーデータファイルが存在しません");
             return;
@@ -188,9 +213,16 @@ public class PusherManager {
                     data.setMoveRange(((Number) map.get("range")).doubleValue());
                     data.setMaterialName((String) map.get("material"));
                     data.setSpeed(((Number) map.get("speed")).doubleValue());
+                    
+                    // 状態データを読み込み（デフォルト値付き）
+                    data.setCurrentPosition(map.containsKey("currentPosition") ? 
+                        ((Number) map.get("currentPosition")).doubleValue() : 0.0);
+                    data.setMovingForward(map.containsKey("movingForward") ? 
+                        (Boolean) map.get("movingForward") : true);
 
                     Location location = data.toLocation();
                     if (location != null) {
+                        // 状態復元用のコンストラクタを使用
                         MedalPusher pusher = new MedalPusher(
                             location,
                             data.getHeight(),
@@ -198,7 +230,9 @@ public class PusherManager {
                             data.getLength(),
                             data.getMoveRange(),
                             data.toMaterial(),
-                            data.getSpeed()
+                            data.getSpeed(),
+                            data.getCurrentPosition(),
+                            data.isMovingForward()
                         );
                         pushers.add(pusher);
                         loadedCount++;
