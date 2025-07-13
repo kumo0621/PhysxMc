@@ -5,7 +5,9 @@ import com.kamesuta.physxmc.PhysxMc;
 import com.kamesuta.physxmc.PhysxSetting;
 import com.kamesuta.physxmc.widget.MedalPusher;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -187,13 +189,8 @@ public class PhysxCommand extends CommandBase implements Listener {
                 return true;
             }
         } else if (arguments[0].equals(ballArgument) && arguments[1] != null && arguments[2] != null) {
-            // /physxmc ball <radius> <density> [material]
-            if (!(sender instanceof Player)) {
-                sender.sendMessage("プレイヤーしか実行できません");
-                return true;
-            }
-            
-            Player player = (Player) sender;
+            // プレイヤー用: /physxmc ball <radius> <density> [material]
+            // コマンドブロック用: /physxmc ball <radius> <density> <x> <y> <z> [material]
             
             try {
                 double radius = Double.parseDouble(arguments[1]);
@@ -209,17 +206,56 @@ public class PhysxCommand extends CommandBase implements Listener {
                     return true;
                 }
                 
+                Location spawnLocation;
                 Material material = Material.SLIME_BLOCK; // デフォルトはスライムブロック
-                if (arguments.length > 3 && arguments[3] != null) {
-                    try {
-                        material = Material.valueOf(arguments[3].toUpperCase());
-                    } catch (IllegalArgumentException e) {
-                        sender.sendMessage("無効なブロック名です: " + arguments[3]);
+                
+                if (sender instanceof Player) {
+                    // プレイヤー実行の場合：目の位置に召喚
+                    Player player = (Player) sender;
+                    spawnLocation = player.getEyeLocation();
+                    
+                    // マテリアル指定（プレイヤー実行時は4番目の引数）
+                    if (arguments.length > 3 && arguments[3] != null) {
+                        try {
+                            material = Material.valueOf(arguments[3].toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                            sender.sendMessage("無効なブロック名です: " + arguments[3]);
+                            return true;
+                        }
+                    }
+                } else if (sender instanceof BlockCommandSender) {
+                    // コマンドブロック実行の場合：座標が必要
+                    if (arguments.length < 6) {
+                        sender.sendMessage("コマンドブロック実行時は座標が必要です: /physxmc ball <radius> <density> <x> <y> <z> [material]");
                         return true;
                     }
+                    
+                    try {
+                        double x = Double.parseDouble(arguments[3]);
+                        double y = Double.parseDouble(arguments[4]);
+                        double z = Double.parseDouble(arguments[5]);
+                        
+                        spawnLocation = new Location(((BlockCommandSender) sender).getBlock().getWorld(), x, y, z);
+                        
+                        // マテリアル指定（コマンドブロック実行時は7番目の引数）
+                        if (arguments.length > 6 && arguments[6] != null) {
+                            try {
+                                material = Material.valueOf(arguments[6].toUpperCase());
+                            } catch (IllegalArgumentException e) {
+                                sender.sendMessage("無効なブロック名です: " + arguments[6]);
+                                return true;
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        sender.sendMessage("座標の数値が正しくありません");
+                        return true;
+                    }
+                } else {
+                    sender.sendMessage("このコマンドはプレイヤーまたはコマンドブロックから実行してください");
+                    return true;
                 }
                 
-                PhysxMc.displayedSphereHolder.createDisplayedSphere(player.getEyeLocation(), radius, material, density);
+                PhysxMc.displayedSphereHolder.createDisplayedSphere(spawnLocation, radius, material, density);
                 sender.sendMessage("球体を召喚しました (半径:" + radius + ", 密度:" + density + ", マテリアル:" + material + ")");
                 return true;
                 
@@ -228,15 +264,10 @@ public class PhysxCommand extends CommandBase implements Listener {
                 return true;
             }
         } else if (arguments[0].equals(rampArgument) && arguments[1] != null) {
-            if (!(sender instanceof Player)) {
-                sender.sendMessage("プレイヤーしか実行できません");
-                return true;
-            }
-
-            Player player = (Player) sender;
-
             if (arguments[1].equals("create") && arguments[2] != null && arguments[3] != null && arguments[4] != null && arguments[5] != null) {
-                // /physxmc ramp create <pitch> <width> <length> <thickness> [material]
+                // プレイヤー用: /physxmc ramp create <pitch> <width> <length> <thickness> [material]
+                // コマンドブロック用: /physxmc ramp create <pitch> <width> <length> <thickness> <x> <y> <z> [material]
+                
                 try {
                     double pitch = Double.parseDouble(arguments[2]);
                     double width = Double.parseDouble(arguments[3]);
@@ -248,17 +279,56 @@ public class PhysxCommand extends CommandBase implements Listener {
                         return true;
                     }
 
+                    Location createLocation;
                     Material material = Material.IRON_BLOCK; // デフォルト
-                    if (arguments.length > 6 && arguments[6] != null) {
-                        try {
-                            material = Material.valueOf(arguments[6].toUpperCase());
-                        } catch (IllegalArgumentException e) {
-                            sender.sendMessage("無効なブロック名です: " + arguments[6]);
+                    
+                    if (sender instanceof Player) {
+                        // プレイヤー実行の場合：プレイヤーの位置に作成
+                        Player player = (Player) sender;
+                        createLocation = player.getLocation();
+                        
+                        // マテリアル指定（プレイヤー実行時は7番目の引数）
+                        if (arguments.length > 6 && arguments[6] != null) {
+                            try {
+                                material = Material.valueOf(arguments[6].toUpperCase());
+                            } catch (IllegalArgumentException e) {
+                                sender.sendMessage("無効なブロック名です: " + arguments[6]);
+                                return true;
+                            }
+                        }
+                    } else if (sender instanceof BlockCommandSender) {
+                        // コマンドブロック実行の場合：座標が必要
+                        if (arguments.length < 9) {
+                            sender.sendMessage("コマンドブロック実行時は座標が必要です: /physxmc ramp create <pitch> <width> <length> <thickness> <x> <y> <z> [material]");
                             return true;
                         }
+                        
+                        try {
+                            double x = Double.parseDouble(arguments[6]);
+                            double y = Double.parseDouble(arguments[7]);
+                            double z = Double.parseDouble(arguments[8]);
+                            
+                            createLocation = new Location(((BlockCommandSender) sender).getBlock().getWorld(), x, y, z);
+                            
+                            // マテリアル指定（コマンドブロック実行時は10番目の引数）
+                            if (arguments.length > 9 && arguments[9] != null) {
+                                try {
+                                    material = Material.valueOf(arguments[9].toUpperCase());
+                                } catch (IllegalArgumentException e) {
+                                    sender.sendMessage("無効なブロック名です: " + arguments[9]);
+                                    return true;
+                                }
+                            }
+                        } catch (NumberFormatException e) {
+                            sender.sendMessage("座標の数値が正しくありません");
+                            return true;
+                        }
+                    } else {
+                        sender.sendMessage("このコマンドはプレイヤーまたはコマンドブロックから実行してください");
+                        return true;
                     }
 
-                    PhysxMc.rampManager.createRamp(player.getLocation(), pitch, width, length, thickness, material);
+                    PhysxMc.rampManager.createRamp(createLocation, pitch, width, length, thickness, material);
                     sender.sendMessage("ランプを作成しました (角度:" + pitch + ", 幅:" + width + ", 長さ:" + length + ", 厚み:" + thickness + ", ブロック:" + material + ")");
                     return true;
 
@@ -267,6 +337,11 @@ public class PhysxCommand extends CommandBase implements Listener {
                     return true;
                 }
             } else if (arguments[1].equals("remove")) {
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("removeコマンドはプレイヤーしか実行できません");
+                    return true;
+                }
+                Player player = (Player) sender;
                 if (PhysxMc.rampManager.removeNearestRamp(player.getLocation(), 10.0)) {
                     sender.sendMessage("近くのランプを削除しました");
                 } else {
@@ -300,8 +375,10 @@ public class PhysxCommand extends CommandBase implements Listener {
                 "/physxmc pusher remove: 近くのプッシャーを削除する\n" +
                 "/physxmc pusher clear: 全てのプッシャーを削除する\n" +
                 "/physxmc pusher count: プッシャーの数を表示する\n" +
-                "/physxmc ball {半径} {密度} [マテリアル]: 指定サイズと重さの転がる球体を召喚する\n" +
-                "/physxmc ramp create {角度} {幅} {長さ} {厚み} [ブロック名]: 傾斜板を作成する\n" +
+                "/physxmc ball {半径} {密度} [マテリアル]: 指定サイズと重さの転がる球体を召喚する（プレイヤー用）\n" +
+                "/physxmc ball {半径} {密度} {x} {y} {z} [マテリアル]: 指定座標に球体を召喚する（コマンドブロック用）\n" +
+                "/physxmc ramp create {角度} {幅} {長さ} {厚み} [ブロック名]: 傾斜板を作成する（プレイヤー用）\n" +
+                "/physxmc ramp create {角度} {幅} {長さ} {厚み} {x} {y} {z} [ブロック名]: 指定座標に傾斜板を作成する（コマンドブロック用）\n" +
                 "/physxmc ramp remove: 近くのランプを削除する\n" +
                 "/physxmc ramp clear: 全てのランプを削除する\n" +
                 "/physxmc ramp count: ランプの数を表示する\n"));
