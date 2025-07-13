@@ -16,6 +16,7 @@ import com.kamesuta.physxmc.utils.ConversionUtility;
 import com.kamesuta.physxmc.utils.PhysxLoader;
 import com.kamesuta.physxmc.widget.EventHandler;
 import com.kamesuta.physxmc.widget.GrabTool;
+import com.kamesuta.physxmc.widget.JackpotRouletteManager;
 import com.kamesuta.physxmc.widget.PlayerTriggerHolder;
 import com.kamesuta.physxmc.widget.PhysicsObjectManager;
 import com.kamesuta.physxmc.widget.PusherManager;
@@ -46,6 +47,7 @@ public final class PhysxMc extends JavaPlugin {
     public static PusherManager pusherManager;
     public static PhysicsObjectManager physicsObjectManager;
     public static RampManager rampManager;
+    public static JackpotRouletteManager jackpotRouletteManager;
 
     public static GrabTool grabTool;
     public ProtocolManager protocolManager;
@@ -74,6 +76,7 @@ public final class PhysxMc extends JavaPlugin {
         pusherManager = new PusherManager(getDataFolder());
         physicsObjectManager = new PhysicsObjectManager(getDataFolder());
         rampManager = new RampManager();
+        jackpotRouletteManager = new JackpotRouletteManager();
         grabTool = new GrabTool();
         
         // データを読み込み（1秒後に実行してワールドが完全に読み込まれてから）
@@ -102,6 +105,7 @@ public final class PhysxMc extends JavaPlugin {
                 playerTriggerHolder.update();
                 pusherManager.update();
                 rampManager.update();
+                jackpotRouletteManager.update();
                 grabTool.update();
                 
                 // 自動保存処理（5分間隔）
@@ -217,6 +221,10 @@ public final class PhysxMc extends JavaPlugin {
 
         if (rampManager != null) {
             rampManager.destroyAll();
+        }
+        
+        if (jackpotRouletteManager != null) {
+            jackpotRouletteManager.destroyAll();
         }
 
         // 最後にPhysXを終了
