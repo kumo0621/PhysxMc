@@ -3,6 +3,7 @@ package com.kamesuta.physxmc.command;
 import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
 import com.kamesuta.physxmc.PhysxMc;
 import com.kamesuta.physxmc.PhysxSetting;
+import com.kamesuta.physxmc.widget.JackpotRoulette;
 import com.kamesuta.physxmc.widget.MedalPusher;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
@@ -282,6 +283,67 @@ public class PhysxCommand extends CommandBase implements Listener {
                 return true;
             }
         }
+        
+        // ジャックポットルーレットコマンド
+        if (arguments[0].equals("jackpot")) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage("プレイヤーしか実行できません");
+                return true;
+            }
+            Player player = (Player) sender;
+            
+            if (arguments.length < 2) {
+                sender.sendMessage("使用法: /physxmc jackpot <create|launch|remove|clear|count|info>");
+                return true;
+            }
+            
+            if (arguments[1].equals("create")) {
+                // デフォルト設定でジャックポットルーレットを作成
+                if (PhysxMc.jackpotRouletteManager.createDefaultRoulette(player.getLocation()) != null) {
+                    sender.sendMessage("ジャックポットルーレットを作成しました！");
+                } else {
+                    sender.sendMessage("ルーレットの作成に失敗しました。近くに既存のルーレットがないか確認してください。");
+                }
+                return true;
+            } else if (arguments[1].equals("launch")) {
+                // ボールを投入
+                if (PhysxMc.jackpotRouletteManager.launchBall(player, player.getLocation())) {
+                    // 成功メッセージはlaunchBall内で表示される
+                } else {
+                    // エラーメッセージはlaunchBall内で表示される
+                }
+                return true;
+            } else if (arguments[1].equals("remove")) {
+                // 近くのルーレットを削除
+                if (PhysxMc.jackpotRouletteManager.removeNearestRoulette(player.getLocation(), 15.0)) {
+                    sender.sendMessage("近くのジャックポットルーレットを削除しました");
+                } else {
+                    sender.sendMessage("近くにジャックポットルーレットが見つかりません");
+                }
+                return true;
+            } else if (arguments[1].equals("clear")) {
+                // 全てのルーレットを削除
+                PhysxMc.jackpotRouletteManager.destroyAll();
+                sender.sendMessage("全てのジャックポットルーレットを削除しました");
+                return true;
+            } else if (arguments[1].equals("count")) {
+                // ルーレット数を表示
+                int rouletteCount = PhysxMc.jackpotRouletteManager.getRouletteCount();
+                int ballCount = PhysxMc.jackpotRouletteManager.getTrackingBallCount();
+                sender.sendMessage("現在のジャックポットルーレット数: " + rouletteCount);
+                sender.sendMessage("追跡中のボール数: " + ballCount);
+                return true;
+            } else if (arguments[1].equals("info")) {
+                // 最寄りのルーレット情報を表示
+                JackpotRoulette nearest = PhysxMc.jackpotRouletteManager.findNearestRoulette(player.getLocation(), 15.0);
+                if (nearest != null) {
+                    sender.sendMessage(nearest.getSlotInfo());
+                } else {
+                    sender.sendMessage("近くにジャックポットルーレットがありません");
+                }
+                return true;
+            }
+        }
 
         sendUsage(sender);
         return true;
@@ -304,7 +366,13 @@ public class PhysxCommand extends CommandBase implements Listener {
                 "/physxmc ramp create {角度} {幅} {長さ} {厚み} [ブロック名]: 傾斜板を作成する\n" +
                 "/physxmc ramp remove: 近くのランプを削除する\n" +
                 "/physxmc ramp clear: 全てのランプを削除する\n" +
-                "/physxmc ramp count: ランプの数を表示する\n"));
+                "/physxmc ramp count: ランプの数を表示する\n" +
+                "/physxmc jackpot create: ジャックポットルーレットを作成する\n" +
+                "/physxmc jackpot launch: ボールを投入してゲーム開始\n" +
+                "/physxmc jackpot remove: 近くのルーレットを削除する\n" +
+                "/physxmc jackpot clear: 全てのルーレットを削除する\n" +
+                "/physxmc jackpot count: ルーレット数と追跡中ボール数を表示する\n" +
+                "/physxmc jackpot info: 近くのルーレット詳細情報を表示する\n"));
     }
 
     @EventHandler
