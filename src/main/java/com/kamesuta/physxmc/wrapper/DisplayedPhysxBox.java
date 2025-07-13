@@ -46,18 +46,28 @@ public class DisplayedPhysxBox extends PhysxBox {
      * このオブジェクトがコインかどうか
      */
     private boolean isCoin = false;
+    
+    /**
+     * このオブジェクトがプッシャーの一部かどうか
+     */
+    private boolean isPusher = false;
 
     public DisplayedPhysxBox(PxPhysics physics, BoxData data, Map<BlockDisplay[], Vector> display) {
-        this(physics, data, display, false);
+        this(physics, data, display, false, false);
     }
 
     public DisplayedPhysxBox(PxPhysics physics, BoxData data, Map<BlockDisplay[], Vector> display, boolean isCoin) {
+        this(physics, data, display, isCoin, false);
+    }
+
+    public DisplayedPhysxBox(PxPhysics physics, BoxData data, Map<BlockDisplay[], Vector> display, boolean isCoin, boolean isPusher) {
         super(physics, isCoin ? coinMaterial : defaultMaterial, data);
 
         display.forEach((blockDisplays, vector) -> this.displayMap.add(new DisplayData(blockDisplays, vector, 0)));
         BlockDisplay[] firstDisplay = displayMap.get(0).displays;
         world = firstDisplay[0].getWorld();
         this.isCoin = isCoin;
+        this.isPusher = isPusher;
     }
 
     /**
@@ -65,6 +75,13 @@ public class DisplayedPhysxBox extends PhysxBox {
      */
     public boolean isCoin() {
         return isCoin;
+    }
+    
+    /**
+     * このオブジェクトがプッシャーの一部かどうか
+     */
+    public boolean isPusher() {
+        return isPusher;
     }
 
     public void update() {

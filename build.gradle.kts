@@ -16,6 +16,11 @@ group = "com.quarri6343"
 // バージョン定義
 version = "1.0-SNAPSHOT"
 
+// Java版の設定
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+}
+
 repositories {
     mavenCentral()
     // Paperの依存リポジトリ
