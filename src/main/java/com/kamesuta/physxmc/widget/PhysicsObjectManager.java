@@ -122,6 +122,9 @@ public class PhysicsObjectManager {
         // デフォルト密度（詳細な密度情報が取得できない場合）
         data.setDensity(com.kamesuta.physxmc.PhysxSetting.getDefaultDensity());
         
+        // プッシャーフラグを設定
+        data.setPusher(box.isPusher());
+        
         return data;
     }
     
@@ -267,6 +270,9 @@ public class PhysicsObjectManager {
                             offsetMaps.add(offsetMap);
                         }
                         map.put("offsets", offsetMaps);
+                        
+                        // プッシャーフラグ
+                        map.put("isPusher", data.isPusher());
                         
                         dataList.add(map);
                         savedCount++;
@@ -487,6 +493,9 @@ public class PhysicsObjectManager {
             }
             data.setOffsets(offsets);
             
+            // プッシャーフラグを読み込み（デフォルトは false）
+            data.setPusher(map.containsKey("isPusher") ? (Boolean) map.get("isPusher") : false);
+            
             return data;
         } catch (Exception e) {
             logger.warning("ボックスデータの解析エラー: " + e.getMessage());
@@ -543,6 +552,13 @@ public class PhysicsObjectManager {
      */
     private void restoreBox(BoxPersistenceData data) {
         try {
+            // プッシャーフラグが設定されている場合は復元をスキップ
+            // プッシャーはPusherManagerによって管理されるため
+            if (data.isPusher()) {
+                logger.info("プッシャーデータをスキップ: PusherManagerで管理されます");
+                return;
+            }
+            
             Location location = data.toPhysicsLocation(); // 物理的な位置を使用
             if (location == null) {
                 logger.warning("ワールドが見つからないため、ボックスを復元できませんでした: " + data.getWorldName());
@@ -553,13 +569,14 @@ public class PhysicsObjectManager {
             location.setYaw((float) Math.toDegrees(Math.atan2(-data.getPhysicsQy(), data.getPhysicsQw()) * 2));
             location.setPitch((float) Math.toDegrees(Math.asin(2 * (data.getPhysicsQx() * data.getPhysicsQw() - data.getPhysicsQy() * data.getPhysicsQz()))));
             
-            // ボックスオブジェクトを作成
+            // ボックスオブジェクトを作成（プッシャーフラグ付き）
             DisplayedPhysxBox box = PhysxMc.displayedBoxHolder.createDisplayedBox(
                 location,
                 data.toScale(),
                 data.toItemStack(),
                 data.toOffsets(),
-                data.getDensity()
+                data.getDensity(),
+                data.isPusher()
             );
             
             if (box != null) {

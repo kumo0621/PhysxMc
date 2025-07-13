@@ -50,6 +50,9 @@ public class BoxPersistenceData {
     private double angularVelocityY;
     private double angularVelocityZ;
     
+    // プッシャーフラグ
+    private boolean isPusher;
+    
     /**
      * Vectorのオフセットを保存するためのデータクラス
      */
