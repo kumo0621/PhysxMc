@@ -90,13 +90,9 @@ public class PhysicsObjectManager {
                 data.setAngularVelocityZ(0);
             }
         } else {
-            logger.warning("ボックスにアクターが存在しません - 速度を0で設定");
-            data.setVelocityX(0);
-            data.setVelocityY(0);
-            data.setVelocityZ(0);
-            data.setAngularVelocityX(0);
-            data.setAngularVelocityY(0);
-            data.setAngularVelocityZ(0);
+            logger.warning("ボックスにアクターが存在しません（無効なボックス） - このボックスは保存されません");
+            // アクターがないボックスは無効なので、nullを返して保存をスキップ
+            return null;
         }
         
         // ディスプレイ情報（最初のディスプレイデータから取得）
@@ -224,6 +220,12 @@ public class PhysicsObjectManager {
                 if (box != null && !box.isDisplayDead() && !box.isPusher()) { // プッシャーの物理オブジェクトは除外
                     try {
                         BoxPersistenceData data = createBoxData(box);
+                        if (data == null) {
+                            // アクターが無効なボックスをスキップ
+                            skippedCount++;
+                            logger.warning("無効なボックス（アクター不存在）をスキップしました");
+                            continue;
+                        }
                         Map<String, Object> map = new HashMap<>();
                         
                         // 基本情報
@@ -580,6 +582,12 @@ public class PhysicsObjectManager {
             );
             
             if (box != null) {
+                // アクターが正常に作成されているか確認
+                if (box.getActor() == null) {
+                    logger.severe("復元されたボックスにアクターがありません - 物理演算が無効");
+                    return;
+                }
+                
                 // 物理的な位置と回転を正確に設定
                 org.joml.Quaternionf quat = new org.joml.Quaternionf(
                     data.getPhysicsQx(),
@@ -589,39 +597,63 @@ public class PhysicsObjectManager {
                 );
                 Vector physicsPos = new Vector(data.getPhysicsX(), data.getPhysicsY(), data.getPhysicsZ());
                 
-                // キネマティック制御で正確な位置に移動
-                box.makeKinematic(true);
-                box.moveKinematic(physicsPos, quat);
-                box.makeKinematic(false); // 物理シミュレーションを再開
+                // 少し待ってから物理演算を復元（安全性のため）
+                new org.bukkit.scheduler.BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            // キネマティック制御で正確な位置に移動
+                            box.makeKinematic(true);
+                            box.moveKinematic(physicsPos, quat);
+                            
+                            // 少し待ってから物理シミュレーションを再開
+                            new org.bukkit.scheduler.BukkitRunnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        box.makeKinematic(false); // 物理シミュレーションを再開
+                                        
+                                        // 速度状態の復元
+                                        if (box.getActor() != null) {
+                                            var actor = box.getActor();
+                                            
+                                            // 線形速度を設定
+                                            var linearVel = new physx.common.PxVec3(
+                                                (float) data.getVelocityX(),
+                                                (float) data.getVelocityY(),
+                                                (float) data.getVelocityZ()
+                                            );
+                                            actor.setLinearVelocity(linearVel);
+                                            
+                                            // 角速度を設定
+                                            var angularVel = new physx.common.PxVec3(
+                                                (float) data.getAngularVelocityX(),
+                                                (float) data.getAngularVelocityY(),
+                                                (float) data.getAngularVelocityZ()
+                                            );
+                                            actor.setAngularVelocity(angularVel);
+                                            
+                                            // PhysXオブジェクトを解放
+                                            linearVel.destroy();
+                                            angularVel.destroy();
+                                            
+                                            logger.info("ボックス復元完了（物理演算有効）: " + data.getMaterialName() + " at " + data.getPhysicsX() + "," + data.getPhysicsY() + "," + data.getPhysicsZ());
+                                        } else {
+                                            logger.warning("復元後のアクターが無効です: " + data.getMaterialName());
+                                        }
+                                    } catch (Exception e) {
+                                        logger.severe("物理演算再開中にエラー: " + e.getMessage());
+                                    }
+                                }
+                            }.runTaskLater(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class), 2L);
+                        } catch (Exception e) {
+                            logger.severe("位置復元中にエラー: " + e.getMessage());
+                        }
+                    }
+                }.runTaskLater(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class), 1L);
                 
-                // 速度状態の復元
-                if (box.getActor() != null) {
-                    var actor = box.getActor();
-                    
-                    // 線形速度を設定
-                    var linearVel = new physx.common.PxVec3(
-                        (float) data.getVelocityX(),
-                        (float) data.getVelocityY(),
-                        (float) data.getVelocityZ()
-                    );
-                    actor.setLinearVelocity(linearVel);
-                    
-                    // 角速度を設定
-                    var angularVel = new physx.common.PxVec3(
-                        (float) data.getAngularVelocityX(),
-                        (float) data.getAngularVelocityY(),
-                        (float) data.getAngularVelocityZ()
-                    );
-                    actor.setAngularVelocity(angularVel);
-                    
-                    // PhysXオブジェクトを解放
-                    linearVel.destroy();
-                    angularVel.destroy();
-                }
-                
-                logger.info("ボックス復元成功: " + data.getMaterialName() + " at " + data.getPhysicsX() + "," + data.getPhysicsY() + "," + data.getPhysicsZ());
             } else {
-                logger.warning("ボックスの作成に失敗しました");
+                logger.warning("ボックスの作成に失敗しました: " + data.getMaterialName());
             }
         } catch (Exception e) {
             logger.warning("ボックス復元エラー: " + e.getMessage());
@@ -652,6 +684,12 @@ public class PhysicsObjectManager {
             );
             
             if (sphere != null) {
+                // アクターが正常に作成されているか確認
+                if (sphere.getActor() == null) {
+                    logger.severe("復元されたスフィアにアクターがありません - 物理演算が無効");
+                    return;
+                }
+                
                 // 物理的な位置と回転を正確に設定
                 org.joml.Quaternionf quat = new org.joml.Quaternionf(
                     data.getPhysicsQx(),

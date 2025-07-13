@@ -1,0 +1,88 @@
+package com.kamesuta.physxmc.widget;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.util.Vector;
+import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
+
+/**
+ * ランプの設定を保存するためのデータクラス
+ */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class RampData {
+    private String worldName;
+    private double x;
+    private double y;
+    private double z;
+    private float yaw;
+    private float pitch;
+    private double width;
+    private double length;
+    private double thickness;
+    private String materialName;
+    
+    /**
+     * DisplayedPhysxBoxからRampDataを作成
+     */
+    public static RampData fromRamp(DisplayedPhysxBox ramp) {
+        Location location = ramp.getLocation();
+        
+        // DisplayMap の最初のデータからスケールとマテリアルを取得
+        double width = 1.0, length = 1.0, thickness = 1.0;
+        String materialName = "IRON_BLOCK";
+        
+        if (!ramp.displayMap.isEmpty()) {
+            DisplayedPhysxBox.DisplayData firstDisplay = ramp.displayMap.get(0);
+            if (firstDisplay.getDisplays().length > 0) {
+                org.bukkit.entity.BlockDisplay blockDisplay = firstDisplay.getDisplays()[0];
+                org.bukkit.util.Transformation transformation = blockDisplay.getTransformation();
+                width = transformation.getScale().x;
+                thickness = transformation.getScale().y;
+                length = transformation.getScale().z;
+                materialName = blockDisplay.getBlock().getMaterial().name();
+            }
+        }
+        
+        return new RampData(
+            location.getWorld().getName(),
+            location.getX(),
+            location.getY(),
+            location.getZ(),
+            location.getYaw(),
+            location.getPitch(),
+            width,
+            length,
+            thickness,
+            materialName
+        );
+    }
+    
+    /**
+     * RampDataからLocationを作成
+     */
+    public Location toLocation() {
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) {
+            return null;
+        }
+        return new Location(world, x, y, z, yaw, pitch);
+    }
+    
+    /**
+     * RampDataからMaterialを作成
+     */
+    public Material toMaterial() {
+        try {
+            return Material.valueOf(materialName);
+        } catch (IllegalArgumentException e) {
+            return Material.STONE; // デフォルトにフォールバック
+        }
+    }
+}
