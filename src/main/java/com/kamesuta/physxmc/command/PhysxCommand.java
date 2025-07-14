@@ -248,14 +248,14 @@ public class PhysxCommand extends CommandBase implements Listener {
 
             Player player = (Player) sender;
 
-            if (arguments[1].equals("create") && arguments.length >= 6 && 
-                arguments[2] != null && arguments[3] != null && arguments[4] != null && arguments[5] != null) {
+            if (arguments[2].equals("create") && arguments.length >= 7 && 
+                arguments[3] != null && arguments[4] != null && arguments[5] != null && arguments[6] != null) {
                 // /physxmc ramp create <pitch> <width> <length> <thickness> [material]
                 try {
-                    double pitch = Double.parseDouble(arguments[2]);
-                    double width = Double.parseDouble(arguments[3]);
-                    double length = Double.parseDouble(arguments[4]);
-                    double thickness = Double.parseDouble(arguments[5]);
+                    double pitch = Double.parseDouble(arguments[3]);
+                    double width = Double.parseDouble(arguments[4]);
+                    double length = Double.parseDouble(arguments[5]);
+                    double thickness = Double.parseDouble(arguments[6]);
 
                     if (width <= 0 || length <= 0 || thickness <= 0) {
                         sender.sendMessage("幅、長さ、厚みは正の値である必要があります");
@@ -268,11 +268,11 @@ public class PhysxCommand extends CommandBase implements Listener {
                     }
 
                     Material material = Material.IRON_BLOCK; // デフォルト
-                    if (arguments.length > 6 && arguments[6] != null && !arguments[6].trim().isEmpty()) {
+                    if (arguments.length > 7 && arguments[7] != null && !arguments[7].trim().isEmpty()) {
                         try {
-                            material = Material.valueOf(arguments[6].toUpperCase());
+                            material = Material.valueOf(arguments[7].toUpperCase());
                         } catch (IllegalArgumentException e) {
-                            sender.sendMessage("無効なブロック名です: " + arguments[6]);
+                            sender.sendMessage("無効なブロック名です: " + arguments[7]);
                             return true;
                         }
                     }
@@ -289,18 +289,18 @@ public class PhysxCommand extends CommandBase implements Listener {
                     sender.sendMessage("数値が正しくありません");
                     return true;
                 }
-            } else if (arguments[1].equals("remove")) {
+            } else if (arguments.length >= 3 && arguments[2].equals("remove")) {
                 if (PhysxMc.rampManager.removeNearestRamp(player.getLocation(), 10.0)) {
                     sender.sendMessage("近くのランプを削除しました");
                 } else {
                     sender.sendMessage("近くにランプが見つかりません");
                 }
                 return true;
-            } else if (arguments[1].equals("clear")) {
+            } else if (arguments.length >= 3 && arguments[2].equals("clear")) {
                 PhysxMc.rampManager.destroyAll();
                 sender.sendMessage("全てのランプを削除しました");
                 return true;
-            } else if (arguments[1].equals("count")) {
+            } else if (arguments.length >= 3 && arguments[2].equals("count")) {
                 sender.sendMessage("現在のランプ数: " + PhysxMc.rampManager.getRampCount());
                 return true;
             }
