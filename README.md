@@ -84,7 +84,7 @@ PhysxMcは、MinecraftのPaperサーバー向けの物理エンジンプラグ�
 +/physxmc debugmode
 +/physxmc density <float>             # 例: /physxmc density 1.5
 +/physxmc updatecurrentchunk
-+/physxmc summon <x> <y> <z>          # 例: /physxmc summon 2 2 2
++/physxmc summon <x> <y> <z> [ブロック名] # 例: /physxmc summon 2 2 2 DIAMOND_BLOCK
 +/physxmc gravity <x> <y> <z>         # 例: /physxmc gravity 0 -19.62 0
 
 # コインシステム
@@ -128,9 +128,11 @@ PhysxMcは、MinecraftのPaperサーバー向けの物理エンジンプラグ�
 - **機能**: プレイヤーの現在位置のチャンク地形をリロード
 - **用途**: 手動での地形更新
 
-#### `/physxmc summon <x> <y> <z>`
-- **機能**: 指定サイズのテスト物理オブジェクトを生成
+#### `/physxmc summon <x> <y> <z> [ブロック名]`
+- **機能**: 指定サイズの物理演算ブロックを生成
 - **パラメータ**: x, y, z（ブロック単位のサイズ）
+- **ブロック名**: 生成するブロックの種類（省略時はコマンドブロック）
+- **例**: `/physxmc summon 2 2 2 DIAMOND_BLOCK`
 
 #### `/physxmc gravity <x> <y> <z>`
 - **機能**: 重力ベクトルの設定

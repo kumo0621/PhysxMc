@@ -5,7 +5,8 @@
       "Bash(./gradlew:*)",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(gh pr create:*)"
+      "Bash(gh pr create:*)",
+      "Bash(gh pr view:*)"
     ],
     "deny": []
   }
