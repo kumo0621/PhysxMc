@@ -89,8 +89,20 @@ public class PhysxCommand extends CommandBase implements Listener {
                 sendUsage(sender);
                 return true;
             }
-            PhysxMc.displayedBoxHolder.createDisplayedBox(((Player) sender).getLocation(), new Vector(x, y, z), new ItemStack(Material.COMMAND_BLOCK), List.of(new Vector()));
-            sender.sendMessage("テストブロックを生成しました");
+            
+            // ブロックタイプを指定できるようにする（オプション）
+            Material blockType = Material.COMMAND_BLOCK; // デフォルトはコマンドブロック
+            if (arguments.length > 4 && arguments[4] != null) {
+                try {
+                    blockType = Material.valueOf(arguments[4].toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    sender.sendMessage("無効なブロック名です: " + arguments[4]);
+                    return true;
+                }
+            }
+            
+            PhysxMc.displayedBoxHolder.createDisplayedBox(((Player) sender).getLocation(), new Vector(x, y, z), new ItemStack(blockType), List.of(new Vector()));
+            sender.sendMessage("物理演算ブロックを生成しました (サイズ:" + x + "x" + y + "x" + z + ", ブロック:" + blockType + ")");
             return true;
         } else if (arguments[0].equals(gravityArgument) && arguments[1] != null && arguments[2] != null && arguments[3] != null) {
             float x, y, z;
@@ -293,7 +305,7 @@ public class PhysxCommand extends CommandBase implements Listener {
                 "/physxmc debugmode: 右クリックで持っているアイテムが投げられたり掴めたりするデバッグモードを有効/無効にする\n" +
                 "/physxmc density {float型}: 召喚する物理オブジェクトの既定の密度を設定する\n" +
                 "/physxmc updateCurrentChunk: プレイヤーが今いるチャンクの地形をリロードする\n" +
-                "/physxmc summon {縦}　{高さ}　{横}: テストオブジェクトを1個召喚する\n" +
+                "/physxmc summon {縦}　{高さ}　{横} [ブロック名]: 物理演算ブロックを召喚する\n" +
                 "/physxmc gravity {x}　{y}　{z}: 重力の大きさを設定する\n" +
                 "/physxmc coin enable: 鉄製のトラップドアを使ったコイン投擲システムを有効/無効にする\n" +
                 "/physxmc pusher create {高さ} {幅} {長さ} {移動範囲} [ブロック名] [速度]: 指定サイズのプッシャーを作成する\n" +
