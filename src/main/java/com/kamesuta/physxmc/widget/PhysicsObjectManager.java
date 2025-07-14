@@ -54,18 +54,29 @@ public class PhysicsObjectManager {
         data.setPitch(location.getPitch());
         
         // 物理状態
-        physx.common.PxVec3 physicsPos = box.getPos().getP();
-        physx.common.PxQuat physicsRot = box.getPos().getQ();
-        data.setPhysicsX(physicsPos.getX());
-        data.setPhysicsY(physicsPos.getY());
-        data.setPhysicsZ(physicsPos.getZ());
-        data.setPhysicsQx(physicsRot.getX());
-        data.setPhysicsQy(physicsRot.getY());
-        data.setPhysicsQz(physicsRot.getZ());
-        data.setPhysicsQw(physicsRot.getW());
+        if (box.getActor() != null && box.getActor().isReleasable()) {
+            physx.common.PxVec3 physicsPos = box.getPos().getP();
+            physx.common.PxQuat physicsRot = box.getPos().getQ();
+            data.setPhysicsX(physicsPos.getX());
+            data.setPhysicsY(physicsPos.getY());
+            data.setPhysicsZ(physicsPos.getZ());
+            data.setPhysicsQx(physicsRot.getX());
+            data.setPhysicsQy(physicsRot.getY());
+            data.setPhysicsQz(physicsRot.getZ());
+            data.setPhysicsQw(physicsRot.getW());
+        } else {
+            // アクターが無効な場合は表示位置を物理位置として使用
+            data.setPhysicsX(location.getX());
+            data.setPhysicsY(location.getY());
+            data.setPhysicsZ(location.getZ());
+            data.setPhysicsQx(0);
+            data.setPhysicsQy(0);
+            data.setPhysicsQz(0);
+            data.setPhysicsQw(1);
+        }
         
         // 速度情報の取得（PhysXアクターから実際の速度を取得）
-        if (box.getActor() != null) {
+        if (box.getActor() != null && box.getActor().isReleasable()) {
             try {
                 physx.common.PxVec3 linearVel = box.getActor().getLinearVelocity();
                 physx.common.PxVec3 angularVel = box.getActor().getAngularVelocity();
@@ -90,9 +101,13 @@ public class PhysicsObjectManager {
                 data.setAngularVelocityZ(0);
             }
         } else {
-            logger.warning("ボックス保存スキップ: 物理アクターが存在しません（無効なボックス）");
-            // アクターがないボックスは無効なので、nullを返して保存をスキップ
-            return null;
+            // アクターがない場合は速度を0で設定
+            data.setVelocityX(0);
+            data.setVelocityY(0);
+            data.setVelocityZ(0);
+            data.setAngularVelocityX(0);
+            data.setAngularVelocityY(0);
+            data.setAngularVelocityZ(0);
         }
         
         // ディスプレイ情報（最初のディスプレイデータから取得）
@@ -216,14 +231,37 @@ public class PhysicsObjectManager {
             // DisplayedBoxHolderから全てのボックスを取得
             List<DisplayedPhysxBox> boxes = PhysxMc.displayedBoxHolder.getAllBoxes();
             
+            // 無効なボックスを事前に除去してリストをクリーンアップ
+            List<DisplayedPhysxBox> invalidBoxes = new ArrayList<>();
+            for (DisplayedPhysxBox box : boxes) {
+                if (box != null && (box.getActor() == null || !box.getActor().isReleasable())) {
+                    invalidBoxes.add(box);
+                }
+            }
+            
+            // 無効なボックスを除去
+            for (DisplayedPhysxBox invalidBox : invalidBoxes) {
+                PhysxMc.displayedBoxHolder.destroySpecific(invalidBox);
+                logger.info("無効なボックスオブジェクトを除去しました");
+            }
+            
+            // リストを更新（無効なボックスを除去後）
+            boxes = PhysxMc.displayedBoxHolder.getAllBoxes();
+            
             for (DisplayedPhysxBox box : boxes) {
                 if (box != null && !box.isDisplayDead() && !box.isPusher()) { // プッシャーの物理オブジェクトは除外
                     try {
+                        // アクターが無効な場合は事前にスキップ
+                        if (box.getActor() == null || !box.getActor().isReleasable()) {
+                            skippedCount++;
+                            logger.warning("ボックス保存スキップ: 物理アクターが存在しないか解放済み（無効なオブジェクト）");
+                            continue;
+                        }
+                        
                         BoxPersistenceData data = createBoxData(box);
                         if (data == null) {
                             // アクターが無効なボックスをスキップ
                             skippedCount++;
-                            // 既に createBoxData メソッドでログを出力しているので、ここでは出力しない
                             continue;
                         }
                         Map<String, Object> map = new HashMap<>();
