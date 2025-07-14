@@ -53,6 +53,9 @@ public class BoxPersistenceData {
     // プッシャーフラグ
     private boolean isPusher;
     
+    // コインフラグ
+    private boolean isCoin;
+    
     /**
      * Vectorのオフセットを保存するためのデータクラス
      */

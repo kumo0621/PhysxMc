@@ -50,13 +50,40 @@ public class RampData {
             }
         }
         
+        // 物理演算の実際の角度を取得（PhysXアクターから）
+        float actualYaw = location.getYaw();
+        float actualPitch = location.getPitch();
+        
+        if (ramp.getActor() != null && ramp.getActor().isReleasable()) {
+            try {
+                // PhysXからの回転情報を取得
+                physx.common.PxTransform transform = ramp.getPos();
+                physx.common.PxVec3 pos = transform.getP();
+                physx.common.PxQuat quat = transform.getQ();
+                
+                // クォータニオンから角度を計算
+                actualYaw = (float) Math.toDegrees(Math.atan2(2 * (quat.getW() * quat.getY() + quat.getX() * quat.getZ()), 
+                    1 - 2 * (quat.getY() * quat.getY() + quat.getZ() * quat.getZ())));
+                actualPitch = (float) Math.toDegrees(Math.asin(2 * (quat.getW() * quat.getX() - quat.getY() * quat.getZ())));
+                
+                // PhysXオブジェクトのクリーンアップ
+                pos.destroy();
+                quat.destroy();
+                transform.destroy();
+            } catch (Exception e) {
+                // フォールバック: 表示位置の角度を使用
+                actualYaw = location.getYaw();
+                actualPitch = location.getPitch();
+            }
+        }
+        
         return new RampData(
             location.getWorld().getName(),
             location.getX(),
             location.getY(),
             location.getZ(),
-            location.getYaw(),
-            location.getPitch(),
+            actualYaw,
+            actualPitch,
             width,
             length,
             thickness,
