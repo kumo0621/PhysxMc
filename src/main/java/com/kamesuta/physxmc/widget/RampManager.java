@@ -2,14 +2,18 @@ package com.kamesuta.physxmc.widget;
 
 import com.kamesuta.physxmc.PhysxMc;
 import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * 傾斜板(ランプ)を管理するクラス
@@ -17,6 +21,18 @@ import java.util.List;
 public class RampManager {
 
     private final List<DisplayedPhysxBox> ramps = new ArrayList<>();
+    private final File yamlFile;
+    private final Logger logger;
+    
+    public RampManager(File dataFolder) {
+        this.yamlFile = new File(dataFolder, "ramps.yml");
+        this.logger = Bukkit.getLogger();
+        
+        // データフォルダが存在しない場合は作成
+        if (!dataFolder.exists()) {
+            dataFolder.mkdirs();
+        }
+    }
 
     /**
      * ランプを生成してシーンに追加
@@ -41,6 +57,10 @@ public class RampManager {
         // 動かないランプとして設定
         ramp.makeKinematic(true);
         ramps.add(ramp);
+        
+        // 自動保存
+        saveRamps();
+        logger.info("ランプを作成しました: " + ramps.size() + "個目");
         return ramp;
     }
 
@@ -80,6 +100,9 @@ public class RampManager {
         if (nearest != null) {
             PhysxMc.displayedBoxHolder.destroySpecific(nearest);
             ramps.remove(nearest);
+            
+            // 自動保存
+            saveRamps();
             return true;
         }
         return false;
@@ -100,5 +123,119 @@ public class RampManager {
      */
     public int getRampCount() {
         return ramps.size();
+    }
+    
+    /**
+     * ランプ設定をファイルに保存
+     */
+    public void saveRamps() {
+        try {
+            org.bukkit.configuration.file.YamlConfiguration yaml = new org.bukkit.configuration.file.YamlConfiguration();
+            List<java.util.Map<String, Object>> dataList = new java.util.ArrayList<>();
+            int savedCount = 0;
+            int skippedCount = 0;
+            
+            for (DisplayedPhysxBox ramp : ramps) {
+                // ランプが有効かチェック
+                if (!ramp.isDisplayDead()) {
+                    try {
+                        RampData data = RampData.fromRamp(ramp);
+                        java.util.Map<String, Object> map = new java.util.HashMap<>();
+                        map.put("world", data.getWorldName());
+                        map.put("x", data.getX());
+                        map.put("y", data.getY());
+                        map.put("z", data.getZ());
+                        map.put("yaw", data.getYaw());
+                        map.put("pitch", data.getPitch());
+                        map.put("width", data.getWidth());
+                        map.put("length", data.getLength());
+                        map.put("thickness", data.getThickness());
+                        map.put("material", data.getMaterialName());
+                        dataList.add(map);
+                        savedCount++;
+                        logger.info("ランプ保存成功: " + data.getMaterialName() + " @ " + data.getWorldName());
+                    } catch (Exception e) {
+                        skippedCount++;
+                        logger.warning("ランプ保存失敗: " + e.getMessage());
+                    }
+                } else {
+                    skippedCount++;
+                    logger.warning("ランプ保存スキップ: 無効なランプ");
+                }
+            }
+            
+            yaml.set("ramps", dataList);
+            yaml.save(yamlFile);
+            logger.info("ランプデータを保存しました: " + savedCount + "個保存、" + skippedCount + "個スキップ");
+        } catch (IOException e) {
+            logger.severe("ランプデータの保存に失敗しました: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * ランプ設定をファイルから読み込み
+     */
+    public void loadRamps() {
+        // 読み込み前に既存のランプをクリア（重複防止）
+        if (!ramps.isEmpty()) {
+            logger.info("既存のランプをクリア中: " + ramps.size() + "個");
+            destroyAll();
+        }
+        
+        if (!yamlFile.exists()) {
+            logger.info("ランプデータファイルが存在しません");
+            return;
+        }
+        
+        try {
+            org.bukkit.configuration.file.YamlConfiguration yaml = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(yamlFile);
+            java.util.List<java.util.Map<?,?>> dataList = yaml.getMapList("ramps");
+            if (dataList == null || dataList.isEmpty()) {
+                logger.info("ランプデータが空です");
+                return;
+            }
+
+            int loadedCount = 0;
+            for (java.util.Map<?,?> map : dataList) {
+                try {
+                    RampData data = new RampData();
+                    data.setWorldName((String) map.get("world"));
+                    data.setX(((Number) map.get("x")).doubleValue());
+                    data.setY(((Number) map.get("y")).doubleValue());
+                    data.setZ(((Number) map.get("z")).doubleValue());
+                    data.setYaw(((Number) map.get("yaw")).floatValue());
+                    data.setPitch(((Number) map.get("pitch")).floatValue());
+                    data.setWidth(((Number) map.get("width")).doubleValue());
+                    data.setLength(((Number) map.get("length")).doubleValue());
+                    data.setThickness(((Number) map.get("thickness")).doubleValue());
+                    data.setMaterialName((String) map.get("material"));
+
+                    Location location = data.toLocation();
+                    if (location != null) {
+                        // ランプを復元（保存時の自動保存を避けるため一時的にリストから削除）
+                        Vector scale = new Vector(data.getWidth(), data.getThickness(), data.getLength());
+                        ItemStack item = new ItemStack(data.toMaterial());
+                        
+                        DisplayedPhysxBox ramp = PhysxMc.displayedBoxHolder.createDisplayedBox(location, scale, item, List.of(new Vector()));
+                        if (ramp != null) {
+                            ramp.makeKinematic(true);
+                            ramps.add(ramp);
+                            loadedCount++;
+                            logger.info("ランプ復元成功: " + data.getMaterialName() + " @ " + data.getWorldName());
+                        } else {
+                            logger.warning("ランプの物理演算作成に失敗しました: " + data.getMaterialName());
+                        }
+                    } else {
+                        logger.warning("ワールドが見つからないため、ランプを復元できませんでした: " + data.getWorldName());
+                    }
+                } catch (Exception e) {
+                    logger.warning("ランプデータの解析に失敗しました: " + e.getMessage());
+                }
+            }
+
+            logger.info("ランプデータを読み込みました: " + loadedCount + "個");
+        } catch (Exception e) {
+            logger.severe("ランプデータの読み込みに失敗しました: " + e.getMessage());
+        }
     }
 } 

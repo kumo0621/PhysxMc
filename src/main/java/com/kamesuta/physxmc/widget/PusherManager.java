@@ -234,8 +234,16 @@ public class PusherManager {
                             data.getCurrentPosition(),
                             data.isMovingForward()
                         );
-                        pushers.add(pusher);
-                        loadedCount++;
+                        
+                        // プッシャーの物理演算が正常に作成されているか確認
+                        if (pusher.isValid()) {
+                            pushers.add(pusher);
+                            loadedCount++;
+                            logger.info("プッシャー復元成功: " + pusher.getStatusInfo());
+                        } else {
+                            logger.warning("プッシャーの物理演算作成に失敗しました: " + data.getMaterialName());
+                            pusher.destroy(); // クリーンアップ
+                        }
                     } else {
                         logger.warning("ワールドが見つからないため、プッシャーを復元できませんでした: " + data.getWorldName());
                     }

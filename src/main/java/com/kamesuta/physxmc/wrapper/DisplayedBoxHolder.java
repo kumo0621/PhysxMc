@@ -112,8 +112,25 @@ public class DisplayedBoxHolder {
         
         BoxData data = new BoxData(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries, false, finalDensity);
         DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, displayMap, density == com.kamesuta.physxmc.PhysxSetting.getCoinDensity(), isPusher);
-        blockDisplayList.add(box);
-        return box;
+        
+        if (box != null) {
+            // アクターが正常に作成されているか検証
+            if (box.getActor() == null) {
+                com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class).getLogger().severe("ボックス作成失敗: PhysXアクターが作成されませんでした");
+                // 失敗したDisplayをクリーンアップ
+                for (DisplayedPhysxBox.DisplayData data2 : box.displayMap) {
+                    for (org.bukkit.entity.BlockDisplay display : data2.getDisplays()) {
+                        display.remove();
+                    }
+                }
+                return null;
+            }
+            blockDisplayList.add(box);
+            return box;
+        } else {
+            com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class).getLogger().severe("ボックス作成失敗: PhysXWorldからnullが返されました");
+            return null;
+        }
     }
 
     /**
