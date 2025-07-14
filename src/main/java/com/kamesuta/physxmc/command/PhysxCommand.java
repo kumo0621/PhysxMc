@@ -251,11 +251,24 @@ public class PhysxCommand extends CommandBase implements Listener {
             if (arguments[1].equals("create") && arguments.length >= 6 && 
                 arguments[2] != null && arguments[3] != null && arguments[4] != null && arguments[5] != null) {
                 // /physxmc ramp create <pitch> <width> <length> <thickness> [material]
+                
+                // デバッグログ: 受け取った引数を出力
+                sender.sendMessage("DEBUG: 受け取った引数:");
+                for (int i = 0; i < arguments.length; i++) {
+                    sender.sendMessage("  arguments[" + i + "] = '" + arguments[i] + "'");
+                }
+                
                 try {
                     double pitch = Double.parseDouble(arguments[2]);
                     double width = Double.parseDouble(arguments[3]);
                     double length = Double.parseDouble(arguments[4]);
                     double thickness = Double.parseDouble(arguments[5]);
+
+                    sender.sendMessage("DEBUG: パース後の数値:");
+                    sender.sendMessage("  pitch = " + pitch);
+                    sender.sendMessage("  width = " + width);
+                    sender.sendMessage("  length = " + length);
+                    sender.sendMessage("  thickness = " + thickness);
 
                     if (width <= 0 || length <= 0 || thickness <= 0) {
                         sender.sendMessage("幅、長さ、厚みは正の値である必要があります");
@@ -271,12 +284,16 @@ public class PhysxCommand extends CommandBase implements Listener {
                     if (arguments.length > 6 && arguments[6] != null && !arguments[6].trim().isEmpty()) {
                         try {
                             material = Material.valueOf(arguments[6].toUpperCase());
+                            sender.sendMessage("DEBUG: マテリアル = " + material);
                         } catch (IllegalArgumentException e) {
                             sender.sendMessage("無効なブロック名です: " + arguments[6]);
                             return true;
                         }
+                    } else {
+                        sender.sendMessage("DEBUG: デフォルトマテリアル使用 = " + material);
                     }
 
+                    sender.sendMessage("DEBUG: ランプ作成を開始します...");
                     DisplayedPhysxBox ramp = PhysxMc.rampManager.createRamp(player.getLocation(), pitch, width, length, thickness, material);
                     if (ramp != null) {
                         sender.sendMessage("ランプを作成しました (角度:" + pitch + ", 幅:" + width + ", 長さ:" + length + ", 厚み:" + thickness + ", ブロック:" + material + ")");
@@ -286,7 +303,7 @@ public class PhysxCommand extends CommandBase implements Listener {
                     return true;
 
                 } catch (NumberFormatException e) {
-                    sender.sendMessage("数値が正しくありません");
+                    sender.sendMessage("数値が正しくありません: " + e.getMessage());
                     return true;
                 }
             } else if (arguments.length >= 2 && arguments[1].equals("remove")) {

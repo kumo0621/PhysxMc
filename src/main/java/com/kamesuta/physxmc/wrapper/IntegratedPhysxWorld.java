@@ -124,6 +124,8 @@ public class IntegratedPhysxWorld extends PhysxWorld {
      */
     public DisplayedPhysxBox addBox(BoxData data, Map<BlockDisplay[], Vector> display, boolean isCoin, boolean isPusher) {
         try {
+            org.bukkit.Bukkit.getLogger().info("デバッグ: DisplayedPhysxBox作成開始");
+            
             DisplayedPhysxBox box = new DisplayedPhysxBox(physics, data, display, isCoin, isPusher);
             
             if (box == null) {
@@ -131,18 +133,27 @@ public class IntegratedPhysxWorld extends PhysxWorld {
                 return null;
             }
             
+            org.bukkit.Bukkit.getLogger().info("デバッグ: DisplayedPhysxBoxコンストラクタ成功");
+            
             if (box.getActor() == null) {
                 org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成失敗: アクターがnullです");
                 return null;
             }
+            
+            org.bukkit.Bukkit.getLogger().info("デバッグ: アクター検証成功");
             
             if (scene == null) {
                 org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成失敗: PhysXシーンがnullです");
                 return null;
             }
             
+            org.bukkit.Bukkit.getLogger().info("デバッグ: シーンにアクター追加中...");
+            
             scene.addActor(box.getActor());
             org.bukkit.Bukkit.getLogger().info("DisplayedPhysxBoxをシーンに追加しました");
+            
+            org.bukkit.Bukkit.getLogger().info("デバッグ: シーン追加完了、正常に終了中...");
+            
             return box;
         } catch (Exception e) {
             org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成中にエラーが発生しました: " + e.getMessage());

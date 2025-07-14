@@ -88,7 +88,11 @@ public class RampManager {
                 return null;
             }
             
-            // 少し待ってからキネマティック設定（PhysXが安定してから）
+            // キネマティック設定を無効化してテスト（クラッシュ原因の特定）
+            logger.info("キネマティック設定をスキップしてテスト中...");
+            
+            // 遅延キネマティック設定をコメントアウト
+            /*
             org.bukkit.scheduler.BukkitRunnable kinematicTask = new org.bukkit.scheduler.BukkitRunnable() {
                 @Override
                 public void run() {
@@ -109,6 +113,7 @@ public class RampManager {
             
             // 1tick後に実行（PhysXの初期化を待つ）
             kinematicTask.runTaskLater(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class), 1L);
+            */
             
             ramps.add(ramp);
             
