@@ -93,42 +93,98 @@ public class DisplayedBoxHolder {
      * @return
      */
     public DisplayedPhysxBox createDisplayedBox(Location location, Vector scale, ItemStack itemStack, List<Vector> offsets, float density, boolean isPusher) {
-        Quaternionf quat = new Quaternionf()
-                .rotateY((float) -Math.toRadians(location.getYaw()))
-                .rotateX((float) Math.toRadians(location.getPitch()));
-        Map<BlockDisplay[], Vector> displayMap = new HashMap<>();
-        Map<PxBoxGeometry, PxVec3> boxGeometries = new HashMap<>();
-
-        for (Vector offset : offsets) {
-            // なめらかな補完のために2つBlockDisplayを作る
-            BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
-            displayMap.put(display, new Vector(offset.getX(), offset.getY(), offset.getZ()));
-            Map<PxBoxGeometry, PxVec3> boxGeometry = getBoxGeometries(itemStack, display[0], scale, new Vector(offset.getX(), offset.getY(), offset.getZ()).multiply(scale));
-            boxGeometries.putAll(boxGeometry);
-        }
-
-        // 密度の決定
-        float finalDensity = density > 0 ? density : com.kamesuta.physxmc.PhysxSetting.getDefaultDensity();
-        
-        BoxData data = new BoxData(new PxVec3((float) location.x(), (float) location.y(), (float) location.z()), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries, false, finalDensity);
-        DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, displayMap, density == com.kamesuta.physxmc.PhysxSetting.getCoinDensity(), isPusher);
-        
-        if (box != null) {
-            // アクターが正常に作成されているか検証
-            if (box.getActor() == null) {
-                com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class).getLogger().severe("ボックス作成失敗: PhysXアクターが作成されませんでした");
-                // 失敗したDisplayをクリーンアップ
-                for (DisplayedPhysxBox.DisplayData data2 : box.displayMap) {
-                    for (org.bukkit.entity.BlockDisplay display : data2.getDisplays()) {
-                        display.remove();
-                    }
-                }
+        try {
+            // 入力値の検証
+            if (location == null || location.getWorld() == null) {
+                org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成失敗: 無効な位置");
                 return null;
             }
-            blockDisplayList.add(box);
-            return box;
-        } else {
-            com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class).getLogger().severe("ボックス作成失敗: PhysXWorldからnullが返されました");
+            
+            if (scale == null || scale.getX() <= 0 || scale.getY() <= 0 || scale.getZ() <= 0) {
+                org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成失敗: 無効なスケール " + scale);
+                return null;
+            }
+            
+            if (itemStack == null) {
+                org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成失敗: アイテムスタックがnull");
+                return null;
+            }
+            
+            if (offsets == null || offsets.isEmpty()) {
+                org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成失敗: オフセットがnullまたは空");
+                return null;
+            }
+            
+            // 安全な角度の正規化
+            float yaw = location.getYaw();
+            float pitch = location.getPitch();
+            
+            // NaNやInfinityのチェック
+            if (Float.isNaN(yaw) || Float.isInfinite(yaw)) yaw = 0;
+            if (Float.isNaN(pitch) || Float.isInfinite(pitch)) pitch = 0;
+            
+            // 角度の範囲制限
+            while (yaw > 180) yaw -= 360;
+            while (yaw < -180) yaw += 360;
+            pitch = Math.max(-90, Math.min(90, pitch));
+            
+            Quaternionf quat = new Quaternionf()
+                    .rotateY((float) -Math.toRadians(yaw))
+                    .rotateX((float) Math.toRadians(pitch));
+                    
+            // クォータニオンの正規化
+            quat.normalize();
+            
+            Map<BlockDisplay[], Vector> displayMap = new HashMap<>();
+            Map<PxBoxGeometry, PxVec3> boxGeometries = new HashMap<>();
+
+            for (Vector offset : offsets) {
+                // なめらかな補完のために2つBlockDisplayを作る
+                BlockDisplay[] display = new BlockDisplay[]{createDisplay(itemStack, location, scale, quat), createDisplay(itemStack, location, scale, quat)};
+                displayMap.put(display, new Vector(offset.getX(), offset.getY(), offset.getZ()));
+                Map<PxBoxGeometry, PxVec3> boxGeometry = getBoxGeometries(itemStack, display[0], scale, new Vector(offset.getX(), offset.getY(), offset.getZ()).multiply(scale));
+                boxGeometries.putAll(boxGeometry);
+            }
+
+            // 密度の決定と検証
+            float finalDensity = density > 0 ? density : com.kamesuta.physxmc.PhysxSetting.getDefaultDensity();
+            if (Float.isNaN(finalDensity) || Float.isInfinite(finalDensity) || finalDensity <= 0) {
+                finalDensity = com.kamesuta.physxmc.PhysxSetting.getDefaultDensity();
+            }
+            
+            // 位置の検証
+            double x = location.x();
+            double y = location.y();
+            double z = location.z();
+            
+            if (Double.isNaN(x) || Double.isInfinite(x)) x = 0;
+            if (Double.isNaN(y) || Double.isInfinite(y)) y = 100;
+            if (Double.isNaN(z) || Double.isInfinite(z)) z = 0;
+            
+            BoxData data = new BoxData(new PxVec3((float) x, (float) y, (float) z), new PxQuat(quat.x, quat.y, quat.z, quat.w), boxGeometries, false, finalDensity);
+            DisplayedPhysxBox box = PhysxMc.physxWorld.addBox(data, displayMap, density == com.kamesuta.physxmc.PhysxSetting.getCoinDensity(), isPusher);
+            
+            if (box != null) {
+                // アクターが正常に作成されているか検証
+                if (box.getActor() == null) {
+                    org.bukkit.Bukkit.getLogger().severe("ボックス作成失敗: PhysXアクターが作成されませんでした");
+                    // 失敗したDisplayをクリーンアップ
+                    for (DisplayedPhysxBox.DisplayData data2 : box.displayMap) {
+                        for (org.bukkit.entity.BlockDisplay display : data2.getDisplays()) {
+                            display.remove();
+                        }
+                    }
+                    return null;
+                }
+                blockDisplayList.add(box);
+                return box;
+            } else {
+                org.bukkit.Bukkit.getLogger().severe("ボックス作成失敗: PhysXWorldからnullが返されました");
+                return null;
+            }
+        } catch (Exception e) {
+            org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成中にエラーが発生しました: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }
