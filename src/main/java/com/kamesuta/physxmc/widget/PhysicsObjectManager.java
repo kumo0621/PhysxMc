@@ -136,6 +136,9 @@ public class PhysicsObjectManager {
         // プッシャーフラグを設定
         data.setPusher(box.isPusher());
         
+        // コインフラグを設定
+        data.setCoin(box.isCoin());
+        
         return data;
     }
     
@@ -249,7 +252,7 @@ public class PhysicsObjectManager {
             boxes = PhysxMc.displayedBoxHolder.getAllBoxes();
             
             for (DisplayedPhysxBox box : boxes) {
-                if (box != null && !box.isDisplayDead() && !box.isPusher()) { // プッシャーの物理オブジェクトは除外
+                if (box != null && !box.isDisplayDead()) { // 全ての物理オブジェクトを保存対象とする
                     try {
                         // アクターが無効な場合は事前にスキップ
                         if (box.getActor() == null || !box.getActor().isReleasable()) {
@@ -314,9 +317,13 @@ public class PhysicsObjectManager {
                         // プッシャーフラグ
                         map.put("isPusher", data.isPusher());
                         
+                        // コインフラグ
+                        map.put("isCoin", data.isCoin());
+                        
                         dataList.add(map);
                         savedCount++;
-                        logger.info("ボックス保存成功: " + (box.isCoin() ? "コイン" : "ブロック") + " at " + data.getPhysicsX() + "," + data.getPhysicsY() + "," + data.getPhysicsZ());
+                        String objectType = box.isPusher() ? "プッシャー" : (box.isCoin() ? "コイン" : "ブロック");
+                        logger.info("ボックス保存成功: " + objectType + " at " + data.getPhysicsX() + "," + data.getPhysicsY() + "," + data.getPhysicsZ());
                     } catch (Exception e) {
                         skippedCount++;
                         logger.warning("ボックス保存失敗: " + e.getMessage());
@@ -327,8 +334,6 @@ public class PhysicsObjectManager {
                         logger.warning("ボックス保存スキップ: オブジェクトがnull");
                     } else if (box.isDisplayDead()) {
                         logger.warning("ボックス保存スキップ: 表示が無効（削除済み）");
-                    } else if (box.isPusher()) {
-                        logger.info("ボックス保存スキップ: プッシャーオブジェクト（PusherManagerで管理）");
                     } else {
                         logger.warning("ボックス保存スキップ: 不明な理由");
                     }
@@ -550,6 +555,9 @@ public class PhysicsObjectManager {
             // プッシャーフラグを読み込み（デフォルトは false）
             data.setPusher(map.containsKey("isPusher") ? (Boolean) map.get("isPusher") : false);
             
+            // コインフラグを読み込み（デフォルトは false）
+            data.setCoin(map.containsKey("isCoin") ? (Boolean) map.get("isCoin") : false);
+            
             return data;
         } catch (Exception e) {
             logger.warning("ボックスデータの解析エラー: " + e.getMessage());
@@ -606,8 +614,8 @@ public class PhysicsObjectManager {
      */
     private void restoreBox(BoxPersistenceData data) {
         try {
-            // プッシャーフラグが設定されている場合は復元をスキップ
-            // プッシャーはPusherManagerによって管理されるため
+            // プッシャーフラグが設定されている場合の処理
+            // プッシャーはPusherManagerによって管理されるため、重複を避けるため復元をスキップ
             if (data.isPusher()) {
                 logger.info("プッシャーデータをスキップ: PusherManagerで管理されます");
                 return;
@@ -624,12 +632,14 @@ public class PhysicsObjectManager {
             location.setPitch((float) Math.toDegrees(Math.asin(2 * (data.getPhysicsQx() * data.getPhysicsQw() - data.getPhysicsQy() * data.getPhysicsQz()))));
             
             // ボックスオブジェクトを作成（プッシャーフラグ付き）
+            // コインの場合はコイン密度を使用
+            float densityToUse = data.isCoin() ? com.kamesuta.physxmc.PhysxSetting.getCoinDensity() : data.getDensity();
             DisplayedPhysxBox box = PhysxMc.displayedBoxHolder.createDisplayedBox(
                 location,
                 data.toScale(),
                 data.toItemStack(),
                 data.toOffsets(),
-                data.getDensity(),
+                densityToUse,
                 data.isPusher()
             );
             
@@ -689,7 +699,8 @@ public class PhysicsObjectManager {
                                             linearVel.destroy();
                                             angularVel.destroy();
                                             
-                                            logger.info("ボックス復元完了（物理演算有効）: " + data.getMaterialName() + " at " + data.getPhysicsX() + "," + data.getPhysicsY() + "," + data.getPhysicsZ());
+                                            String objectType = data.isPusher() ? "プッシャー" : (data.isCoin() ? "コイン" : "ブロック");
+                                            logger.info("ボックス復元完了（物理演算有効）: " + objectType + " " + data.getMaterialName() + " at " + data.getPhysicsX() + "," + data.getPhysicsY() + "," + data.getPhysicsZ());
                                         } else {
                                             logger.warning("復元後のアクターが無効です: " + data.getMaterialName());
                                         }
@@ -828,7 +839,7 @@ public class PhysicsObjectManager {
             for (DisplayedPhysxBox box : existingBoxes) {
                 if (box != null) {
                     if (box.isPusher()) {
-                        pusherCount++; // プッシャーの物理オブジェクトはカウントのみ
+                        pusherCount++; // プッシャーの物理オブジェクトはPusherManagerで管理されるため削除しない
                     } else {
                         PhysxMc.displayedBoxHolder.destroySpecific(box);
                         boxCount++;
