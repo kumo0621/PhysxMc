@@ -90,7 +90,7 @@ public class PhysicsObjectManager {
                 data.setAngularVelocityZ(0);
             }
         } else {
-            logger.warning("ボックスにアクターが存在しません（無効なボックス） - このボックスは保存されません");
+            logger.warning("ボックス保存スキップ: 物理アクターが存在しません（無効なボックス）");
             // アクターがないボックスは無効なので、nullを返して保存をスキップ
             return null;
         }
@@ -223,7 +223,7 @@ public class PhysicsObjectManager {
                         if (data == null) {
                             // アクターが無効なボックスをスキップ
                             skippedCount++;
-                            logger.warning("無効なボックス（アクター不存在）をスキップしました");
+                            // 既に createBoxData メソッドでログを出力しているので、ここでは出力しない
                             continue;
                         }
                         Map<String, Object> map = new HashMap<>();
@@ -285,7 +285,15 @@ public class PhysicsObjectManager {
                     }
                 } else {
                     skippedCount++;
-                    logger.warning("ボックス保存スキップ: 無効なオブジェクト");
+                    if (box == null) {
+                        logger.warning("ボックス保存スキップ: オブジェクトがnull");
+                    } else if (box.isDisplayDead()) {
+                        logger.warning("ボックス保存スキップ: 表示が無効（削除済み）");
+                    } else if (box.isPusher()) {
+                        logger.info("ボックス保存スキップ: プッシャーオブジェクト（PusherManagerで管理）");
+                    } else {
+                        logger.warning("ボックス保存スキップ: 不明な理由");
+                    }
                 }
             }
             
@@ -355,7 +363,13 @@ public class PhysicsObjectManager {
                     }
                 } else {
                     skippedCount++;
-                    logger.warning("スフィア保存スキップ: 無効なオブジェクト");
+                    if (sphere == null) {
+                        logger.warning("スフィア保存スキップ: オブジェクトがnull");
+                    } else if (sphere.isDisplayDead()) {
+                        logger.warning("スフィア保存スキップ: 表示が無効（削除済み）");
+                    } else {
+                        logger.warning("スフィア保存スキップ: 不明な理由");
+                    }
                 }
             }
             
