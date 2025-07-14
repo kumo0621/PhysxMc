@@ -123,9 +123,32 @@ public class IntegratedPhysxWorld extends PhysxWorld {
      * @return 追加した箱オブジェクト
      */
     public DisplayedPhysxBox addBox(BoxData data, Map<BlockDisplay[], Vector> display, boolean isCoin, boolean isPusher) {
-        DisplayedPhysxBox box = new DisplayedPhysxBox(physics, data, display, isCoin, isPusher);
-        scene.addActor(box.getActor());
-        return box;
+        try {
+            DisplayedPhysxBox box = new DisplayedPhysxBox(physics, data, display, isCoin, isPusher);
+            
+            if (box == null) {
+                org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成失敗: コンストラクタがnullを返しました");
+                return null;
+            }
+            
+            if (box.getActor() == null) {
+                org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成失敗: アクターがnullです");
+                return null;
+            }
+            
+            if (scene == null) {
+                org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成失敗: PhysXシーンがnullです");
+                return null;
+            }
+            
+            scene.addActor(box.getActor());
+            org.bukkit.Bukkit.getLogger().info("DisplayedPhysxBoxをシーンに追加しました");
+            return box;
+        } catch (Exception e) {
+            org.bukkit.Bukkit.getLogger().severe("DisplayedPhysxBox作成中にエラーが発生しました: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**

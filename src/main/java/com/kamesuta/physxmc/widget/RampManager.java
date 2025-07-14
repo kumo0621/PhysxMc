@@ -82,8 +82,34 @@ public class RampManager {
                 return null;
             }
             
-            // 動かないランプとして設定
-            ramp.makeKinematic(true);
+            // アクターが有効であることを再確認
+            if (ramp.getActor() == null) {
+                logger.severe("ランプ作成失敗: PhysXアクターが無効です");
+                return null;
+            }
+            
+            // 少し待ってからキネマティック設定（PhysXが安定してから）
+            org.bukkit.scheduler.BukkitRunnable kinematicTask = new org.bukkit.scheduler.BukkitRunnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (ramp.getActor() != null && ramp.getActor().isReleasable()) {
+                            // 動かないランプとして設定
+                            ramp.makeKinematic(true);
+                            logger.info("ランプをキネマティック状態に設定しました");
+                        } else {
+                            logger.warning("ランプのアクターが無効のため、キネマティック設定をスキップしました");
+                        }
+                    } catch (Exception e) {
+                        logger.severe("ランプのキネマティック設定中にエラー: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+            };
+            
+            // 1tick後に実行（PhysXの初期化を待つ）
+            kinematicTask.runTaskLater(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class), 1L);
+            
             ramps.add(ramp);
             
             // 自動保存
