@@ -60,21 +60,34 @@ public final class PhysxMc extends JavaPlugin {
     @Override
     public void onEnable() {
         try {
+            getLogger().info("PhysxMcプラグインを開始しています...");
+            
+            // PhysXライブラリの読み込み
+            getLogger().info("PhysXライブラリを読み込み中...");
             PhysxLoader.loadPhysxOnAppClassloader();
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
+            getLogger().info("PhysXライブラリの読み込み完了");
 
-        physx = new Physx();
-        physxWorld = new IntegratedPhysxWorld();
-        physxWorld.setUpScene();
-        displayedBoxHolder = new DisplayedBoxHolder();
-        displayedSphereHolder = new DisplayedSphereHolder();
-        playerTriggerHolder = new PlayerTriggerHolder();
-        pusherManager = new PusherManager(getDataFolder());
-        physicsObjectManager = new PhysicsObjectManager(getDataFolder());
-        rampManager = new RampManager(getDataFolder());
-        grabTool = new GrabTool();
+            // 各コンポーネントの初期化
+            getLogger().info("物理エンジンを初期化中...");
+            physx = new Physx();
+            physxWorld = new IntegratedPhysxWorld();
+            physxWorld.setUpScene();
+            
+            getLogger().info("マネージャーを初期化中...");
+            displayedBoxHolder = new DisplayedBoxHolder();
+            displayedSphereHolder = new DisplayedSphereHolder();
+            playerTriggerHolder = new PlayerTriggerHolder();
+            pusherManager = new PusherManager(getDataFolder());
+            physicsObjectManager = new PhysicsObjectManager(getDataFolder());
+            rampManager = new RampManager(getDataFolder());
+            grabTool = new GrabTool();
+            
+            getLogger().info("PhysxMcプラグインの初期化完了");
+        } catch (Throwable e) {
+            getLogger().severe("PhysxMcプラグインの初期化に失敗しました: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("PhysxMcプラグインの初期化に失敗", e);
+        }
         
         // データを読み込み（3秒後に実行してワールドとPhysXが完全に読み込まれてから）
         new BukkitRunnable() {
@@ -90,16 +103,34 @@ public final class PhysxMc extends JavaPlugin {
                     }
                     
                     // 先に物理オブジェクトを読み込み（プッシャーの物理オブジェクトは除外される）
-                    getLogger().info("ボックスとスフィアの復元を開始...");
-                    physicsObjectManager.loadAll();
+                    try {
+                        getLogger().info("ボックスとスフィアの復元を開始...");
+                        physicsObjectManager.loadAll();
+                        getLogger().info("ボックスとスフィアの復元完了");
+                    } catch (Exception e) {
+                        getLogger().severe("ボックス・スフィアの復元中にエラーが発生しました: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                     
                     // 次にプッシャーを読み込み（重複を避けるため）
-                    getLogger().info("プッシャーの復元を開始...");
-                    pusherManager.loadPushers();
+                    try {
+                        getLogger().info("プッシャーの復元を開始...");
+                        pusherManager.loadPushers();
+                        getLogger().info("プッシャーの復元完了");
+                    } catch (Exception e) {
+                        getLogger().severe("プッシャーの復元中にエラーが発生しました: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                     
                     // ランプの復元も追加
-                    getLogger().info("ランプの復元を開始...");
-                    rampManager.loadRamps();
+                    try {
+                        getLogger().info("ランプの復元を開始...");
+                        rampManager.loadRamps();
+                        getLogger().info("ランプの復元完了");
+                    } catch (Exception e) {
+                        getLogger().severe("ランプの復元中にエラーが発生しました: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                     
                     getLogger().info("物理オブジェクトの復元が完了しました。");
                     

@@ -4,6 +4,7 @@ import com.destroystokyo.paper.event.server.AsyncTabCompleteEvent;
 import com.kamesuta.physxmc.PhysxMc;
 import com.kamesuta.physxmc.PhysxSetting;
 import com.kamesuta.physxmc.widget.MedalPusher;
+import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
@@ -247,7 +248,8 @@ public class PhysxCommand extends CommandBase implements Listener {
 
             Player player = (Player) sender;
 
-            if (arguments[1].equals("create") && arguments[2] != null && arguments[3] != null && arguments[4] != null && arguments[5] != null) {
+            if (arguments[1].equals("create") && arguments.length >= 6 && 
+                arguments[2] != null && arguments[3] != null && arguments[4] != null && arguments[5] != null) {
                 // /physxmc ramp create <pitch> <width> <length> <thickness> [material]
                 try {
                     double pitch = Double.parseDouble(arguments[2]);
@@ -259,9 +261,14 @@ public class PhysxCommand extends CommandBase implements Listener {
                         sender.sendMessage("幅、長さ、厚みは正の値である必要があります");
                         return true;
                     }
+                    
+                    if (pitch < -90 || pitch > 90) {
+                        sender.sendMessage("角度は-90から90度の範囲で指定してください");
+                        return true;
+                    }
 
                     Material material = Material.IRON_BLOCK; // デフォルト
-                    if (arguments.length > 6 && arguments[6] != null) {
+                    if (arguments.length > 6 && arguments[6] != null && !arguments[6].trim().isEmpty()) {
                         try {
                             material = Material.valueOf(arguments[6].toUpperCase());
                         } catch (IllegalArgumentException e) {
@@ -270,8 +277,12 @@ public class PhysxCommand extends CommandBase implements Listener {
                         }
                     }
 
-                    PhysxMc.rampManager.createRamp(player.getLocation(), pitch, width, length, thickness, material);
-                    sender.sendMessage("ランプを作成しました (角度:" + pitch + ", 幅:" + width + ", 長さ:" + length + ", 厚み:" + thickness + ", ブロック:" + material + ")");
+                    DisplayedPhysxBox ramp = PhysxMc.rampManager.createRamp(player.getLocation(), pitch, width, length, thickness, material);
+                    if (ramp != null) {
+                        sender.sendMessage("ランプを作成しました (角度:" + pitch + ", 幅:" + width + ", 長さ:" + length + ", 厚み:" + thickness + ", ブロック:" + material + ")");
+                    } else {
+                        sender.sendMessage("ランプの作成に失敗しました。サーバーログを確認してください。");
+                    }
                     return true;
 
                 } catch (NumberFormatException e) {

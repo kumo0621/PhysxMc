@@ -46,22 +46,55 @@ public class RampManager {
      * @return 生成されたDisplayedPhysxBox
      */
     public DisplayedPhysxBox createRamp(Location location, double pitchDeg, double width, double length, double thickness, Material material) {
-        // ランプ中心位置をコピーしてピッチのみ設定
-        Location center = location.clone();
-        center.setPitch((float) pitchDeg);
-
-        Vector scale = new Vector(width, thickness, length);
-        ItemStack item = new ItemStack(material);
-
-        DisplayedPhysxBox ramp = PhysxMc.displayedBoxHolder.createDisplayedBox(center, scale, item, List.of(new Vector()));
-        // 動かないランプとして設定
-        ramp.makeKinematic(true);
-        ramps.add(ramp);
+        // 入力値の検証
+        if (location == null) {
+            logger.severe("ランプ作成失敗: 位置がnullです");
+            return null;
+        }
         
-        // 自動保存
-        saveRamps();
-        logger.info("ランプを作成しました: " + ramps.size() + "個目");
-        return ramp;
+        if (location.getWorld() == null) {
+            logger.severe("ランプ作成失敗: ワールドがnullです");
+            return null;
+        }
+        
+        if (material == null) {
+            logger.severe("ランプ作成失敗: マテリアルがnullです");
+            return null;
+        }
+        
+        if (width <= 0 || length <= 0 || thickness <= 0) {
+            logger.severe("ランプ作成失敗: 無効なサイズ (width=" + width + ", length=" + length + ", thickness=" + thickness + ")");
+            return null;
+        }
+        
+        try {
+            // ランプ中心位置をコピーしてピッチのみ設定
+            Location center = location.clone();
+            center.setPitch((float) pitchDeg);
+
+            Vector scale = new Vector(width, thickness, length);
+            ItemStack item = new ItemStack(material);
+
+            DisplayedPhysxBox ramp = PhysxMc.displayedBoxHolder.createDisplayedBox(center, scale, item, List.of(new Vector()));
+            
+            if (ramp == null) {
+                logger.severe("ランプ作成失敗: DisplayedPhysxBoxの作成に失敗しました");
+                return null;
+            }
+            
+            // 動かないランプとして設定
+            ramp.makeKinematic(true);
+            ramps.add(ramp);
+            
+            // 自動保存
+            saveRamps();
+            logger.info("ランプを作成しました: " + ramps.size() + "個目");
+            return ramp;
+        } catch (Exception e) {
+            logger.severe("ランプ作成中にエラーが発生しました: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
