@@ -119,6 +119,8 @@ public class DisplayedBoxHolder {
             float yaw = location.getYaw();
             float pitch = location.getPitch();
             
+            org.bukkit.Bukkit.getLogger().info("デバッグ: 元の角度 - yaw=" + yaw + ", pitch=" + pitch);
+            
             // NaNやInfinityのチェック
             if (Float.isNaN(yaw) || Float.isInfinite(yaw)) yaw = 0;
             if (Float.isNaN(pitch) || Float.isInfinite(pitch)) pitch = 0;
@@ -128,12 +130,16 @@ public class DisplayedBoxHolder {
             while (yaw < -180) yaw += 360;
             pitch = Math.max(-90, Math.min(90, pitch));
             
+            org.bukkit.Bukkit.getLogger().info("デバッグ: 正規化後の角度 - yaw=" + yaw + ", pitch=" + pitch);
+            
             Quaternionf quat = new Quaternionf()
                     .rotateY((float) -Math.toRadians(yaw))
                     .rotateX((float) Math.toRadians(pitch));
                     
             // クォータニオンの正規化
             quat.normalize();
+            
+            org.bukkit.Bukkit.getLogger().info("デバッグ: クォータニオン - x=" + quat.x + ", y=" + quat.y + ", z=" + quat.z + ", w=" + quat.w);
             
             Map<BlockDisplay[], Vector> displayMap = new HashMap<>();
             Map<PxBoxGeometry, PxVec3> boxGeometries = new HashMap<>();
