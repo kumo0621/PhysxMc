@@ -88,32 +88,21 @@ public class RampManager {
                 return null;
             }
             
-            // キネマティック設定を無効化してテスト（クラッシュ原因の特定）
-            logger.info("キネマティック設定をスキップしてテスト中...");
-            
-            // 遅延キネマティック設定をコメントアウト
-            /*
-            org.bukkit.scheduler.BukkitRunnable kinematicTask = new org.bukkit.scheduler.BukkitRunnable() {
-                @Override
-                public void run() {
-                    try {
-                        if (ramp.getActor() != null && ramp.getActor().isReleasable()) {
-                            // 動かないランプとして設定
-                            ramp.makeKinematic(true);
-                            logger.info("ランプをキネマティック状態に設定しました");
-                        } else {
-                            logger.warning("ランプのアクターが無効のため、キネマティック設定をスキップしました");
-                        }
-                    } catch (Exception e) {
-                        logger.severe("ランプのキネマティック設定中にエラー: " + e.getMessage());
-                        e.printStackTrace();
-                    }
+            // ランプを即座にキネマティック状態に設定（クラッシュ問題の修正）
+            try {
+                if (ramp.getActor() != null && ramp.getActor().isReleasable()) {
+                    ramp.makeKinematic(true);
+                    logger.info("ランプをキネマティック状態に設定しました");
+                } else {
+                    logger.warning("ランプのアクターが無効のため、キネマティック設定をスキップしました");
                 }
-            };
-            
-            // 1tick後に実行（PhysXの初期化を待つ）
-            kinematicTask.runTaskLater(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class), 1L);
-            */
+            } catch (Exception e) {
+                logger.severe("ランプのキネマティック設定中にエラー: " + e.getMessage());
+                e.printStackTrace();
+                // エラー時はランプを削除してnullを返す
+                PhysxMc.displayedBoxHolder.destroySpecific(ramp);
+                return null;
+            }
             
             ramps.add(ramp);
             
