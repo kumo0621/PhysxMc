@@ -5,8 +5,6 @@ import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.Vector;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +18,7 @@ import java.util.logging.Logger;
  */
 public class RampManager {
 
-    private final List<DisplayedPhysxBox> ramps = new ArrayList<>();
+    private final List<MedalRamp> ramps = new ArrayList<>();
     private final File yamlFile;
     private final Logger logger;
     
@@ -68,39 +66,12 @@ public class RampManager {
         }
         
         try {
-            // ランプ中心位置をコピーしてピッチのみ設定
-            Location center = location.clone();
-            center.setPitch((float) pitchDeg);
-
-            Vector scale = new Vector(width, thickness, length);
-            ItemStack item = new ItemStack(material);
-
-            DisplayedPhysxBox ramp = PhysxMc.displayedBoxHolder.createDisplayedBox(center, scale, item, List.of(new Vector()));
+            // MedalRampを使用して作成（pusherと同じパターン）
+            MedalRamp ramp = new MedalRamp(location, pitchDeg, width, length, thickness, material);
             
-            if (ramp == null) {
-                logger.severe("ランプ作成失敗: DisplayedPhysxBoxの作成に失敗しました");
-                return null;
-            }
-            
-            // アクターが有効であることを再確認
-            if (ramp.getActor() == null) {
-                logger.severe("ランプ作成失敗: PhysXアクターが無効です");
-                return null;
-            }
-            
-            // ランプを即座にキネマティック状態に設定（クラッシュ問題の修正）
-            try {
-                if (ramp.getActor() != null && ramp.getActor().isReleasable()) {
-                    ramp.makeKinematic(true);
-                    logger.info("ランプをキネマティック状態に設定しました");
-                } else {
-                    logger.warning("ランプのアクターが無効のため、キネマティック設定をスキップしました");
-                }
-            } catch (Exception e) {
-                logger.severe("ランプのキネマティック設定中にエラー: " + e.getMessage());
-                e.printStackTrace();
-                // エラー時はランプを削除してnullを返す
-                PhysxMc.displayedBoxHolder.destroySpecific(ramp);
+            if (!ramp.isValid()) {
+                logger.severe("ランプ作成失敗: MedalRampの作成に失敗しました");
+                ramp.destroy();
                 return null;
             }
             
@@ -108,8 +79,8 @@ public class RampManager {
             
             // 自動保存
             saveRamps();
-            logger.info("ランプを作成しました: " + ramps.size() + "個目");
-            return ramp;
+            logger.info("ランプを作成しました: " + ramps.size() + "個目 - " + ramp.getStatusInfo());
+            return ramp.getRampBox();
         } catch (Exception e) {
             logger.severe("ランプ作成中にエラーが発生しました: " + e.getMessage());
             e.printStackTrace();
@@ -121,11 +92,11 @@ public class RampManager {
      * すべてのランプを更新(無効化されたものを除去)
      */
     public void update() {
-        Iterator<DisplayedPhysxBox> iterator = ramps.iterator();
+        Iterator<MedalRamp> iterator = ramps.iterator();
         while (iterator.hasNext()) {
-            DisplayedPhysxBox ramp = iterator.next();
-            if (ramp.isDisplayDead()) {
-                PhysxMc.displayedBoxHolder.destroySpecific(ramp);
+            MedalRamp ramp = iterator.next();
+            if (!ramp.isValid()) {
+                ramp.destroy();
                 iterator.remove();
             }
         }
@@ -139,11 +110,11 @@ public class RampManager {
      * @return 削除できたか
      */
     public boolean removeNearestRamp(Location location, double maxDistance) {
-        DisplayedPhysxBox nearest = null;
+        MedalRamp nearest = null;
         double nearestDistance = Double.MAX_VALUE;
 
-        for (DisplayedPhysxBox ramp : ramps) {
-            double distance = ramp.getLocation().distance(location);
+        for (MedalRamp ramp : ramps) {
+            double distance = ramp.getCenterLocation().distance(location);
             if (distance < nearestDistance && distance <= maxDistance) {
                 nearestDistance = distance;
                 nearest = ramp;
@@ -151,7 +122,7 @@ public class RampManager {
         }
 
         if (nearest != null) {
-            PhysxMc.displayedBoxHolder.destroySpecific(nearest);
+            nearest.destroy();
             ramps.remove(nearest);
             
             // 自動保存
@@ -165,8 +136,8 @@ public class RampManager {
      * 全ランプを削除
      */
     public void destroyAll() {
-        for (DisplayedPhysxBox ramp : ramps) {
-            PhysxMc.displayedBoxHolder.destroySpecific(ramp);
+        for (MedalRamp ramp : ramps) {
+            ramp.destroy();
         }
         ramps.clear();
     }
@@ -188,25 +159,24 @@ public class RampManager {
             int savedCount = 0;
             int skippedCount = 0;
             
-            for (DisplayedPhysxBox ramp : ramps) {
+            for (MedalRamp ramp : ramps) {
                 // ランプが有効かチェック
-                if (!ramp.isDisplayDead()) {
+                if (ramp.exists()) {
                     try {
-                        RampData data = RampData.fromRamp(ramp);
                         java.util.Map<String, Object> map = new java.util.HashMap<>();
-                        map.put("world", data.getWorldName());
-                        map.put("x", data.getX());
-                        map.put("y", data.getY());
-                        map.put("z", data.getZ());
-                        map.put("yaw", data.getYaw());
-                        map.put("pitch", data.getPitch());
-                        map.put("width", data.getWidth());
-                        map.put("length", data.getLength());
-                        map.put("thickness", data.getThickness());
-                        map.put("material", data.getMaterialName());
+                        map.put("world", ramp.getLocation().getWorld().getName());
+                        map.put("x", ramp.getLocation().getX());
+                        map.put("y", ramp.getLocation().getY());
+                        map.put("z", ramp.getLocation().getZ());
+                        map.put("yaw", ramp.getLocation().getYaw());
+                        map.put("pitch", ramp.getPitch());
+                        map.put("width", ramp.getWidth());
+                        map.put("length", ramp.getLength());
+                        map.put("thickness", ramp.getThickness());
+                        map.put("material", ramp.getMaterial().name());
                         dataList.add(map);
                         savedCount++;
-                        logger.info("ランプ保存成功: " + data.getMaterialName() + " @ " + data.getWorldName());
+                        logger.info("ランプ保存成功: " + ramp.getMaterial().name() + " @ " + ramp.getLocation().getWorld().getName());
                     } catch (Exception e) {
                         skippedCount++;
                         logger.warning("ランプ保存失敗: " + e.getMessage());
@@ -251,35 +221,35 @@ public class RampManager {
             int loadedCount = 0;
             for (java.util.Map<?,?> map : dataList) {
                 try {
-                    RampData data = new RampData();
-                    data.setWorldName((String) map.get("world"));
-                    data.setX(((Number) map.get("x")).doubleValue());
-                    data.setY(((Number) map.get("y")).doubleValue());
-                    data.setZ(((Number) map.get("z")).doubleValue());
-                    data.setYaw(((Number) map.get("yaw")).floatValue());
-                    data.setPitch(((Number) map.get("pitch")).floatValue());
-                    data.setWidth(((Number) map.get("width")).doubleValue());
-                    data.setLength(((Number) map.get("length")).doubleValue());
-                    data.setThickness(((Number) map.get("thickness")).doubleValue());
-                    data.setMaterialName((String) map.get("material"));
+                    String worldName = (String) map.get("world");
+                    double x = ((Number) map.get("x")).doubleValue();
+                    double y = ((Number) map.get("y")).doubleValue();
+                    double z = ((Number) map.get("z")).doubleValue();
+                    float yaw = ((Number) map.get("yaw")).floatValue();
+                    double pitch = ((Number) map.get("pitch")).doubleValue();
+                    double width = ((Number) map.get("width")).doubleValue();
+                    double length = ((Number) map.get("length")).doubleValue();
+                    double thickness = ((Number) map.get("thickness")).doubleValue();
+                    String materialName = (String) map.get("material");
 
-                    Location location = data.toLocation();
-                    if (location != null) {
-                        // ランプを復元（保存時の自動保存を避けるため一時的にリストから削除）
-                        Vector scale = new Vector(data.getWidth(), data.getThickness(), data.getLength());
-                        ItemStack item = new ItemStack(data.toMaterial());
+                    org.bukkit.World world = org.bukkit.Bukkit.getWorld(worldName);
+                    if (world != null) {
+                        Location location = new Location(world, x, y, z, yaw, 0);
+                        Material material = Material.valueOf(materialName);
                         
-                        DisplayedPhysxBox ramp = PhysxMc.displayedBoxHolder.createDisplayedBox(location, scale, item, List.of(new Vector()));
-                        if (ramp != null) {
-                            ramp.makeKinematic(true);
+                        // MedalRampを使用して復元
+                        MedalRamp ramp = new MedalRamp(location, pitch, width, length, thickness, material);
+                        
+                        if (ramp.isValid()) {
                             ramps.add(ramp);
                             loadedCount++;
-                            logger.info("ランプ復元成功: " + data.getMaterialName() + " @ " + data.getWorldName());
+                            logger.info("ランプ復元成功: " + materialName + " @ " + worldName);
                         } else {
-                            logger.warning("ランプの物理演算作成に失敗しました: " + data.getMaterialName());
+                            logger.warning("ランプの物理演算作成に失敗しました: " + materialName);
+                            ramp.destroy();
                         }
                     } else {
-                        logger.warning("ワールドが見つからないため、ランプを復元できませんでした: " + data.getWorldName());
+                        logger.warning("ワールドが見つからないため、ランプを復元できませんでした: " + worldName);
                     }
                 } catch (Exception e) {
                     logger.warning("ランプデータの解析に失敗しました: " + e.getMessage());
