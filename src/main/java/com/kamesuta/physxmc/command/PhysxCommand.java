@@ -6,6 +6,7 @@ import com.kamesuta.physxmc.PhysxSetting;
 import com.kamesuta.physxmc.widget.MedalPusher;
 import com.kamesuta.physxmc.wrapper.DisplayedPhysxBox;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -321,6 +322,88 @@ public class PhysxCommand extends CommandBase implements Listener {
                 sender.sendMessage("現在のランプ数: " + PhysxMc.rampManager.getRampCount());
                 return true;
             }
+        } else if (arguments[0].equals("payout")) {
+            // payout関連コマンド（プレイヤーまたはコマンドブロック対応）
+
+            if (arguments.length >= 2 && arguments[1].equals("start")) {
+                // /physxmc payout start <taskId> <x> <y> <z> <intervalSeconds> [maxCoins]
+                if (arguments.length >= 7) {
+                    try {
+                        String taskId = arguments[2];
+                        double x = Double.parseDouble(arguments[3]);
+                        double y = Double.parseDouble(arguments[4]);
+                        double z = Double.parseDouble(arguments[5]);
+                        double intervalSeconds = Double.parseDouble(arguments[6]);
+                        int maxCoins = -1; // デフォルトは無制限
+                        
+                        if (arguments.length >= 8) {
+                            maxCoins = Integer.parseInt(arguments[7]);
+                        }
+                        
+                        // プレイヤーまたはコマンドブロックの世界を使用
+                        org.bukkit.World world = null;
+                        if (sender instanceof Player) {
+                            world = ((Player) sender).getWorld();
+                        } else {
+                            // コマンドブロックの場合、実行者の世界を取得
+                            world = org.bukkit.Bukkit.getWorlds().get(0); // デフォルトワールド
+                        }
+                        
+                        Location location = new Location(world, x, y, z);
+                        
+                        boolean success = PhysxMc.medalPayoutSystem.startPayout(taskId, location, intervalSeconds, maxCoins);
+                        if (success) {
+                            sender.sendMessage("払い出しシステムを開始しました: " + taskId);
+                            sender.sendMessage("位置: " + String.format("%.1f, %.1f, %.1f", x, y, z));
+                            sender.sendMessage("間隔: " + intervalSeconds + "秒");
+                            sender.sendMessage("最大枚数: " + (maxCoins > 0 ? maxCoins + "枚" : "無制限"));
+                        } else {
+                            sender.sendMessage("払い出しシステムの開始に失敗しました");
+                        }
+                        return true;
+                    } catch (NumberFormatException e) {
+                        sender.sendMessage("数値が正しくありません");
+                        return true;
+                    }
+                } else {
+                    sender.sendMessage("使用方法: /physxmc payout start <taskId> <x> <y> <z> <intervalSeconds> [maxCoins]");
+                    return true;
+                }
+            } else if (arguments.length >= 2 && arguments[1].equals("stop")) {
+                // /physxmc payout stop <taskId>
+                if (arguments.length >= 3) {
+                    String taskId = arguments[2];
+                    boolean success = PhysxMc.medalPayoutSystem.stopPayout(taskId);
+                    if (success) {
+                        sender.sendMessage("払い出しシステムを停止しました: " + taskId);
+                    } else {
+                        sender.sendMessage("払い出しタスクが見つかりません: " + taskId);
+                    }
+                    return true;
+                } else {
+                    sender.sendMessage("使用方法: /physxmc payout stop <taskId>");
+                    return true;
+                }
+            } else if (arguments.length >= 2 && arguments[1].equals("stopall")) {
+                // /physxmc payout stopall
+                PhysxMc.medalPayoutSystem.stopAllPayouts();
+                sender.sendMessage("全ての払い出しシステムを停止しました");
+                return true;
+            } else if (arguments.length >= 2 && arguments[1].equals("list")) {
+                // /physxmc payout list
+                sender.sendMessage(PhysxMc.medalPayoutSystem.getAllTasksInfo());
+                return true;
+            } else if (arguments.length >= 2 && arguments[1].equals("info")) {
+                // /physxmc payout info <taskId>
+                if (arguments.length >= 3) {
+                    String taskId = arguments[2];
+                    sender.sendMessage(PhysxMc.medalPayoutSystem.getTaskInfo(taskId));
+                    return true;
+                } else {
+                    sender.sendMessage("使用方法: /physxmc payout info <taskId>");
+                    return true;
+                }
+            }
         }
 
         sendUsage(sender);
@@ -344,7 +427,12 @@ public class PhysxCommand extends CommandBase implements Listener {
                 "/physxmc ramp create {角度} {幅} {長さ} {厚み} [ブロック名]: 傾斜板を作成する\n" +
                 "/physxmc ramp remove: 近くのランプを削除する\n" +
                 "/physxmc ramp clear: 全てのランプを削除する\n" +
-                "/physxmc ramp count: ランプの数を表示する\n"));
+                "/physxmc ramp count: ランプの数を表示する\n" +
+                "/physxmc payout start <taskId> <x> <y> <z> <intervalSeconds> [maxCoins]: 指定座標にコイン払い出しを開始\n" +
+                "/physxmc payout stop <taskId>: 指定タスクの払い出しを停止\n" +
+                "/physxmc payout stopall: 全ての払い出しを停止\n" +
+                "/physxmc payout list: アクティブなタスクを表示\n" +
+                "/physxmc payout info <taskId>: タスクの詳細情報を表示\n"));
     }
 
     @EventHandler

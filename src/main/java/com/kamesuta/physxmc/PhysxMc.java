@@ -17,6 +17,7 @@ import com.kamesuta.physxmc.utils.PhysxLoader;
 import com.kamesuta.physxmc.widget.EventHandler;
 import com.kamesuta.physxmc.widget.GrabTool;
 import com.kamesuta.physxmc.widget.PlayerTriggerHolder;
+import com.kamesuta.physxmc.widget.MedalPayoutSystem;
 import com.kamesuta.physxmc.widget.PhysicsObjectManager;
 import com.kamesuta.physxmc.widget.PusherManager;
 import com.kamesuta.physxmc.widget.RampManager;
@@ -46,6 +47,7 @@ public final class PhysxMc extends JavaPlugin {
     public static PusherManager pusherManager;
     public static PhysicsObjectManager physicsObjectManager;
     public static RampManager rampManager;
+    public static MedalPayoutSystem medalPayoutSystem;
 
     public static GrabTool grabTool;
     public ProtocolManager protocolManager;
@@ -80,6 +82,7 @@ public final class PhysxMc extends JavaPlugin {
             pusherManager = new PusherManager(getDataFolder());
             physicsObjectManager = new PhysicsObjectManager(getDataFolder());
             rampManager = new RampManager(getDataFolder());
+            medalPayoutSystem = new MedalPayoutSystem();
             grabTool = new GrabTool();
             
             getLogger().info("PhysxMcプラグインの初期化完了");
@@ -254,6 +257,9 @@ public final class PhysxMc extends JavaPlugin {
             }
             if (rampManager != null) {
                 rampManager.saveRamps();
+            }
+            if (medalPayoutSystem != null) {
+                medalPayoutSystem.stopAllPayouts();
             }
             getLogger().info("最終データ保存完了");
         } catch (Exception e) {
