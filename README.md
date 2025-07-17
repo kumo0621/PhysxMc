@@ -107,6 +107,13 @@ PhysxMcは、MinecraftのPaperサーバー向けの物理エンジンプラグ�
 +/physxmc ramp remove
 +/physxmc ramp clear
 +/physxmc ramp count
+
+# 払い出しシステム
++/physxmc payout start <ID> <x> <y> <z> <間隔> [最大枚数]
+# 例: /physxmc payout start payout1 100 64 200 2.0 50
++/physxmc payout stop <ID>
++/physxmc payout stopall
++/physxmc payout list
 +```
 
 ### 基本コマンド
@@ -197,6 +204,42 @@ PhysxMcは、MinecraftのPaperサーバー向けの物理エンジンプラグ�
 
 #### `/physxmc ramp count`
 現在アクティブなランプの数を表示します。
+
+### 払い出しシステム専用コマンド
+
+自動的にコインを払い出すシステムで、メダルゲームの景品払い出しやイベント演出に使用できます。
+
+#### `/physxmc payout start <ID> <x> <y> <z> <間隔> [最大枚数]`
+| パラメータ | 説明 |
+|-----------|------|
+| ID | 払い出しタスクの識別子（英数字） |
+| x | 払い出し位置のX座標 |
+| y | 払い出し位置のY座標 |
+| z | 払い出し位置のZ座標 |
+| 間隔 | コイン払い出しの間隔（秒数、小数可） |
+| 最大枚数 | 最大払い出し枚数（省略時は無制限） |
+
+指定した座標でコインの自動払い出しを開始します。
+
+**例**: 
+```bash
+# 座標(100, 64, 200)で2秒間隔、最大50枚のコインを払い出し
+/physxmc payout start payout1 100 64 200 2.0 50
+
+# 無制限でコインを払い出し
+/physxmc payout start payout2 150 64 250 1.5
+```
+
+#### `/physxmc payout stop <ID>`
+指定したIDの払い出しタスクを停止します。
+
+**例**: `/physxmc payout stop payout1`
+
+#### `/physxmc payout stopall`
+すべてのアクティブな払い出しタスクを停止します。
+
+#### `/physxmc payout list`
+現在アクティブな払い出しタスクの一覧を表示します。各タスクのID、座標、間隔、進行状況が確認できます。
 
 ## アーキテクチャ
 
