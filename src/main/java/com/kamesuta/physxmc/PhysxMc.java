@@ -216,7 +216,7 @@ public final class PhysxMc extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        getLogger().info("プラグイン停止中: 最終データ保存を開始...");
+        getLogger().info("プラグイン停止中: PhysXシステムを安全に終了します...");
         
         // メダル払い出しシステムを先に停止
         try {
@@ -228,71 +228,56 @@ public final class PhysxMc extends JavaPlugin {
             getLogger().warning("メダル払い出しシステム停止中にエラー: " + e.getMessage());
         }
         
-        // 同期で最終保存を実行（各マネージャーごとに個別にエラーハンドリング）
+        // 保存処理は一時的に無効化（PhysXクラッシュ防止のため）
+        // TODO: 安全な保存方法を実装後に有効化
+        getLogger().info("データ保存をスキップ（PhysXクラッシュ防止のため）");
+        
+        // 安全にPhysXオブジェクトを破棄
         try {
-            if (pusherManager != null) {
-                getLogger().info("プッシャーデータ保存中...");
-                pusherManager.savePushers();
-                getLogger().info("プッシャーデータ保存完了");
-            }
-        } catch (Exception e) {
-            getLogger().severe("プッシャーデータ保存中にエラーが発生しました: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        try {
-            if (physicsObjectManager != null) {
-                getLogger().info("物理オブジェクトデータ保存中...");
-                physicsObjectManager.saveAll();
-                getLogger().info("物理オブジェクトデータ保存完了");
-            }
-        } catch (Exception e) {
-            getLogger().severe("物理オブジェクトデータ保存中にエラーが発生しました: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        try {
-            if (rampManager != null) {
-                getLogger().info("ランプデータ保存中...");
-                rampManager.saveRamps();
-                getLogger().info("ランプデータ保存完了");
-            }
-        } catch (Exception e) {
-            getLogger().severe("ランプデータ保存中にエラーが発生しました: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        getLogger().info("最終データ保存完了");
-        
-        // 物理シミュレーションを停止してからオブジェクトを削除
-        if (physx != null && physxWorld != null) {
-            physxWorld.destroyScene(); // 先にシーンを破棄
-        }
-
-        // その後でオブジェクトを削除
-        if (displayedBoxHolder != null) {
-            displayedBoxHolder.destroyAll();
-        }
-        
-        if (displayedSphereHolder != null) {
-            displayedSphereHolder.destroyAll();
-        }
-        
-        if (playerTriggerHolder != null) {
-            playerTriggerHolder.destroyAll();
-        }
+            getLogger().info("PhysXオブジェクトの破棄を開始...");
             
-        if (pusherManager != null) {
-            pusherManager.destroyAll();
-        }
+            // 1. 最初にマネージャーのオブジェクトを破棄（PhysXシーンが有効な状態で）
+            if (pusherManager != null) {
+                pusherManager.destroyAll();
+                getLogger().info("プッシャーマネージャー破棄完了");
+            }
 
-        if (rampManager != null) {
-            rampManager.destroyAll();
-        }
+            if (rampManager != null) {
+                rampManager.destroyAll();
+                getLogger().info("ランプマネージャー破棄完了");
+            }
+            
+            // 2. ディスプレイオブジェクトを破棄
+            if (displayedBoxHolder != null) {
+                displayedBoxHolder.destroyAll();
+                getLogger().info("ディスプレイボックス破棄完了");
+            }
+            
+            if (displayedSphereHolder != null) {
+                displayedSphereHolder.destroyAll();
+                getLogger().info("ディスプレイスフィア破棄完了");
+            }
+            
+            if (playerTriggerHolder != null) {
+                playerTriggerHolder.destroyAll();
+                getLogger().info("プレイヤートリガー破棄完了");
+            }
 
-        // 最後にPhysXを終了
-        if (physx != null) {
-            physx.terminate();
+            // 3. PhysXシーンを破棄
+            if (physxWorld != null) {
+                physxWorld.destroyScene();
+                getLogger().info("PhysXシーン破棄完了");
+            }
+
+            // 4. 最後にPhysXを終了
+            if (physx != null) {
+                physx.terminate();
+                getLogger().info("PhysX終了完了");
+            }
+            
+        } catch (Exception e) {
+            getLogger().severe("PhysXオブジェクトの破棄中にエラーが発生しました: " + e.getMessage());
+            e.printStackTrace();
         }
         
         getLogger().info("プラグイン停止完了");
