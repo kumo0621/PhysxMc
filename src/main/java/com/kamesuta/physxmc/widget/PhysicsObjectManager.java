@@ -252,8 +252,15 @@ public class PhysicsObjectManager {
             boxes = PhysxMc.displayedBoxHolder.getAllBoxes();
             
             for (DisplayedPhysxBox box : boxes) {
-                if (box != null && !box.isDisplayDead()) { // 全ての物理オブジェクトを保存対象とする
+                if (box != null && !box.isDisplayDead()) {
                     try {
+                        // プッシャーはPusherManagerで管理されるため、重複を避けるためスキップ
+                        if (box.isPusher()) {
+                            skippedCount++;
+                            logger.info("ボックス保存スキップ: プッシャーはPusherManagerで管理されます");
+                            continue;
+                        }
+                        
                         // アクターが無効な場合は事前にスキップ
                         if (box.getActor() == null || !box.getActor().isReleasable()) {
                             skippedCount++;

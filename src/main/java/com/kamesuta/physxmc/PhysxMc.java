@@ -92,7 +92,7 @@ public final class PhysxMc extends JavaPlugin {
             throw new RuntimeException("PhysxMcプラグインの初期化に失敗", e);
         }
         
-        // データを読み込み（5秒後に実行してワールドとPhysXが完全に読み込まれてから）
+        // データを読み込み（3秒後に実行してワールドとPhysXが完全に読み込まれてから）
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -105,55 +105,51 @@ public final class PhysxMc extends JavaPlugin {
                         return;
                     }
                     
-                    // 段階的復元を実装（サーバー負荷軽減）
-                    new BukkitRunnable() {
-                        private int stage = 0;
-                        
-                        @Override
-                        public void run() {
-                            try {
-                                switch (stage) {
-                                    case 0:
-                                        getLogger().info("ボックスとスフィアの復元を開始...");
-                                        physicsObjectManager.loadAll();
-                                        getLogger().info("ボックスとスフィアの復元完了");
-                                        break;
-                                    case 1:
-                                        getLogger().info("プッシャーの復元を開始...");
-                                        pusherManager.loadPushers();
-                                        getLogger().info("プッシャーの復元完了");
-                                        break;
-                                    case 2:
-                                        getLogger().info("ランプの復元を開始...");
-                                        rampManager.loadRamps();
-                                        getLogger().info("ランプの復元完了");
-                                        
-                                        // 復元後の状態をログ出力
-                                        getLogger().info("物理オブジェクトの復元が完了しました。");
-                                        getLogger().info("復元結果:");
-                                        getLogger().info("- ボックス数: " + displayedBoxHolder.getAllBoxes().size());
-                                        getLogger().info("- スフィア数: " + (displayedSphereHolder != null ? "実装待ち" : "0"));
-                                        getLogger().info("- プッシャー数: " + pusherManager.getPusherCount());
-                                        getLogger().info("- ランプ数: " + rampManager.getRampCount());
-                                        
-                                        this.cancel();
-                                        return;
-                                }
-                                stage++;
-                            } catch (Exception e) {
-                                getLogger().severe("物理オブジェクトの復元中にエラーが発生しました (ステージ " + stage + "): " + e.getMessage());
-                                e.printStackTrace();
-                                this.cancel();
-                            }
-                        }
-                    }.runTaskTimer(PhysxMc.this, 0L, 20L); // 1秒間隔で段階的に実行
+                    // 先に物理オブジェクトを読み込み（プッシャーの物理オブジェクトは除外される）
+                    try {
+                        getLogger().info("ボックスとスフィアの復元を開始...");
+                        physicsObjectManager.loadAll();
+                        getLogger().info("ボックスとスフィアの復元完了");
+                    } catch (Exception e) {
+                        getLogger().severe("ボックス・スフィアの復元中にエラーが発生しました: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                    
+                    // 次にプッシャーを読み込み（重複を避けるため）
+                    try {
+                        getLogger().info("プッシャーの復元を開始...");
+                        pusherManager.loadPushers();
+                        getLogger().info("プッシャーの復元完了");
+                    } catch (Exception e) {
+                        getLogger().severe("プッシャーの復元中にエラーが発生しました: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                    
+                    // ランプの復元も追加
+                    try {
+                        getLogger().info("ランプの復元を開始...");
+                        rampManager.loadRamps();
+                        getLogger().info("ランプの復元完了");
+                    } catch (Exception e) {
+                        getLogger().severe("ランプの復元中にエラーが発生しました: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                    
+                    getLogger().info("物理オブジェクトの復元が完了しました。");
+                    
+                    // 復元後の状態をログ出力
+                    getLogger().info("復元結果:");
+                    getLogger().info("- ボックス数: " + displayedBoxHolder.getAllBoxes().size());
+                    getLogger().info("- スフィア数: " + (displayedSphereHolder != null ? "実装待ち" : "0"));
+                    getLogger().info("- プッシャー数: " + pusherManager.getPusherCount());
+                    getLogger().info("- ランプ数: " + rampManager.getRampCount());
                     
                 } catch (Exception e) {
-                    getLogger().severe("物理オブジェクトの復元スケジューラーの開始に失敗しました: " + e.getMessage());
+                    getLogger().severe("物理オブジェクトの復元中にエラーが発生しました: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
-        }.runTaskLater(this, 100L); // 5秒後に実行（より安全な待機時間）
+        }.runTaskLater(this, 60L); // 3秒後に実行（より安全な待機時間）
 
         // コインの黒曜石接触検出を追加
         physxWorld.getSimCallback().contactReceivers.add(this::onCoinContact);
@@ -162,47 +158,15 @@ public final class PhysxMc extends JavaPlugin {
         physxWorld.getSimCallback().contactReceivers.add(this::onSphereContact);
 
         new BukkitRunnable() {
-            private int tickCounter = 0;
-            
             @Override
             public void run() {
-                tickCounter++;
-                
-                // 物理シミュレーション - 毎ティック実行（必須）
                 physxWorld.tick();
-                
-                // 表示更新 - 2ティックに1回実行（パフォーマンス改善）
-                if (tickCounter % 2 == 0) {
-                    displayedBoxHolder.update();
-                    displayedSphereHolder.update();
-                    playerTriggerHolder.update();
-                    pusherManager.update();
-                    rampManager.update();
-                    grabTool.update();
-                }
-                
-                // 自動保存処理を無効化（クラッシュ防止のため）
-                // autoSaveCounter++;
-                // if (autoSaveCounter >= AUTO_SAVE_INTERVAL) {
-                //     autoSaveCounter = 0;
-                //     // 同期で自動保存を実行（onDisableと同じ安全な処理）
-                //     try {
-                //         getLogger().info("自動保存を開始...");
-                //         if (pusherManager != null) {
-                //             pusherManager.savePushers();
-                //         }
-                //         if (physicsObjectManager != null) {
-                //             physicsObjectManager.saveAll();
-                //         }
-                //         if (rampManager != null) {
-                //             rampManager.saveRamps();
-                //         }
-                //         getLogger().info("自動保存が完了しました");
-                //     } catch (Exception e) {
-                //         getLogger().severe("自動保存中にエラーが発生しました: " + e.getMessage());
-                //         e.printStackTrace();
-                //     }
-                // }
+                displayedBoxHolder.update();
+                displayedSphereHolder.update();
+                playerTriggerHolder.update();
+                pusherManager.update();
+                rampManager.update();
+                grabTool.update();
             }
         }.runTaskTimer(this, 1, 1);
 
@@ -252,28 +216,53 @@ public final class PhysxMc extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // 自動保存カウンターをリセットして即座に保存を実行
-        autoSaveCounter = AUTO_SAVE_INTERVAL;
         getLogger().info("プラグイン停止中: 最終データ保存を開始...");
         
-        // 同期で最終保存を実行（非同期だとプラグイン停止前に完了しない可能性）
+        // メダル払い出しシステムを先に停止
         try {
-            if (pusherManager != null) {
-                pusherManager.savePushers();
-            }
-            if (physicsObjectManager != null) {
-                physicsObjectManager.saveAll();
-            }
-            if (rampManager != null) {
-                rampManager.saveRamps();
-            }
             if (medalPayoutSystem != null) {
                 medalPayoutSystem.stopAllPayouts();
+                getLogger().info("メダル払い出しシステム停止完了");
             }
-            getLogger().info("最終データ保存完了");
         } catch (Exception e) {
-            getLogger().severe("最終データ保存中にエラーが発生しました: " + e.getMessage());
+            getLogger().warning("メダル払い出しシステム停止中にエラー: " + e.getMessage());
         }
+        
+        // 同期で最終保存を実行（各マネージャーごとに個別にエラーハンドリング）
+        try {
+            if (pusherManager != null) {
+                getLogger().info("プッシャーデータ保存中...");
+                pusherManager.savePushers();
+                getLogger().info("プッシャーデータ保存完了");
+            }
+        } catch (Exception e) {
+            getLogger().severe("プッシャーデータ保存中にエラーが発生しました: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        try {
+            if (physicsObjectManager != null) {
+                getLogger().info("物理オブジェクトデータ保存中...");
+                physicsObjectManager.saveAll();
+                getLogger().info("物理オブジェクトデータ保存完了");
+            }
+        } catch (Exception e) {
+            getLogger().severe("物理オブジェクトデータ保存中にエラーが発生しました: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        try {
+            if (rampManager != null) {
+                getLogger().info("ランプデータ保存中...");
+                rampManager.saveRamps();
+                getLogger().info("ランプデータ保存完了");
+            }
+        } catch (Exception e) {
+            getLogger().severe("ランプデータ保存中にエラーが発生しました: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        getLogger().info("最終データ保存完了");
         
         // 物理シミュレーションを停止してからオブジェクトを削除
         if (physx != null && physxWorld != null) {
