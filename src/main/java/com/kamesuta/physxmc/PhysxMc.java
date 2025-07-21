@@ -92,7 +92,7 @@ public final class PhysxMc extends JavaPlugin {
             throw new RuntimeException("PhysxMcプラグインの初期化に失敗", e);
         }
         
-        // データを読み込み（3秒後に実行してワールドとPhysXが完全に読み込まれてから）
+        // データを読み込み（5秒後に実行してワールドとPhysXが完全に読み込まれてから）
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -105,51 +105,55 @@ public final class PhysxMc extends JavaPlugin {
                         return;
                     }
                     
-                    // 先に物理オブジェクトを読み込み（プッシャーの物理オブジェクトは除外される）
-                    try {
-                        getLogger().info("ボックスとスフィアの復元を開始...");
-                        physicsObjectManager.loadAll();
-                        getLogger().info("ボックスとスフィアの復元完了");
-                    } catch (Exception e) {
-                        getLogger().severe("ボックス・スフィアの復元中にエラーが発生しました: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                    
-                    // 次にプッシャーを読み込み（重複を避けるため）
-                    try {
-                        getLogger().info("プッシャーの復元を開始...");
-                        pusherManager.loadPushers();
-                        getLogger().info("プッシャーの復元完了");
-                    } catch (Exception e) {
-                        getLogger().severe("プッシャーの復元中にエラーが発生しました: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                    
-                    // ランプの復元も追加
-                    try {
-                        getLogger().info("ランプの復元を開始...");
-                        rampManager.loadRamps();
-                        getLogger().info("ランプの復元完了");
-                    } catch (Exception e) {
-                        getLogger().severe("ランプの復元中にエラーが発生しました: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                    
-                    getLogger().info("物理オブジェクトの復元が完了しました。");
-                    
-                    // 復元後の状態をログ出力
-                    getLogger().info("復元結果:");
-                    getLogger().info("- ボックス数: " + displayedBoxHolder.getAllBoxes().size());
-                    getLogger().info("- スフィア数: " + (displayedSphereHolder != null ? "実装待ち" : "0"));
-                    getLogger().info("- プッシャー数: " + pusherManager.getPusherCount());
-                    getLogger().info("- ランプ数: " + rampManager.getRampCount());
+                    // 段階的復元を実装（サーバー負荷軽減）
+                    new BukkitRunnable() {
+                        private int stage = 0;
+                        
+                        @Override
+                        public void run() {
+                            try {
+                                switch (stage) {
+                                    case 0:
+                                        getLogger().info("ボックスとスフィアの復元を開始...");
+                                        physicsObjectManager.loadAll();
+                                        getLogger().info("ボックスとスフィアの復元完了");
+                                        break;
+                                    case 1:
+                                        getLogger().info("プッシャーの復元を開始...");
+                                        pusherManager.loadPushers();
+                                        getLogger().info("プッシャーの復元完了");
+                                        break;
+                                    case 2:
+                                        getLogger().info("ランプの復元を開始...");
+                                        rampManager.loadRamps();
+                                        getLogger().info("ランプの復元完了");
+                                        
+                                        // 復元後の状態をログ出力
+                                        getLogger().info("物理オブジェクトの復元が完了しました。");
+                                        getLogger().info("復元結果:");
+                                        getLogger().info("- ボックス数: " + displayedBoxHolder.getAllBoxes().size());
+                                        getLogger().info("- スフィア数: " + (displayedSphereHolder != null ? "実装待ち" : "0"));
+                                        getLogger().info("- プッシャー数: " + pusherManager.getPusherCount());
+                                        getLogger().info("- ランプ数: " + rampManager.getRampCount());
+                                        
+                                        this.cancel();
+                                        return;
+                                }
+                                stage++;
+                            } catch (Exception e) {
+                                getLogger().severe("物理オブジェクトの復元中にエラーが発生しました (ステージ " + stage + "): " + e.getMessage());
+                                e.printStackTrace();
+                                this.cancel();
+                            }
+                        }
+                    }.runTaskTimer(PhysxMc.this, 0L, 20L); // 1秒間隔で段階的に実行
                     
                 } catch (Exception e) {
-                    getLogger().severe("物理オブジェクトの復元中にエラーが発生しました: " + e.getMessage());
+                    getLogger().severe("物理オブジェクトの復元スケジューラーの開始に失敗しました: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
-        }.runTaskLater(this, 60L); // 3秒後に実行（より安全な待機時間）
+        }.runTaskLater(this, 100L); // 5秒後に実行（より安全な待機時間）
 
         // コインの黒曜石接触検出を追加
         physxWorld.getSimCallback().contactReceivers.add(this::onCoinContact);
@@ -158,15 +162,24 @@ public final class PhysxMc extends JavaPlugin {
         physxWorld.getSimCallback().contactReceivers.add(this::onSphereContact);
 
         new BukkitRunnable() {
+            private int tickCounter = 0;
+            
             @Override
             public void run() {
+                tickCounter++;
+                
+                // 物理シミュレーション - 毎ティック実行（必須）
                 physxWorld.tick();
-                displayedBoxHolder.update();
-                displayedSphereHolder.update();
-                playerTriggerHolder.update();
-                pusherManager.update();
-                rampManager.update();
-                grabTool.update();
+                
+                // 表示更新 - 2ティックに1回実行（パフォーマンス改善）
+                if (tickCounter % 2 == 0) {
+                    displayedBoxHolder.update();
+                    displayedSphereHolder.update();
+                    playerTriggerHolder.update();
+                    pusherManager.update();
+                    rampManager.update();
+                    grabTool.update();
+                }
                 
                 // 自動保存処理を無効化（クラッシュ防止のため）
                 // autoSaveCounter++;
