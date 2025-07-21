@@ -140,7 +140,7 @@ public final class PhysxMc extends JavaPlugin {
                     // 復元後の状態をログ出力
                     getLogger().info("復元結果:");
                     getLogger().info("- ボックス数: " + displayedBoxHolder.getAllBoxes().size());
-                    getLogger().info("- スフィア数: " + (displayedSphereHolder != null ? "実装待ち" : "0"));
+                    getLogger().info("- スフィア数: " + (displayedSphereHolder != null ? displayedSphereHolder.getAllSpheres().size() : "0"));
                     getLogger().info("- プッシャー数: " + pusherManager.getPusherCount());
                     getLogger().info("- ランプ数: " + rampManager.getRampCount());
                     
@@ -228,9 +228,39 @@ public final class PhysxMc extends JavaPlugin {
             getLogger().warning("メダル払い出しシステム停止中にエラー: " + e.getMessage());
         }
         
-        // 保存処理は一時的に無効化（PhysXクラッシュ防止のため）
-        // TODO: 安全な保存方法を実装後に有効化
-        getLogger().info("データ保存をスキップ（PhysXクラッシュ防止のため）");
+        // スフィア保持機能のため保存処理を再度有効化
+        // 保存順序を最適化してPhysXクラッシュを防止
+        try {
+            if (physicsObjectManager != null) {
+                getLogger().info("物理オブジェクトデータ保存中（スフィア含む）...");
+                physicsObjectManager.saveAll();
+                getLogger().info("物理オブジェクトデータ保存完了");
+            }
+        } catch (Exception e) {
+            getLogger().warning("物理オブジェクトデータ保存中にエラー（継続します）: " + e.getMessage());
+        }
+        
+        try {
+            if (pusherManager != null) {
+                getLogger().info("プッシャーデータ保存中...");
+                pusherManager.savePushers();
+                getLogger().info("プッシャーデータ保存完了");
+            }
+        } catch (Exception e) {
+            getLogger().warning("プッシャーデータ保存中にエラー（継続します）: " + e.getMessage());
+        }
+        
+        try {
+            if (rampManager != null) {
+                getLogger().info("ランプデータ保存中...");
+                rampManager.saveRamps();
+                getLogger().info("ランプデータ保存完了");
+            }
+        } catch (Exception e) {
+            getLogger().warning("ランプデータ保存中にエラー（継続します）: " + e.getMessage());
+        }
+        
+        getLogger().info("データ保存完了");
         
         // 安全にPhysXオブジェクトを破棄
         try {
