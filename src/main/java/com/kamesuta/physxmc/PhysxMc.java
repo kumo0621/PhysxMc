@@ -168,32 +168,28 @@ public final class PhysxMc extends JavaPlugin {
                 rampManager.update();
                 grabTool.update();
                 
-                // 自動保存処理（5分間隔）
-                autoSaveCounter++;
-                if (autoSaveCounter >= AUTO_SAVE_INTERVAL) {
-                    autoSaveCounter = 0;
-                    // 非同期で自動保存を実行（メインスレッドをブロックしない）
-                    new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                getLogger().info("自動保存を開始...");
-                                if (pusherManager != null) {
-                                    pusherManager.savePushers();
-                                }
-                                if (physicsObjectManager != null) {
-                                    physicsObjectManager.saveAll();
-                                }
-                                if (rampManager != null) {
-                                    rampManager.saveRamps();
-                                }
-                                getLogger().info("自動保存が完了しました");
-                            } catch (Exception e) {
-                                getLogger().warning("自動保存中にエラーが発生しました: " + e.getMessage());
-                            }
-                        }
-                    }.runTaskAsynchronously(PhysxMc.this);
-                }
+                // 自動保存処理を無効化（クラッシュ防止のため）
+                // autoSaveCounter++;
+                // if (autoSaveCounter >= AUTO_SAVE_INTERVAL) {
+                //     autoSaveCounter = 0;
+                //     // 同期で自動保存を実行（onDisableと同じ安全な処理）
+                //     try {
+                //         getLogger().info("自動保存を開始...");
+                //         if (pusherManager != null) {
+                //             pusherManager.savePushers();
+                //         }
+                //         if (physicsObjectManager != null) {
+                //             physicsObjectManager.saveAll();
+                //         }
+                //         if (rampManager != null) {
+                //             rampManager.saveRamps();
+                //         }
+                //         getLogger().info("自動保存が完了しました");
+                //     } catch (Exception e) {
+                //         getLogger().severe("自動保存中にエラーが発生しました: " + e.getMessage());
+                //         e.printStackTrace();
+                //     }
+                // }
             }
         }.runTaskTimer(this, 1, 1);
 
