@@ -114,6 +114,9 @@ PhysxMcは、MinecraftのPaperサーバー向けの物理エンジンプラグ�
 +/physxmc payout stop <ID>
 +/physxmc payout stopall
 +/physxmc payout list
+
+# データ管理システム
++/physxmc save                        # 現在のオブジェクトを全て保存
 +```
 
 ### 基本コマンド
