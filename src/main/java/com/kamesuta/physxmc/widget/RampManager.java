@@ -77,8 +77,6 @@ public class RampManager {
             
             ramps.add(ramp);
             
-            // 自動保存
-            saveRamps();
             logger.info("ランプを作成しました: " + ramps.size() + "個目 - " + ramp.getStatusInfo());
             return ramp.getRampBox();
         } catch (Exception e) {
@@ -125,8 +123,6 @@ public class RampManager {
             nearest.destroy();
             ramps.remove(nearest);
             
-            // 自動保存
-            saveRamps();
             return true;
         }
         return false;

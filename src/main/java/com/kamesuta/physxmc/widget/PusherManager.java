@@ -56,8 +56,6 @@ public class PusherManager {
         
         MedalPusher pusher = new MedalPusher(location, height, width, length, moveRange, material, speed);
         pushers.add(pusher);
-        // 自動保存
-        savePushers();
         logger.info("プッシャーを作成しました: " + pushers.size() + "個目");
         return pusher;
     }
@@ -116,8 +114,6 @@ public class PusherManager {
         if (nearest != null) {
             nearest.destroy();
             pushers.remove(nearest);
-            // 自動保存
-            savePushers();
             return true;
         }
         

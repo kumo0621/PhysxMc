@@ -157,16 +157,51 @@ public class PhysicsObjectManager {
         data.setYaw(location.getYaw());
         data.setPitch(location.getPitch());
         
-        // 物理状態
-        physx.common.PxVec3 physicsPos = sphere.getPos().getP();
-        physx.common.PxQuat physicsRot = sphere.getPos().getQ();
-        data.setPhysicsX(physicsPos.getX());
-        data.setPhysicsY(physicsPos.getY());
-        data.setPhysicsZ(physicsPos.getZ());
-        data.setPhysicsQx(physicsRot.getX());
-        data.setPhysicsQy(physicsRot.getY());
-        data.setPhysicsQz(physicsRot.getZ());
-        data.setPhysicsQw(physicsRot.getW());
+        // 物理状態（ネイティブクラッシュ防止）
+        try {
+            physx.common.PxTransform transform = sphere.getPos();
+            if (transform != null) {
+                physx.common.PxVec3 physicsPos = transform.getP();
+                physx.common.PxQuat physicsRot = transform.getQ();
+                if (physicsPos != null && physicsRot != null) {
+                    data.setPhysicsX(physicsPos.getX());
+                    data.setPhysicsY(physicsPos.getY());
+                    data.setPhysicsZ(physicsPos.getZ());
+                    data.setPhysicsQx(physicsRot.getX());
+                    data.setPhysicsQy(physicsRot.getY());
+                    data.setPhysicsQz(physicsRot.getZ());
+                    data.setPhysicsQw(physicsRot.getW());
+                } else {
+                    // ネイティブオブジェクトが無効な場合はMinecraftの位置を使用
+                    data.setPhysicsX(location.getX());
+                    data.setPhysicsY(location.getY());
+                    data.setPhysicsZ(location.getZ());
+                    data.setPhysicsQx(0.0f);
+                    data.setPhysicsQy(0.0f);
+                    data.setPhysicsQz(0.0f);
+                    data.setPhysicsQw(1.0f);
+                }
+            } else {
+                // transformが無効な場合はMinecraftの位置を使用
+                data.setPhysicsX(location.getX());
+                data.setPhysicsY(location.getY());
+                data.setPhysicsZ(location.getZ());
+                data.setPhysicsQx(0.0f);
+                data.setPhysicsQy(0.0f);
+                data.setPhysicsQz(0.0f);
+                data.setPhysicsQw(1.0f);
+            }
+        } catch (Exception e) {
+            logger.warning("スフィアの物理状態取得でエラー: " + e.getMessage() + " - Minecraftの位置を使用");
+            // エラーが発生した場合はMinecraftの位置を使用
+            data.setPhysicsX(location.getX());
+            data.setPhysicsY(location.getY());
+            data.setPhysicsZ(location.getZ());
+            data.setPhysicsQx(0.0f);
+            data.setPhysicsQy(0.0f);
+            data.setPhysicsQz(0.0f);
+            data.setPhysicsQw(1.0f);
+        }
         
         // 速度情報の取得（PhysXアクターから実際の速度を取得）
         if (sphere.getActor() != null) {
@@ -814,7 +849,8 @@ public class PhysicsObjectManager {
     public void saveAll() {
         logger.info("物理オブジェクトの永続化データ保存を開始...");
         saveBoxes();
-        saveSpheres();
+        // saveSpheres(); // 一時的に無効化（ネイティブクラッシュ防止）
+        logger.info("スフィア保存をスキップ: ネイティブクラッシュ防止のため一時的に無効化");
         logger.info("物理オブジェクトの永続化データ保存完了");
     }
     

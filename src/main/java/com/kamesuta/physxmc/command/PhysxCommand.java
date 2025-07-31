@@ -36,11 +36,13 @@ public class PhysxCommand extends CommandBase implements Listener {
     private static final String pusherArgument = "pusher";
     private static final String ballArgument = "ball";
     private static final String rampArgument = "ramp";
+    private static final String saveArgument = "save";
+    private static final String loadArgument = "load";
 
     /**
      * 引数のリスト
      */
-    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument, coinArgument, pusherArgument, ballArgument, rampArgument);
+    private static final List<String> arguments = List.of(resetArgument, debugArgument, densityArgument, updateArgument, summonArgument, gravityArgument, coinArgument, pusherArgument, ballArgument, rampArgument, saveArgument, loadArgument);
 
     public PhysxCommand() {
         super(commandName, 1, 8, false);
@@ -404,6 +406,127 @@ public class PhysxCommand extends CommandBase implements Listener {
                     return true;
                 }
             }
+        } else if (arguments[0].equals(saveArgument)) {
+            // /physxmc save - 現在のオブジェクトを全て保存（非同期実行）
+            sender.sendMessage("オブジェクトの保存を開始します...");
+            
+            // 保存対象の数を事前に取得（finalにする）
+            final int pusherCount = PhysxMc.pusherManager.getPusherCount();
+            final int rampCount = PhysxMc.rampManager.getRampCount();
+            // final int boxCount = PhysxMc.displayedBoxHolder.getAllBoxes().size();
+            final int boxCount = 0; // 物理オブジェクト保存を無効化したため0に設定
+            // スフィアは保存対象外
+            
+            // 非同期で保存処理を実行
+            org.bukkit.scheduler.BukkitRunnable saveTask = new org.bukkit.scheduler.BukkitRunnable() {
+                @Override
+                public void run() {
+                    try {
+                        // プッシャーの保存
+                        PhysxMc.pusherManager.savePushers();
+                        
+                        // ランプの保存
+                        PhysxMc.rampManager.saveRamps();
+                        
+                        // 物理オブジェクトの保存を無効化（ネイティブクラッシュ防止）
+                        // PhysxMc.physicsObjectManager.saveAll();
+                        
+                        final int totalSaved = pusherCount + rampCount + boxCount;
+                        
+                        // メインスレッドで結果を送信
+                        org.bukkit.scheduler.BukkitRunnable resultTask = new org.bukkit.scheduler.BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                sender.sendMessage("すべてのオブジェクトを保存しました:");
+                                sender.sendMessage("- プッシャー: " + pusherCount + "個");
+                                sender.sendMessage("- ランプ: " + rampCount + "個");
+                                sender.sendMessage("- ボックス: 保存無効化（ネイティブクラッシュ防止）");
+                                sender.sendMessage("- スフィア: 保存対象外");
+                                sender.sendMessage("合計: " + totalSaved + "個のオブジェクトを保存");
+                            }
+                        };
+                        resultTask.runTask(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class));
+                        
+                    } catch (Exception e) {
+                        // エラーもメインスレッドで送信
+                        org.bukkit.scheduler.BukkitRunnable errorTask = new org.bukkit.scheduler.BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                sender.sendMessage("保存中にエラーが発生しました: " + e.getMessage());
+                            }
+                        };
+                        errorTask.runTask(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class));
+                    }
+                }
+            };
+            saveTask.runTaskAsynchronously(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class));
+            return true;
+        } else if (arguments[0].equals(loadArgument)) {
+            // /physxmc load - 保存されたオブジェクトを全て復元（非同期実行）
+            sender.sendMessage("オブジェクトの復元を開始します...");
+            
+            // 非同期で復元処理を実行
+            org.bukkit.scheduler.BukkitRunnable loadTask = new org.bukkit.scheduler.BukkitRunnable() {
+                @Override
+                public void run() {
+                    try {
+                        // メインスレッドで既存オブジェクトをクリア
+                        org.bukkit.scheduler.BukkitRunnable clearTask = new org.bukkit.scheduler.BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                PhysxMc.displayedBoxHolder.destroyAll();
+                                PhysxMc.displayedSphereHolder.destroyAll(); // スフィアはクリアするが復元はしない
+                                PhysxMc.pusherManager.destroyAll();
+                                PhysxMc.rampManager.destroyAll();
+                            }
+                        };
+                        clearTask.runTask(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class));
+                        
+                        // 少し待ってから復元処理
+                        Thread.sleep(100);
+                        
+                        // 物理オブジェクト（ボックスのみ、スフィアは除外）の復元
+                        PhysxMc.physicsObjectManager.loadAll();
+                        
+                        // プッシャーの復元
+                        PhysxMc.pusherManager.loadPushers();
+                        
+                        // ランプの復元
+                        PhysxMc.rampManager.loadRamps();
+                        
+                        // 復元結果をメインスレッドで取得・送信
+                        org.bukkit.scheduler.BukkitRunnable resultTask = new org.bukkit.scheduler.BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                int boxCount = PhysxMc.displayedBoxHolder.getAllBoxes().size();
+                                int pusherCount = PhysxMc.pusherManager.getPusherCount();
+                                int rampCount = PhysxMc.rampManager.getRampCount();
+                                int totalLoaded = boxCount + pusherCount + rampCount;
+                                
+                                sender.sendMessage("すべてのオブジェクトを復元しました:");
+                                sender.sendMessage("- ボックス: " + boxCount + "個");
+                                sender.sendMessage("- スフィア: 復元対象外（既存は削除）");
+                                sender.sendMessage("- プッシャー: " + pusherCount + "個");
+                                sender.sendMessage("- ランプ: " + rampCount + "個");
+                                sender.sendMessage("合計: " + totalLoaded + "個のオブジェクトを復元");
+                            }
+                        };
+                        resultTask.runTask(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class));
+                        
+                    } catch (Exception e) {
+                        // エラーもメインスレッドで送信
+                        org.bukkit.scheduler.BukkitRunnable errorTask = new org.bukkit.scheduler.BukkitRunnable() {
+                            @Override
+                            public void run() {
+                                sender.sendMessage("復元中にエラーが発生しました: " + e.getMessage());
+                            }
+                        };
+                        errorTask.runTask(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class));
+                    }
+                }
+            };
+            loadTask.runTaskAsynchronously(com.kamesuta.physxmc.PhysxMc.getPlugin(com.kamesuta.physxmc.PhysxMc.class));
+            return true;
         }
 
         sendUsage(sender);
@@ -432,7 +555,9 @@ public class PhysxCommand extends CommandBase implements Listener {
                 "/physxmc payout stop <taskId>: 指定タスクの払い出しを停止\n" +
                 "/physxmc payout stopall: 全ての払い出しを停止\n" +
                 "/physxmc payout list: アクティブなタスクを表示\n" +
-                "/physxmc payout info <taskId>: タスクの詳細情報を表示\n"));
+                "/physxmc payout info <taskId>: タスクの詳細情報を表示\n" +
+                "/physxmc save: 現在のすべてのオブジェクトをファイルに保存\n" +
+                "/physxmc load: 保存されたオブジェクトをファイルから復元\n"));
     }
 
     @EventHandler
