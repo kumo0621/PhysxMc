@@ -117,8 +117,6 @@ PhysxMcは、MinecraftのPaperサーバー向けの物理エンジンプラグ�
 
 # データ管理システム
 +/physxmc save                        # 現在のオブジェクトを全て保存
-+/physxmc load                        # 保存されたオブジェクトを復元
-+```
 
 ### 基本コマンド
 
