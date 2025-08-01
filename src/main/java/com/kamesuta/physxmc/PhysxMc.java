@@ -105,6 +105,25 @@ public final class PhysxMc extends JavaPlugin {
                         return;
                     }
                     
+                    // サーバー再起動時の重複防止：全マネージャーを明示的にクリア
+                    getLogger().info("既存オブジェクトのクリーンアップを実行...");
+                    if (pusherManager != null) {
+                        pusherManager.destroyAll();
+                        getLogger().info("既存プッシャーをクリアしました");
+                    }
+                    if (rampManager != null) {
+                        rampManager.destroyAll();
+                        getLogger().info("既存ランプをクリアしました");
+                    }
+                    if (displayedBoxHolder != null) {
+                        displayedBoxHolder.destroyAll();
+                        getLogger().info("既存ボックスをクリアしました");
+                    }
+                    if (displayedSphereHolder != null) {
+                        displayedSphereHolder.destroyAll();
+                        getLogger().info("既存スフィアをクリアしました");
+                    }
+                    
                     // 先に物理オブジェクトを読み込み（プッシャーの物理オブジェクトは除外される）
                     try {
                         getLogger().info("ボックスとスフィアの復元を開始...");
@@ -115,21 +134,25 @@ public final class PhysxMc extends JavaPlugin {
                         e.printStackTrace();
                     }
                     
-                    // 次にプッシャーを読み込み（重複を避けるため）
+                    // プッシャーを読み込み
                     try {
                         getLogger().info("プッシャーの復元を開始...");
+                        int beforeCount = pusherManager.getPusherCount();
                         pusherManager.loadPushers();
-                        getLogger().info("プッシャーの復元完了");
+                        int afterCount = pusherManager.getPusherCount();
+                        getLogger().info("プッシャーの復元完了: " + beforeCount + "個 → " + afterCount + "個");
                     } catch (Exception e) {
                         getLogger().severe("プッシャーの復元中にエラーが発生しました: " + e.getMessage());
                         e.printStackTrace();
                     }
                     
-                    // ランプの復元も追加
+                    // ランプの復元
                     try {
                         getLogger().info("ランプの復元を開始...");
+                        int beforeCount = rampManager.getRampCount();
                         rampManager.loadRamps();
-                        getLogger().info("ランプの復元完了");
+                        int afterCount = rampManager.getRampCount();
+                        getLogger().info("ランプの復元完了: " + beforeCount + "個 → " + afterCount + "個");
                     } catch (Exception e) {
                         getLogger().severe("ランプの復元中にエラーが発生しました: " + e.getMessage());
                         e.printStackTrace();

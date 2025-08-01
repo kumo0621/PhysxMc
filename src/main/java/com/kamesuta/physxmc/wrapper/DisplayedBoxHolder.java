@@ -279,6 +279,7 @@ public class DisplayedBoxHolder {
      * 全てのBlockDisplayと箱を消去する
      */
     public void destroyAll() {
+        int destroyedCount = blockDisplayList.size();
         blockDisplayList.forEach(box -> {
             for (DisplayedPhysxBox.DisplayData data : box.displayMap){
                 for (BlockDisplay blockDisplay : data.getDisplays()) {
@@ -288,6 +289,9 @@ public class DisplayedBoxHolder {
             PhysxMc.physxWorld.removeBox(box);
         });
         blockDisplayList.clear();
+        if (destroyedCount > 0) {
+            java.util.logging.Logger.getLogger("PhysxMc").info("DisplayedBoxHolder: " + destroyedCount + "個のボックスを削除しました");
+        }
     }
 
     public void destroySpecific(DisplayedPhysxBox box) {

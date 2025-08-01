@@ -136,10 +136,14 @@ public class RampManager {
      * 全ランプを削除
      */
     public void destroyAll() {
+        int destroyedCount = ramps.size();
         for (MedalRamp ramp : ramps) {
             ramp.destroy();
         }
         ramps.clear();
+        if (destroyedCount > 0) {
+            logger.info("RampManager: " + destroyedCount + "個のランプを削除しました");
+        }
     }
 
     /**
@@ -199,10 +203,9 @@ public class RampManager {
      * ランプ設定をファイルから読み込み
      */
     public void loadRamps() {
-        // 読み込み前に既存のランプをクリア（重複防止）
+        // 注意：クリーンアップはPhysxMc.javaで実行済み
         if (!ramps.isEmpty()) {
-            logger.info("既存のランプをクリア中: " + ramps.size() + "個");
-            destroyAll();
+            logger.warning("ランプが既に存在します(" + ramps.size() + "個)。重複読み込みの可能性があります。");
         }
         
         if (!yamlFile.exists()) {

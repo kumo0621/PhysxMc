@@ -129,6 +129,7 @@ public class DisplayedSphereHolder {
      * 全てのBlockDisplayと球体を消去する
      */
     public void destroyAll() {
+        int destroyedCount = sphereDisplayList.size();
         sphereDisplayList.forEach(sphere -> {
             for (DisplayedPhysxSphere.DisplayData data : sphere.displayMap){
                 for (BlockDisplay blockDisplay : data.getDisplays()) {
@@ -138,6 +139,9 @@ public class DisplayedSphereHolder {
             PhysxMc.physxWorld.removeSphere(sphere);
         });
         sphereDisplayList.clear();
+        if (destroyedCount > 0) {
+            java.util.logging.Logger.getLogger("PhysxMc").info("DisplayedSphereHolder: " + destroyedCount + "個のスフィアを削除しました");
+        }
     }
 
     public void destroySpecific(DisplayedPhysxSphere sphere) {

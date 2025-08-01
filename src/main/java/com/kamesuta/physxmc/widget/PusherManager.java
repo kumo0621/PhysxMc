@@ -82,10 +82,14 @@ public class PusherManager {
      * 全てのプッシャーを破壊
      */
     public void destroyAll() {
+        int destroyedCount = pushers.size();
         for (MedalPusher pusher : pushers) {
             pusher.destroy();
         }
         pushers.clear();
+        if (destroyedCount > 0) {
+            logger.info("PusherManager: " + destroyedCount + "個のプッシャーを削除しました");
+        }
     }
     
     /**
@@ -179,11 +183,11 @@ public class PusherManager {
      * プッシャー設定をファイルから読み込み
      */
     public void loadPushers() {
-        // 読み込み前に既存のプッシャーをクリア（重複防止）
+        // 注意：クリーンアップはPhysxMc.javaで実行済み
         if (!pushers.isEmpty()) {
-            logger.info("既存のプッシャーをクリア中: " + pushers.size() + "個");
-            destroyAll();
+            logger.warning("プッシャーが既に存在します(" + pushers.size() + "個)。重複読み込みの可能性があります。");
         }
+        
         if (!yamlFile.exists()) {
             logger.info("プッシャーデータファイルが存在しません");
             return;
