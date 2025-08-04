@@ -26,16 +26,23 @@ public class PhysicsObjectManager {
     private final File sphereFile;
     private final Logger logger;
     
+    // セッション一意ID（重複防止用）
+    private final String sessionId;
+    private boolean isLoading = false;
+    
     public PhysicsObjectManager(File dataFolder) {
         this.dataFolder = dataFolder;
         this.boxFile = new File(dataFolder, "boxes.yml");
-        this.sphereFile = new File(dataFolder, "spheres.yml");
+        this.sphereFile = new File(dataFolder, "sphereFile.yml");
         this.logger = Bukkit.getLogger();
+        this.sessionId = java.util.UUID.randomUUID().toString();
         
         // データフォルダが存在しない場合は作成
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
+        
+        logger.info("PhysicsObjectManager初期化完了 - セッションID: " + sessionId.substring(0, 8));
     }
     
     /**
@@ -237,15 +244,34 @@ public class PhysicsObjectManager {
             // 無効なボックスを事前に除去してリストをクリーンアップ
             List<DisplayedPhysxBox> invalidBoxes = new ArrayList<>();
             for (DisplayedPhysxBox box : boxes) {
-                if (box != null && (box.getActor() == null || !box.getActor().isReleasable())) {
-                    invalidBoxes.add(box);
+                if (box != null) {
+                    try {
+                        // より詳細な無効性チェック
+                        if (box.getActor() == null) {
+                            logger.warning("アクターがnullのボックスを発見: " + box.hashCode());
+                            invalidBoxes.add(box);
+                        } else if (!box.getActor().isReleasable()) {
+                            logger.warning("解放済みアクターのボックスを発見: " + box.hashCode());
+                            invalidBoxes.add(box);
+                        } else if (box.isDisplayDead()) {
+                            logger.warning("表示が死んでいるボックスを発見: " + box.hashCode());
+                            invalidBoxes.add(box);
+                        }
+                    } catch (Exception e) {
+                        logger.warning("ボックス検証中にエラー: " + e.getMessage() + " - ボックスを無効として処理");
+                        invalidBoxes.add(box);
+                    }
                 }
             }
             
             // 無効なボックスを除去
             for (DisplayedPhysxBox invalidBox : invalidBoxes) {
-                PhysxMc.displayedBoxHolder.destroySpecific(invalidBox);
-                logger.info("無効なボックスオブジェクトを除去しました");
+                try {
+                    PhysxMc.displayedBoxHolder.destroySpecific(invalidBox);
+                    logger.info("無効なボックスオブジェクトを除去しました: " + invalidBox.hashCode());
+                } catch (Exception e) {
+                    logger.warning("無効ボックス除去中にエラー: " + e.getMessage());
+                }
             }
             
             // リストを更新（無効なボックスを除去後）
@@ -822,14 +848,25 @@ public class PhysicsObjectManager {
      * 全ての物理オブジェクトを読み込み
      */
     public void loadAll() {
-        logger.info("物理オブジェクトの永続化データ読み込みを開始...");
+        // 重複読み込み防止
+        if (isLoading) {
+            logger.warning("既に読み込み中です。重複実行を防止します。セッションID: " + sessionId.substring(0, 8));
+            return;
+        }
         
-        // 読み込み前に既存のオブジェクトをクリア（重複防止）
-        clearExistingObjects();
-        
-        loadBoxes();
-        loadSpheres();
-        logger.info("物理オブジェクトの永続化データ読み込み完了");
+        isLoading = true;
+        try {
+            logger.info("物理オブジェクトの永続化データ読み込みを開始... セッションID: " + sessionId.substring(0, 8));
+            
+            // 読み込み前に既存のオブジェクトをクリア（重複防止）
+            clearExistingObjects();
+            
+            loadBoxes();
+            loadSpheres();
+            logger.info("物理オブジェクトの永続化データ読み込み完了 - セッションID: " + sessionId.substring(0, 8));
+        } finally {
+            isLoading = false;
+        }
     }
     
     /**

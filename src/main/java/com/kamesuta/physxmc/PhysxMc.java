@@ -58,6 +58,10 @@ public final class PhysxMc extends JavaPlugin {
     // 自動保存のカウンター（5分間隔 = 6000 ticks）
     private int autoSaveCounter = 0;
     private static final int AUTO_SAVE_INTERVAL = 6000; // 5分間隔
+    
+    // 初期化状態管理
+    private static boolean isInitialized = false;
+    private static boolean isLoadingData = false;
 
     @Override
     public void onEnable() {
@@ -97,32 +101,30 @@ public final class PhysxMc extends JavaPlugin {
             @Override
             public void run() {
                 try {
+                    // 重複読み込み防止
+                    if (isLoadingData) {
+                        getLogger().warning("既にデータ読み込み中です。重複実行を防止します。");
+                        return;
+                    }
+                    
+                    if (isInitialized) {
+                        getLogger().warning("既にデータが読み込み済みです。重複実行を防止します。");
+                        return;
+                    }
+                    
+                    isLoadingData = true;
                     getLogger().info("物理オブジェクトの復元を開始します...");
                     
                     // PhysXシーンが準備できているか確認
                     if (physxWorld == null) {
                         getLogger().warning("PhysXワールドが準備できていません。復元をスキップします。");
+                        isLoadingData = false;
                         return;
                     }
                     
                     // サーバー再起動時の重複防止：全マネージャーを明示的にクリア
                     getLogger().info("既存オブジェクトのクリーンアップを実行...");
-                    if (pusherManager != null) {
-                        pusherManager.destroyAll();
-                        getLogger().info("既存プッシャーをクリアしました");
-                    }
-                    if (rampManager != null) {
-                        rampManager.destroyAll();
-                        getLogger().info("既存ランプをクリアしました");
-                    }
-                    if (displayedBoxHolder != null) {
-                        displayedBoxHolder.destroyAll();
-                        getLogger().info("既存ボックスをクリアしました");
-                    }
-                    if (displayedSphereHolder != null) {
-                        displayedSphereHolder.destroyAll();
-                        getLogger().info("既存スフィアをクリアしました");
-                    }
+                    performCompleteCleanup();
                     
                     // 先に物理オブジェクトを読み込み（プッシャーの物理オブジェクトは除外される）
                     try {
@@ -167,9 +169,14 @@ public final class PhysxMc extends JavaPlugin {
                     getLogger().info("- プッシャー数: " + pusherManager.getPusherCount());
                     getLogger().info("- ランプ数: " + rampManager.getRampCount());
                     
+                    // 初期化完了フラグを設定
+                    isInitialized = true;
+                    
                 } catch (Exception e) {
                     getLogger().severe("物理オブジェクトの復元中にエラーが発生しました: " + e.getMessage());
                     e.printStackTrace();
+                } finally {
+                    isLoadingData = false;
                 }
             }
         }.runTaskLater(this, 60L); // 3秒後に実行（より安全な待機時間）
@@ -463,6 +470,43 @@ public final class PhysxMc extends JavaPlugin {
         }.runTaskLater(this, 20L);
 
         redstonePulseTasks.put(locKey, task);
+    }
+
+    /**
+     * 完全なクリーンアップを実行（重複防止用）
+     */
+    private void performCompleteCleanup() {
+        getLogger().info("完全クリーンアップを開始...");
+        
+        // 1. 各マネージャーのリストをクリア
+        if (pusherManager != null) {
+            pusherManager.destroyAll();
+            getLogger().info("既存プッシャーをクリアしました");
+        }
+        if (rampManager != null) {
+            rampManager.destroyAll();
+            getLogger().info("既存ランプをクリアしました");
+        }
+        if (displayedBoxHolder != null) {
+            displayedBoxHolder.destroyAll();
+            getLogger().info("既存ボックスをクリアしました");
+        }
+        if (displayedSphereHolder != null) {
+            displayedSphereHolder.destroyAll();
+            getLogger().info("既存スフィアをクリアしました");
+        }
+        
+        // 2. ガベージコレクションの実行を推奨
+        System.gc();
+        
+        // 3. 少し待機してクリーンアップを確実にする
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        getLogger().info("完全クリーンアップ完了");
     }
 
     /**
