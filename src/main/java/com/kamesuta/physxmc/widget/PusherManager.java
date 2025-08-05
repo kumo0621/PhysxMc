@@ -22,14 +22,21 @@ public class PusherManager {
     private final File yamlFile;
     private final Logger logger;
     
+    // セッション管理
+    private final String sessionId;
+    private boolean isLoading = false;
+    
     public PusherManager(File dataFolder) {
         this.yamlFile = new File(dataFolder, "pushers.yml");
         this.logger = Bukkit.getLogger();
+        this.sessionId = java.util.UUID.randomUUID().toString();
         
         // データフォルダが存在しない場合は作成
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
+        
+        logger.info("PusherManager初期化完了 - セッションID: " + sessionId.substring(0, 8));
     }
     
     /**
@@ -183,10 +190,18 @@ public class PusherManager {
      * プッシャー設定をファイルから読み込み
      */
     public void loadPushers() {
-        // 注意：クリーンアップはPhysxMc.javaで実行済み
-        if (!pushers.isEmpty()) {
-            logger.warning("プッシャーが既に存在します(" + pushers.size() + "個)。重複読み込みの可能性があります。");
+        // 重複読み込み防止
+        if (isLoading) {
+            logger.warning("プッシャー読み込み中です。重複実行を防止します。セッションID: " + sessionId.substring(0, 8));
+            return;
         }
+        
+        isLoading = true;
+        try {
+            // 注意：クリーンアップはPhysxMc.javaで実行済み
+            if (!pushers.isEmpty()) {
+                logger.warning("プッシャーが既に存在します(" + pushers.size() + "個)。重複読み込みの可能性があります。セッションID: " + sessionId.substring(0, 8));
+            }
         
         if (!yamlFile.exists()) {
             logger.info("プッシャーデータファイルが存在しません");
@@ -256,9 +271,11 @@ public class PusherManager {
                 }
             }
 
-            logger.info("プッシャーデータを読み込みました: " + loadedCount + "個");
+            logger.info("プッシャーデータを読み込みました: " + loadedCount + "個 - セッションID: " + sessionId.substring(0, 8));
         } catch (Exception e) {
             logger.severe("プッシャーデータの読み込みに失敗しました: " + e.getMessage());
+        } finally {
+            isLoading = false;
         }
     }
 } 

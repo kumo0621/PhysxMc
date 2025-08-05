@@ -22,14 +22,21 @@ public class RampManager {
     private final File yamlFile;
     private final Logger logger;
     
+    // セッション管理
+    private final String sessionId;
+    private boolean isLoading = false;
+    
     public RampManager(File dataFolder) {
         this.yamlFile = new File(dataFolder, "ramps.yml");
         this.logger = Bukkit.getLogger();
+        this.sessionId = java.util.UUID.randomUUID().toString();
         
         // データフォルダが存在しない場合は作成
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
+        
+        logger.info("RampManager初期化完了 - セッションID: " + sessionId.substring(0, 8));
     }
 
     /**
@@ -203,10 +210,18 @@ public class RampManager {
      * ランプ設定をファイルから読み込み
      */
     public void loadRamps() {
-        // 注意：クリーンアップはPhysxMc.javaで実行済み
-        if (!ramps.isEmpty()) {
-            logger.warning("ランプが既に存在します(" + ramps.size() + "個)。重複読み込みの可能性があります。");
+        // 重複読み込み防止
+        if (isLoading) {
+            logger.warning("ランプ読み込み中です。重複実行を防止します。セッションID: " + sessionId.substring(0, 8));
+            return;
         }
+        
+        isLoading = true;
+        try {
+            // 注意：クリーンアップはPhysxMc.javaで実行済み
+            if (!ramps.isEmpty()) {
+                logger.warning("ランプが既に存在します(" + ramps.size() + "個)。重複読み込みの可能性があります。セッションID: " + sessionId.substring(0, 8));
+            }
         
         if (!yamlFile.exists()) {
             logger.info("ランプデータファイルが存在しません");
@@ -259,9 +274,11 @@ public class RampManager {
                 }
             }
 
-            logger.info("ランプデータを読み込みました: " + loadedCount + "個");
+            logger.info("ランプデータを読み込みました: " + loadedCount + "個 - セッションID: " + sessionId.substring(0, 8));
         } catch (Exception e) {
             logger.severe("ランプデータの読み込みに失敗しました: " + e.getMessage());
+        } finally {
+            isLoading = false;
         }
     }
 } 
